@@ -150,6 +150,7 @@ export async function openFileSmart(file) {
   const page = ['png', 'jpg', 'gif', 'bmp', 'webp'].includes(ext) ? 'image'
     : ['wav', 'mp3', 'flac', 'ogg'].includes(ext) ? 'audio'
     : ['pcap', 'pcapng'].includes(ext) ? 'pcap'
+    : ['elf', 'exe'].includes(ext) ? 'rev'
     : 'file';
   sendTo(page, file);
   return page;

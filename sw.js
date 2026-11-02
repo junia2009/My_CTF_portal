@@ -7,6 +7,9 @@ const APP_CACHE = `ctfportal-app-${BUILD_ID}`;
 const FONT_CACHE = 'ctfportal-fonts-v1';
 // OCR（onnxruntime-web と PaddleOCR のモデル）の大きなファイル用。アプリを更新しても消さない（中身はバージョン付きで固定のため）
 const OCR_CACHE = 'ctfportal-ocr-v2';
+// 逆アセンブラ（Capstone、約 3.6MB）。バージョン固定なのでアプリを更新しても消さず、インストール時に先に取っておく
+const LIB_CACHE = 'ctfportal-lib-capstone-5.0.9';
+const LIB_FILES = ['vendor/capstone/capstone.js', 'vendor/capstone/capstone.wasm'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (event) => {
@@ -14,6 +17,13 @@ self.addEventListener('install', (event) => {
     const cache = await caches.open(APP_CACHE);
     // cache: 'reload' で HTTP キャッシュを経由せず最新を取得する
     await cache.addAll(['./', ...PRECACHE].map((u) => new Request(u, { cache: 'reload' })));
+    // 逆アセンブラはまだ持っていなければ取得する（失敗してもインストールは続ける）
+    try {
+      const lib = await caches.open(LIB_CACHE);
+      for (const f of LIB_FILES) if (!(await lib.match(f))) await lib.add(f);
+    } catch {
+      // 初めて使うときに改めて取得する
+    }
   })());
 });
 
@@ -43,9 +53,10 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // OCR のエンジン・モデル：初回だけダウンロードし、以後は専用キャッシュから返す
-  if (/\/vendor\/(onnxruntime|paddleocr)\//.test(url.pathname)) {
+  const lazy = /\/vendor\/(onnxruntime|paddleocr)\//.test(url.pathname) ? OCR_CACHE : /\/vendor\/capstone\//.test(url.pathname) ? LIB_CACHE : null;
+  if (lazy) {
     event.respondWith((async () => {
-      const cache = await caches.open(OCR_CACHE);
+      const cache = await caches.open(lazy);
       const hit = await cache.match(req, { ignoreSearch: true });
       if (hit) return hit;
       const res = await fetch(req);

@@ -650,6 +650,106 @@
       </section>
 
       <!-- 位置特定アシスタント -->
+      <section data-page="rev" hidden>
+        <h1>バイナリ解析（逆アセンブル）</h1>
+        <p class="lead">実行ファイル（ELF / PE）の中身を、関数の一覧・疑似コード・逆アセンブル・分岐のグラフで読みます。Ghidra でやる「main を探す → 文字列から判定の場所を見つける → 比べている値を読む」を、ブラウザだけで行えます。ファイルは外部へ送りません。</p>
+        <label class="dropzone compact" id="revDrop" for="revIn">
+          <input type="file" id="revIn" hidden>
+          <span class="dz-main">実行ファイル（ELF / PE）をドロップ、またはクリックして選択</span>
+        </label>
+        <details class="card rev-raw" id="revRaw">
+          <summary>機械語（シェルコード）を直接貼って逆アセンブルする</summary>
+          <div class="row">
+            <select id="revRawArch" aria-label="アーキテクチャ">
+              <option value="x64">x86-64（64ビット）</option>
+              <option value="x86">x86（32ビット）</option>
+              <option value="arm64">ARM64</option>
+              <option value="arm">ARM（32ビット）</option>
+              <option value="thumb">ARM Thumb</option>
+            </select>
+            <input id="revRawBase" value="0x0" aria-label="先頭のアドレス" class="rev-base">
+            <button type="button" id="revRawGo">逆アセンブル</button>
+          </div>
+          <textarea id="revRawIn" rows="3" placeholder="16進のバイト列（48 31 c0 50 … / \x48\x31\xc0 … / 4831c050 …）"></textarea>
+        </details>
+        <div class="geo-progress" id="revProg" hidden><i></i><span></span></div>
+        <div id="revResult" hidden>
+          <div class="card">
+            <h3 id="revTitle"></h3>
+            <table class="kv" id="revProps"></table>
+            <div id="revAlerts"></div>
+            <div class="rev-imports" id="revImports"></div>
+          </div>
+          <div class="rev-work">
+            <aside class="card rev-side">
+              <div class="tabs" role="tablist">
+                <button type="button" data-tab="revfuncs">関数</button>
+                <button type="button" data-tab="revstrs">文字列</button>
+              </div>
+              <div class="tab-panels">
+                <div data-panel="revfuncs">
+                  <input id="revFuncQ" placeholder="関数名で絞り込み" aria-label="関数名で絞り込み">
+                  <div class="rev-list" id="revFuncs"></div>
+                </div>
+                <div data-panel="revstrs" hidden>
+                  <input id="revStrQ" placeholder="文字列で絞り込み（flag / Correct / Wrong など）" aria-label="文字列で絞り込み">
+                  <label class="check"><input type="checkbox" id="revStrRef" checked> コードから使われているものだけ</label>
+                  <div class="rev-list" id="revStrs"></div>
+                </div>
+              </div>
+            </aside>
+            <div class="card rev-main">
+              <div class="rev-head">
+                <button type="button" class="ghost small" id="revBack" title="前に見ていた場所へ戻る">←</button>
+                <b id="revFn" class="rev-fn"></b>
+                <span class="hint" id="revFnInfo"></span>
+                <span class="rev-head-actions">
+                  <button type="button" class="ghost small" id="revRename">名前を変える</button>
+                  <button type="button" class="ghost small" id="revComment" title="逆アセンブルで選んだ行にコメントを付ける">コメント</button>
+                </span>
+              </div>
+              <div class="meta-line rev-xrefs" id="revXrefs"></div>
+              <div class="tabs" role="tablist">
+                <button type="button" data-tab="revcode">疑似コード</button>
+                <button type="button" data-tab="revasm">逆アセンブル</button>
+                <button type="button" data-tab="revgraph">グラフ</button>
+                <button type="button" data-tab="revdata">データ</button>
+              </div>
+              <div class="tab-panels">
+                <div data-panel="revcode">
+                  <p class="hint rev-note">レジスタの中身を追いかけて組み立てた<b>簡易の疑似コード</b>です（型や構造体は推測しません）。怪しいところは逆アセンブルで確かめてください。行をクリックすると、その命令へ移動します。</p>
+                  <div class="rev-code" id="revCode"></div>
+                </div>
+                <div data-panel="revasm" hidden><div class="rev-asm" id="revAsm"></div></div>
+                <div data-panel="revgraph" hidden>
+                  <div class="row rev-graph-tools">
+                    <button type="button" class="ghost small" id="revZoomOut" aria-label="縮小">－</button>
+                    <button type="button" class="ghost small" id="revZoomIn" aria-label="拡大">＋</button>
+                    <span class="hint"><span class="e-true">━ 条件が成り立つ</span>　<span class="e-false">━ 成り立たない</span>　<span class="e-jmp">━ そのまま進む</span>　ブロックをクリックで逆アセンブルへ</span>
+                  </div>
+                  <div class="rev-graph" id="revGraph"></div>
+                </div>
+                <div data-panel="revdata" hidden>
+                  <div class="row">
+                    <input id="revDataAddr" class="rev-base" placeholder="アドレス（例: 0x2010）" aria-label="アドレス">
+                    <input id="revDataLen" type="number" min="1" max="4096" value="64" class="rev-len" aria-label="バイト数">
+                    <button type="button" id="revDataGo">表示</button>
+                  </div>
+                  <p class="hint" id="revDataInfo">逆アセンブルや疑似コードに出てくる配列・データのアドレスを入れると、中身を表示します。比較に使われている配列を取り出して、XOR などのツールへ送れます。</p>
+                  <pre class="rev-dump" id="revDump"></pre>
+                  <div class="row" id="revDataActions" hidden>
+                    <button type="button" class="ghost small" id="revToXor">XOR ツールへ</button>
+                    <button type="button" class="ghost small" id="revToCodec">エンコード / デコードへ</button>
+                    <button type="button" class="ghost small" id="revToBinview">バイナリビューアへ</button>
+                    <button type="button" class="ghost small" id="revCopyArr">C の配列としてコピー</button>
+                    <button type="button" class="ghost small" id="revCopyPy">Python の bytes としてコピー</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section data-page="geo" hidden>
         <h1>位置特定アシスタント</h1>
         <p class="lead">画像から撮影場所の手がかりを集め、地図で調べるところまでを手伝います。画像は外部へ送らず、すべてこの端末の中で処理します。</p>
