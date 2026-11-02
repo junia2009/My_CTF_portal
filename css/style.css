@@ -752,6 +752,30 @@ tr.p-icmp td:nth-child(5), tr.p-arp td:nth-child(5) { color: var(--warn); }
 .diff-inline { padding: .7rem; white-space: pre-wrap; word-break: break-all; line-height: 1.8; }
 .diff-inline ins { text-decoration: none; background: rgba(var(--accent-rgb), .25); color: var(--accent); outline: 1px solid rgba(var(--accent-rgb), .6); }
 .diff-inline del { background: rgba(255, 107, 122, .2); color: #ffb3bb; }
+.diff-side.over { outline: 2px dashed var(--accent); outline-offset: -6px; }
+.diff-side label.btn { margin: 0; cursor: pointer; }
+.diff-file { display: flex; flex-wrap: wrap; gap: .3rem .9rem; align-items: center; font-size: .85rem; padding: .6rem .7rem; margin-top: .5rem; background: var(--field); border: 1px solid var(--line); }
+.diff-file b { font-family: var(--mono); color: var(--accent); word-break: break-all; }
+.diff-sub { margin: .9rem .7rem .3rem; font-size: .82rem; font-weight: 700; color: var(--accent); font-family: var(--ui); }
+.diff-out .kv, .diff-out .table-wrap, .diff-out > .row, .diff-out > .hint { margin: .5rem .7rem; }
+.diff-out .kv { table-layout: fixed; width: calc(100% - 1.4rem); }
+.diff-out .kv td { word-break: break-all; overflow-wrap: anywhere; }
+.diff-out .kv th { width: 9.5rem; }
+tr.diff-add td:first-child { color: var(--accent); } tr.diff-del td:first-child { color: var(--error); } tr.diff-rep td:first-child { color: var(--warn); }
+.hx-diff { padding: .3rem .7rem .6rem; overflow-x: auto; font-variant-ligatures: none; }
+.hx-pair { padding: .15rem 0; border-bottom: 1px dashed rgba(var(--accent-rgb), .1); width: max-content; min-width: 100%; }
+.hx-pair:not(.changed) { opacity: .55; }
+.hx-line { display: flex; gap: .8rem; white-space: pre; line-height: 1.5; }
+.hx-off { width: 5.4rem; color: var(--muted); }
+.hx-tag { width: 1rem; font-weight: 700; }
+.hx-line.a .hx-tag { color: var(--error); } .hx-line.b .hx-tag { color: var(--accent); }
+.hx-bytes { display: flex; gap: .45em; }
+.hx-bytes i, .hx-asc i { font-style: normal; }
+.hx-bytes i:nth-child(8) { margin-right: .45em; }
+.hx-line.a .d { background: rgba(255, 107, 122, .28); color: #ffd0d5; }
+.hx-line.b .d { background: rgba(var(--accent-rgb), .3); color: var(--text); }
+.hx-asc { color: var(--muted); }
+.hx-gap { color: var(--muted); padding: .1rem 0 .1rem 6.2rem; }
 
 /* ---------- 正規表現 ---------- */
 .rx-slash { font-family: var(--mono); font-size: 1.2rem; color: var(--accent); }

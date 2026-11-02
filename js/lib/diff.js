@@ -66,3 +66,75 @@ export function diffBytes(a, b) {
   }
   return { positions, xor };
 }
+
+// バイナリの比較：同じ位置どうしで比べ、違いのある 16 バイトの行（前後 context 行つき）を返す
+export function hexDiffRows(a, b, { width = 16, context = 1, maxRows = 600 } = {}) {
+  const n = Math.max(a.length, b.length);
+  const rows = Math.ceil(n / width);
+  const diffRow = new Uint8Array(rows);
+  let diffCount = 0, first = -1;
+  for (let i = 0; i < n; i++) {
+    if (a[i] !== b[i]) {
+      diffRow[(i / width) | 0] = 1;
+      diffCount++;
+      if (first < 0) first = i;
+    }
+  }
+  const show = new Uint8Array(rows);
+  for (let r = 0; r < rows; r++) if (diffRow[r]) for (let k = Math.max(0, r - context); k <= Math.min(rows - 1, r + context); k++) show[k] = 1;
+  const out = [];
+  let prev = -2, truncated = false;
+  for (let r = 0; r < rows; r++) {
+    if (!show[r]) continue;
+    if (out.length >= maxRows) {
+      truncated = true;
+      break;
+    }
+    if (r !== prev + 1 && out.length) out.push({ gap: true });
+    out.push({ off: r * width, a: a.subarray(r * width, r * width + width), b: b.subarray(r * width, r * width + width), diff: !!diffRow[r] });
+    prev = r;
+  }
+  return { rows: out, diffCount, first, truncated };
+}
+
+// 挿入・削除のあるバイナリ：バイト列として差分を取り、まとまった範囲で返す
+export function byteRanges(a, b, { maxD = 2000 } = {}) {
+  const ops = diffSeq(Array.from(a), Array.from(b), { maxD });
+  const out = [];
+  let ia = 0, ib = 0;
+  for (const o of ops) {
+    const last = out[out.length - 1];
+    if (o.type === 'eq') {
+      ia++;
+      ib++;
+      continue;
+    }
+    const at = o.type === 'del' ? ia : ib;
+    if (last && last.type === o.type && last.end === at && (o.type === 'del' ? last.offB === ib : last.offA === ia)) {
+      last.bytes.push(o.text);
+      last.end++;
+    } else out.push({ type: o.type, offA: ia, offB: ib, end: at + 1, bytes: [o.text] });
+    if (o.type === 'del') ia++;
+    else ib++;
+  }
+  // 同じ場所での「削除＋追加」は「置き換え」としてまとめる
+  const merged = [];
+  for (const { end, ...r } of out) {
+    const last = merged[merged.length - 1];
+    const bytes = Uint8Array.from(r.bytes);
+    if (last && last.type === 'del' && r.type === 'add' && r.offA === last.offA + last.bytes.length && r.offB === last.offB) {
+      merged[merged.length - 1] = { type: 'rep', offA: last.offA, offB: last.offB, bytes, old: last.bytes };
+    } else merged.push({ ...r, bytes });
+  }
+  return merged;
+}
+
+// テキストとして扱えるか（NUL を含まず、UTF-8 として正しい）
+export function asText(bytes, limit = 2 << 20) {
+  if (bytes.length > limit || bytes.includes(0)) return null;
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return null;
+  }
+}
