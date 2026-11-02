@@ -86,7 +86,10 @@ export function extractClues(text) {
   // 座標
   for (const c of parseCoords(norm)) clues.push({ type: '座標', value: `${c.lat}, ${c.lon}`, note: c.raw, coords: c });
   // 郵便番号（日本）
-  for (const m of norm.matchAll(/(?:〒|郵便番号\s*)\s*(\d{3})-?(\d{4})/g)) {
+  // OCR は 〒 を T・〶・亍 と読み違えやすいので、番号の直前にあればそれも郵便記号とみなす
+  for (const m of norm.matchAll(/(?:[〒〶亍]|(?<![A-Za-z])T|郵便番号\s*)\s*(\d{3})-(\d{4})(?!\d)|(?:[〒〶]|郵便番号\s*)\s*(\d{3})(\d{4})(?!\d)/g)) {
+    m[1] ??= m[3];
+    m[2] ??= m[4];
     clues.push({ type: '郵便番号', value: `〒${m[1]}-${m[2]}`, note: '日本郵便で住所を調べられます', query: `〒${m[1]}-${m[2]}`, extra: { label: '日本郵便で検索', url: `https://www.post.japanpost.jp/cgi-zip/zipcode.php?zip=${m[1]}${m[2]}` } });
   }
   // 電話番号
