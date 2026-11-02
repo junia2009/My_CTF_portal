@@ -60,7 +60,7 @@ export const GENRES = [
   },
   {
     id: 'REVERSING', label: 'REVERSING', desc: 'プログラムを読み解いて、フラグの判定処理や隠し文字列を探す。',
-    tools: ['file', 'xor', 'codec', 'base'],
+    tools: ['rev', 'file', 'xor', 'codec'],
     sheet: [
       ['file <バイナリ>', 'アーキテクチャや言語、strip の有無を確認する'],
       ['strings -n 6 <バイナリ>', '埋め込まれた文字列を探す'],
@@ -68,7 +68,10 @@ export const GENRES = [
       ['ltrace ./<バイナリ>', 'ライブラリ関数呼び出し（strcmp など）を観察する'],
       ['strace ./<バイナリ>', 'システムコールを観察する'],
       ['gdb ./<バイナリ> → b main → r → ni / si → x/s $rdi', 'デバッガでステップ実行して値を確認する'],
-      ['Ghidra / IDA Free', 'デコンパイルして処理の流れを読む'],
+      ['Ghidra / IDA Free', 'デコンパイルして処理の流れを読む（ポータルの「バイナリ解析」でも簡易の疑似コードを読める）'],
+      ['upx -d <バイナリ>', 'UPX で圧縮された実行ファイルを展開する'],
+      ['gdb: b *0x401234 → r → x/32bx $rsp → info registers', 'アドレスで止めて、メモリとレジスタの中身を見る'],
+      ['引数のレジスタ（x64 Linux）: rdi, rsi, rdx, rcx, r8, r9', '関数を呼ぶ直前に入れた値が引数。Windows x64 は rcx, rdx, r8, r9'],
       ['python3 -m uncompyle6 / pycdc', 'Python の .pyc を元のコードに戻す'],
     ],
   },

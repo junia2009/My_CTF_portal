@@ -68,9 +68,9 @@ export function initFile() {
     if (type && ext && !type.ext.split('/').includes(ext) && !(type.ext === 'zip' && ['docx', 'xlsx', 'pptx', 'jar', 'apk', 'odt'].includes(ext)) && !(type.ext === 'jpg' && ext === 'jpeg')) {
       alerts.push(h('div', { class: 'alert' }, `拡張子 .${ext} と中身（${type.name}）が一致しません。拡張子が偽装されている可能性があります。`));
     }
-    const tool = { png: 'image', jpg: 'image', gif: 'image', bmp: 'image', webp: 'image', wav: 'audio', mp3: 'audio', flac: 'audio', ogg: 'audio', pcap: 'pcap', pcapng: 'pcap' }[type?.ext];
+    const tool = { png: 'image', jpg: 'image', gif: 'image', bmp: 'image', webp: 'image', wav: 'audio', mp3: 'audio', flac: 'audio', ogg: 'audio', pcap: 'pcap', pcapng: 'pcap', elf: 'rev', exe: 'rev' }[type?.ext];
     if (tool) {
-      const label = { image: '画像解析', audio: '音声解析', pcap: 'pcap 解析' }[tool];
+      const label = { image: '画像解析', audio: '音声解析', pcap: 'pcap 解析', rev: 'バイナリ解析（逆アセンブル）' }[tool];
       alerts.push(h('div', { class: 'alert ok' }, `${type.name}です。${label}で、より詳しく調べられます。`,
         h('button', { type: 'button', class: 'small', onclick: () => sendTo(tool, new File([bytes], name)) }, `${label}で開く`)));
     }

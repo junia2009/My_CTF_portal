@@ -195,6 +195,13 @@ async function sampleGeo() {
   return new File([blob], 'sample_streetcorner.png', { type: 'image/png' });
 }
 
+// 入力を XOR して配列と比べるクラックミー（ELF x86-64）
+async function sampleRev() {
+  const { CRACKME_B64 } = await import('./sample-crackme.js');
+  const bin = Uint8Array.from(atob(CRACKME_B64), (c) => c.charCodeAt(0));
+  return new File([bin], 'crackme', { type: 'application/octet-stream' });
+}
+
 export const SAMPLES = {
   codec: () => ({ text: 'NjY2YzYxNjc3Yjc3MzM2YzYzMzA2ZDMzNWY3NDMwNWY2Mzc0NjY3ZA==', magic: true }),
   base: () => ({ text: '0x666c61677b6e756d6233727d' }),
@@ -221,6 +228,7 @@ export const SAMPLES = {
   net: () => ({ cidr: '192.168.10.77/26', ts: '1700000000' }),
   pinject: () => ({ text: samplePinject() }),
   geo: sampleGeo,
+  rev: sampleRev,
   image: sampleImage,
   audio: sampleAudio,
   pcap: samplePcap,

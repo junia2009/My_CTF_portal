@@ -13,6 +13,7 @@ import { initPcap, initLogs } from './ui/traffic.js';
 import { initMath, initBinview, initMojibake, initDiff, initRegex } from './ui/utility.js';
 import { initPinject } from './ui/pinject.js';
 import { initGeo } from './ui/geo.js';
+import { initRev } from './ui/rev.js';
 
 const onShow = {};
 let pallas = null;
@@ -59,6 +60,7 @@ initDiff();
 initRegex();
 initPinject();
 initGeo();
+initRev();
 onShow.guide = initGuide();
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();

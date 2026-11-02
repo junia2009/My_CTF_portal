@@ -24,6 +24,11 @@ import { repairCandidates, decodeAll, encodeAs } from '../js/lib/mojibake.js';
 import { diffLines, diffChars, diffBytes } from '../js/lib/diff.js';
 import * as PI from '../js/lib/pinject.js';
 import * as GEO from '../js/lib/geo.js';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import * as BF from '../js/lib/binfmt.js';
+import { Program, makeDisassembler } from '../js/lib/rev.js';
+import { decompile } from '../js/lib/decomp.js';
 
 let passed = 0;
 const t = async (name, fn) => {
@@ -577,6 +582,60 @@ await t('位置特定: 市外局番・座標・文字種', () => {
   assert.deepEqual(GEO.parseCoords('location: 35.6895, 139.6917').map((x) => [x.lat, x.lon]), [[35.6895, 139.6917]]);
   assert.ok(GEO.extractClues('서울특별시 카페').hints.some((h) => h.includes('韓国')));
   assert.ok(GEO.mapLinks('渋谷駅').google.includes(encodeURIComponent('渋谷駅')));
+});
+
+
+// ---------- バイナリ解析 ----------
+const capstone = await createRequire(import.meta.url)('../vendor/capstone/capstone.js')();
+const fixture = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/${n}`, import.meta.url)));
+const analyzeBin = async (n) => {
+  const bin = BF.parseBinary(fixture(n));
+  return new Program(bin, makeDisassembler(capstone, bin.arch, bin.bits)).analyze();
+};
+const pseudo = (p, name) => decompile(p, p.functions().find((f) => f.name === name).addr).lines.map((l) => l.text.trim()).join('\n');
+await t('バイナリ解析: ELF の構造・インポート・文字列', async () => {
+  const bin = BF.parseBinary(fixture('crackme'));
+  assert.equal(bin.format, 'ELF');
+  assert.equal(bin.arch, 'x64');
+  assert.ok(bin.symbols.some((s) => s.name === 'check'));
+  assert.deepEqual(['puts', 'strlen', 'fgets'].filter((n) => [...bin.slots.values()].includes(n)), ['puts', 'strlen', 'fgets']);
+  const strs = BF.extractStrings(bin).map((s) => s.text);
+  assert.ok(strs.includes('Correct! That is the flag.'));
+  assert.equal(BF.stringAt(bin, bin.symbols.find((s) => s.name === 'enc').addr + 0x1b), 'PASSWORD> ');
+  assert.equal(BF.parseBinary(new Uint8Array(64)), null);
+});
+await t('バイナリ解析: 疑似コードでフラグ判定が読める', async () => {
+  const p = await analyzeBin('crackme');
+  const code = pseudo(p, 'check');
+  assert.ok(code.includes('if (strlen(var_18) != 0x1b) return 0;'), code);
+  assert.ok(code.includes('while (var_4 <= 0x1a) {'), code);
+  assert.ok(code.includes('if ((var_18[var_4] ^ 0x37) != enc[var_4]) return 0;'), code);
+  const main = pseudo(p, 'main');
+  assert.ok(main.includes('printf("PASSWORD> ");') && main.includes('puts("Wrong...");') && main.includes('if (check(&var_50) != 0) {'), main);
+  assert.ok(!/__canary|__stack_chk_fail/.test(main), main);
+  // 文字列から、使っている関数へたどれる
+  const s = p.stringRefs(BF.extractStrings(p.bin)).find((x) => x.text === 'Wrong...');
+  assert.equal(p.names.get(s.refs[0].func), 'main');
+  // 配列を取り出して XOR 0x37 で戻すとフラグ
+  const enc = BF.readAt(p.bin, p.bin.symbols.find((x) => x.name === 'enc').addr, 27);
+  assert.equal(String.fromCharCode(...enc.map((b) => b ^ 0x37)), 'flag{r3v3rs1ng_w1th_p4ll4s}');
+});
+await t('バイナリ解析: strip 済みでも main を見つける', async () => {
+  const p = await analyzeBin('crackme_stripped');
+  assert.ok(p.mainGuessed);
+  const code = pseudo(p, 'main');
+  assert.ok(/if \(sub_[0-9a-f]+\(&var_50\) != 0\)/.test(code), code);
+});
+await t('バイナリ解析: PE（32 / 64ビット）のインポート', async () => {
+  for (const f of ['pe64.exe', 'pe32.exe']) {
+    const p = await analyzeBin(f);
+    assert.equal(p.bin.format, 'PE');
+    assert.deepEqual(p.bin.imports.map((i) => i.name).sort(), ['ExitProcess', 'IsDebuggerPresent', 'MessageBoxA']);
+    assert.equal(BF.notableKind('IsDebuggerPresent'), 'デバッガ検出');
+    const code = pseudo(p, 'entry');
+    assert.ok(code.includes('if (IsDebuggerPresent() != 0) {'), code);
+    assert.ok(code.includes('MessageBoxA(0, "flag{pe_imports}", "PALLAS", 0);'), code);
+  }
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);
