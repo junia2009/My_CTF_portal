@@ -4,7 +4,7 @@
 export const GENRES = [
   {
     id: 'MISC', label: 'MISC', desc: 'エンコードの重ね掛け、QRコード、画像の隠しデータなど何でもあり。',
-    tools: ['codec', 'flag', 'base'],
+    tools: ['codec', 'file', 'flag', 'base'],
     sheet: [
       ['file <ファイル>', 'ファイルの種類を判定する（拡張子は信用しない）'],
       ['strings -n 6 <ファイル> | grep -i flag', '読める文字列を抜き出してフラグを探す'],
@@ -18,7 +18,7 @@ export const GENRES = [
   },
   {
     id: 'WEB', label: 'WEB', desc: 'Webアプリの挙動を観察して、隠れた情報や設定の不備を見つける。',
-    tools: ['codec', 'jwt', 'hash'],
+    tools: ['codec', 'jwt', 'hash', 'flag'],
     sheet: [
       ['curl -i <URL>', 'レスポンスヘッダごと表示する'],
       ['curl -s <URL>/robots.txt', 'robots.txt に書かれた隠しパスを確認する'],
@@ -32,7 +32,7 @@ export const GENRES = [
   },
   {
     id: 'CRYPT', label: 'CRYPT', desc: '古典暗号から RSA まで。まず暗号の種類を見極めるのが大事。',
-    tools: ['classic', 'xor', 'hash', 'base'],
+    tools: ['classic', 'xor', 'rsa', 'hash', 'base'],
     sheet: [
       ['openssl rsa -pubin -in pub.pem -text -noout', '公開鍵から n と e を確認する'],
       ['openssl enc -d -aes-256-cbc -in enc.bin -K <鍵hex> -iv <IVhex>', 'AES-CBC を鍵と IV を指定して復号する'],
@@ -46,7 +46,7 @@ export const GENRES = [
   },
   {
     id: 'NW', label: 'NW', desc: 'パケットキャプチャの解析やネットワーク設定の読み解き。',
-    tools: ['codec', 'flag'],
+    tools: ['net', 'file', 'codec', 'flag'],
     sheet: [
       ['tshark -r cap.pcap -q -z conv,tcp', 'TCP の通信相手ごとの統計を見る'],
       ['tshark -r cap.pcap -q -z io,phs', 'プロトコルの内訳を見る'],
@@ -60,7 +60,7 @@ export const GENRES = [
   },
   {
     id: 'REVERSING', label: 'REVERSING', desc: 'プログラムを読み解いて、フラグの判定処理や隠し文字列を探す。',
-    tools: ['xor', 'codec', 'base'],
+    tools: ['file', 'xor', 'codec', 'base'],
     sheet: [
       ['file <バイナリ>', 'アーキテクチャや言語、strip の有無を確認する'],
       ['strings -n 6 <バイナリ>', '埋め込まれた文字列を探す'],
@@ -74,7 +74,7 @@ export const GENRES = [
   },
   {
     id: 'OSINT', label: 'OSINT', desc: '公開情報から場所・人物・日時などを特定する。',
-    tools: ['codec'],
+    tools: ['file', 'net', 'codec'],
     sheet: [
       ['exiftool <画像>', '撮影日時、機種、GPS 座標などのメタデータを確認する'],
       ['Google レンズ / Bing 画像検索 / Yandex', '画像の逆引き検索をする'],
@@ -87,7 +87,7 @@ export const GENRES = [
   },
   {
     id: 'FORENSIC', label: 'FORENSIC', desc: 'ディスクイメージ・メモリ・ファイルから痕跡を掘り出す。',
-    tools: ['codec', 'hash', 'flag'],
+    tools: ['file', 'codec', 'hash', 'net'],
     sheet: [
       ['binwalk <ファイル>', 'ファイルの中に埋め込まれた別ファイルを探す'],
       ['binwalk -e <ファイル>', '埋め込まれたファイルを取り出す'],
@@ -101,7 +101,7 @@ export const GENRES = [
   },
   {
     id: 'DEFENSE', label: 'DEFENSE', desc: 'ログ解析やインシデント対応で、攻撃の痕跡を見つけて守る。',
-    tools: ['codec', 'flag'],
+    tools: ['net', 'codec', 'flag', 'hash'],
     sheet: [
       ['grep "Failed password" /var/log/auth.log | awk \'{print $(NF-3)}\' | sort | uniq -c | sort -nr', 'SSH ログイン失敗の多い IP を集計する'],
       ['last / lastb', 'ログイン履歴・ログイン失敗履歴を確認する'],
@@ -115,7 +115,7 @@ export const GENRES = [
   },
   {
     id: 'CONFIG', label: 'CONFIG', desc: 'サーバーや設定ファイルの不備を見つけて、安全な設定に直す。',
-    tools: ['hash', 'codec'],
+    tools: ['net', 'hash', 'codec'],
     sheet: [
       ['sshd -T | grep -Ei "permitrootlogin|passwordauthentication"', 'SSH の実際の設定値を確認する'],
       ['find / -perm -4000 -type f 2>/dev/null', 'SUID が付いたファイルを洗い出す'],

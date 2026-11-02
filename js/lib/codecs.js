@@ -6,6 +6,38 @@ const td = new TextDecoder('utf-8');
 export const toBytes = (s) => te.encode(s);
 export const fromBytes = (b) => td.decode(b);
 
+const strictTd = new TextDecoder('utf-8', { fatal: true });
+export function isUtf8(b) {
+  try {
+    strictTd.decode(b);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 1バイト = 1文字として扱う（バイナリを壊さずに文字列化する）
+export function latin1Decode(b) {
+  let s = '';
+  for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode(...b.subarray(i, i + 8192));
+  return s;
+}
+export const latin1Encode = (s) => Uint8Array.from(s, (c) => c.charCodeAt(0) & 0xff);
+
+// UTF-8 として正しければ UTF-8、そうでなければ 1バイト1文字で文字列にする
+export const bytesToText = (b) => (isUtf8(b) ? strictTd.decode(b) : latin1Decode(b));
+
+// 表示可能な文字（ASCII 印字可能文字と改行・タブ、UTF-8 の多バイト文字）の割合
+export function printableRatio(b) {
+  if (!b.length) return 0;
+  const utf8 = isUtf8(b);
+  let n = 0;
+  for (const x of b) {
+    if ((x >= 0x20 && x <= 0x7e) || x === 0x0a || x === 0x0d || x === 0x09 || (utf8 && x >= 0x80)) n++;
+  }
+  return n / b.length;
+}
+
 // ---------- Hex ----------
 export const bytesToHex = (b, sep = '') =>
   Array.from(b, (x) => x.toString(16).padStart(2, '0')).join(sep);
@@ -175,45 +207,113 @@ export function textToInteger(s) {
   return hex ? BigInt('0x' + hex).toString(10) : '0';
 }
 
-// ---------- 変換レシピ用の操作一覧 ----------
-export const OPS = [
-  { id: 'b64e', name: 'Base64 エンコード', fn: (s) => b64Encode(toBytes(s)) },
-  { id: 'b64d', name: 'Base64 デコード', fn: (s) => fromBytes(b64Decode(s)) },
-  { id: 'b32e', name: 'Base32 エンコード', fn: (s) => b32Encode(toBytes(s)) },
-  { id: 'b32d', name: 'Base32 デコード', fn: (s) => fromBytes(b32Decode(s)) },
-  { id: 'hexe', name: 'Hex エンコード', fn: (s) => bytesToHex(toBytes(s)) },
-  { id: 'hexd', name: 'Hex デコード', fn: (s) => fromBytes(hexToBytes(s)) },
-  { id: 'bine', name: '2進数 エンコード', fn: (s) => bytesToBin(toBytes(s)) },
-  { id: 'bind', name: '2進数 デコード', fn: (s) => fromBytes(binToBytes(s)) },
-  { id: 'dece', name: '10進数 エンコード', fn: (s) => bytesToDec(toBytes(s)) },
-  { id: 'decd', name: '10進数 デコード', fn: (s) => fromBytes(decToBytes(s)) },
-  { id: 'urle', name: 'URL エンコード', fn: urlEncode },
-  { id: 'urld', name: 'URL デコード', fn: urlDecode },
-  { id: 'htmle', name: 'HTML エンティティ化', fn: htmlEncode },
-  { id: 'htmld', name: 'HTML エンティティ解除', fn: htmlDecode },
-  { id: 'unie', name: 'Unicode エスケープ', fn: unicodeEscape },
-  { id: 'unid', name: 'Unicode エスケープ解除', fn: unicodeUnescape },
-  { id: 'rot13', name: 'ROT13', fn: rot13 },
-  { id: 'rot47', name: 'ROT47', fn: rot47 },
-  { id: 'atbash', name: 'Atbash', fn: atbash },
-  { id: 'rev', name: '文字列を反転', fn: reverse },
-  { id: 'upper', name: '大文字に変換', fn: (s) => s.toUpperCase() },
-  { id: 'lower', name: '小文字に変換', fn: (s) => s.toLowerCase() },
-  { id: 'trim', name: '空白・改行を除去', fn: (s) => s.replace(/\s+/g, '') },
-];
 
-export function runRecipe(input, opIds) {
-  const steps = [];
-  let cur = input;
-  for (const id of opIds) {
-    const op = OPS.find((o) => o.id === id);
-    try {
-      cur = op.fn(cur);
-      steps.push({ op, ok: true, out: cur });
-    } catch (e) {
-      steps.push({ op, ok: false, error: e.message });
-      return { output: null, steps, error: `「${op.name}」で失敗: ${e.message}` };
-    }
+// ---------- Base58 (Bitcoin 方式) ----------
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+export function b58Encode(bytes) {
+  let n = 0n;
+  for (const b of bytes) n = n * 256n + BigInt(b);
+  let out = '';
+  while (n > 0n) {
+    out = B58[Number(n % 58n)] + out;
+    n /= 58n;
   }
-  return { output: cur, steps, error: null };
+  for (const b of bytes) {
+    if (b !== 0) break;
+    out = '1' + out;
+  }
+  return out;
+}
+
+export function b58Decode(s) {
+  const t = s.trim();
+  if (!t) throw new Error('入力が空です');
+  let n = 0n;
+  for (const c of t) {
+    const i = B58.indexOf(c);
+    if (i < 0) throw new Error('不正なBase58文字列です');
+    n = n * 58n + BigInt(i);
+  }
+  const out = [];
+  while (n > 0n) {
+    out.unshift(Number(n % 256n));
+    n /= 256n;
+  }
+  for (const c of t) {
+    if (c !== '1') break;
+    out.unshift(0);
+  }
+  return Uint8Array.from(out);
+}
+
+// ---------- Base85 (ASCII85 / Adobe 方式) ----------
+export function b85Encode(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 4) {
+    const chunk = bytes.subarray(i, i + 4);
+    const pad = 4 - chunk.length;
+    let v = 0;
+    for (let j = 0; j < 4; j++) v = v * 256 + (chunk[j] ?? 0);
+    if (v === 0 && pad === 0) {
+      out += 'z';
+      continue;
+    }
+    let s = '';
+    for (let j = 0; j < 5; j++) {
+      s = String.fromCharCode(33 + (v % 85)) + s;
+      v = Math.floor(v / 85);
+    }
+    out += s.slice(0, 5 - pad);
+  }
+  return '<~' + out + '~>';
+}
+
+export function b85Decode(s) {
+  let t = s.replace(/\s+/g, '');
+  if (t.startsWith('<~')) t = t.slice(2);
+  if (t.endsWith('~>')) t = t.slice(0, -2);
+  t = t.replace(/z/g, '!!!!!');
+  if (!/^[!-u]*$/.test(t)) throw new Error('不正なBase85文字列です');
+  const out = [];
+  for (let i = 0; i < t.length; i += 5) {
+    const chunk = t.slice(i, i + 5);
+    if (chunk.length === 1) throw new Error('Base85 の長さが不正です');
+    const pad = 5 - chunk.length;
+    let v = 0;
+    for (const c of chunk + 'u'.repeat(pad)) v = v * 85 + (c.charCodeAt(0) - 33);
+    if (v > 0xffffffff) throw new Error('Base85 の値が範囲外です');
+    out.push(...[(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255].slice(0, 4 - pad));
+  }
+  return Uint8Array.from(out);
+}
+
+// ---------- モールス信号 ----------
+const MORSE = {
+  A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..', J: '.---',
+  K: '-.-', L: '.-..', M: '--', N: '-.', O: '---', P: '.--.', Q: '--.-', R: '.-.', S: '...', T: '-',
+  U: '..-', V: '...-', W: '.--', X: '-..-', Y: '-.--', Z: '--..',
+  0: '-----', 1: '.----', 2: '..---', 3: '...--', 4: '....-', 5: '.....', 6: '-....', 7: '--...', 8: '---..', 9: '----.',
+  '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-',
+  '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', _: '..--.-', '"': '.-..-.',
+  $: '...-..-', '@': '.--.-.',
+};
+const MORSE_REV = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
+
+export function morseEncode(s) {
+  return s
+    .toUpperCase()
+    .trim()
+    .split(/\s+/)
+    .map((w) => Array.from(w, (c) => MORSE[c] ?? '#').join(' '))
+    .join(' / ');
+}
+
+export function morseDecode(s) {
+  const t = s.replace(/[_−–—]/g, '-').replace(/[·•*]/g, '.').trim();
+  if (!/^[.\-\s/|]+$/.test(t)) throw new Error('モールス信号は . - / と空白で入力してください');
+  return t
+    .split(/\s*[/|]\s*|\s{3,}/)
+    .map((w) => w.split(/\s+/).filter(Boolean).map((c) => MORSE_REV[c] ?? '?').join(''))
+    .join(' ');
 }

@@ -52,10 +52,13 @@
       <div class="nav-group">暗号</div>
       <a href="#classic" data-route="classic">古典暗号</a>
       <a href="#xor" data-route="xor">XOR</a>
-      <div class="nav-group">ハッシュ・データ</div>
+      <a href="#rsa" data-route="rsa">RSA</a>
+      <div class="nav-group">解析</div>
+      <a href="#file" data-route="file">ファイル解析</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
+      <a href="#net" data-route="net">ネットワーク・時刻</a>
       <div class="nav-group">競技の補助</div>
       <a href="#notes" data-route="notes">問題メモ・フラグ記録</a>
       <a href="#cheatsheet" data-route="cheatsheet">チートシート</a>
@@ -89,30 +92,66 @@
       <section data-page="codec" hidden>
         <h1>エンコード / デコード</h1>
         <div class="card">
-          <label for="codecIn">入力</label>
-          <textarea id="codecIn" rows="5" placeholder="変換したい文字列"></textarea>
-          <h3>ワンクリック変換</h3>
-          <div class="btn-grid" id="codecQuick"></div>
+          <div class="row between">
+            <label for="codecIn">入力</label>
+            <div class="row">
+              <select id="codecInFmt" aria-label="入力の形式">
+                <option value="text">テキストとして読む</option>
+                <option value="hex">Hex として読む</option>
+                <option value="b64">Base64 として読む</option>
+              </select>
+              <label class="btn ghost" for="codecFile">ファイルを読み込む</label>
+              <input type="file" id="codecFile" hidden>
+            </div>
+          </div>
+          <textarea id="codecIn" rows="5" placeholder="変換したい文字列（ファイルを読み込むと Hex で表示されます）"></textarea>
+          <div class="meta-line" id="codecInInfo"></div>
         </div>
+
+        <div class="card magic-card">
+          <div class="row between">
+            <h3>自動解析（Magic）</h3>
+            <button type="button" id="magicRun">解析する</button>
+          </div>
+          <p class="hint">Base64 / Base32 / Base58 / Base85 / Hex / 2進・10進 / URL / HTML / Unicode / モールス / gzip・zlib を重ねて試し、読める結果やフラグが出たものを上位に表示します。最後にシーザー全シフト・ROT47・反転でフラグが出るかも確認します。</p>
+          <div class="table-wrap"><table class="list" id="magicOut"></table></div>
+        </div>
+
+        <div class="card">
+          <h3>ワンクリック変換</h3>
+          <p class="hint">押すと、その変換をレシピの最後に追加します。</p>
+          <div id="codecQuick"></div>
+        </div>
+
         <div class="card">
           <h3>レシピ（変換を順番につなげる）</h3>
           <div class="row">
             <select id="recipeOp"></select>
+            <input id="recipeArg" class="mono" hidden>
             <button type="button" id="recipeAdd">追加</button>
             <button type="button" id="recipeClear" class="ghost">クリア</button>
           </div>
           <ol class="recipe" id="recipeList"></ol>
-          <p class="hint">レシピが空のときは、ワンクリック変換の結果が出力に表示されます。</p>
         </div>
+
         <div class="card">
           <div class="row between">
             <label for="codecOut">出力</label>
             <div class="row">
+              <select id="codecOutFmt" aria-label="出力の表示形式">
+                <option value="auto">自動</option>
+                <option value="text">テキスト</option>
+                <option value="hex">Hex</option>
+                <option value="dump">16進ダンプ</option>
+                <option value="b64">Base64</option>
+              </select>
               <button type="button" class="ghost" id="codecSwap">出力を入力へ</button>
               <button type="button" class="ghost" data-copy="codecOut">コピー</button>
+              <button type="button" class="ghost" id="codecSave">保存</button>
             </div>
           </div>
-          <textarea id="codecOut" rows="5" readonly></textarea>
+          <textarea id="codecOut" rows="7" readonly></textarea>
+          <div class="meta-line" id="codecOutInfo"></div>
           <p class="error" id="codecErr"></p>
         </div>
       </section>
@@ -137,31 +176,80 @@
       <section data-page="classic" hidden>
         <h1>古典暗号</h1>
         <div class="card">
-          <label for="clIn">暗号文 / 平文</label>
-          <textarea id="clIn" rows="4" placeholder="例: Gur dhvpx oebja sbk"></textarea>
+          <label for="clIn">暗号文</label>
+          <textarea id="clIn" rows="4" placeholder="例: Gur dhvpx oebja sbk whzcf bire gur ynml qbt"></textarea>
         </div>
-        <div class="card">
-          <h3>シーザー暗号（全シフト）</h3>
-          <p class="hint">英文らしさのスコアが高い順に色が付きます。</p>
-          <div class="table-wrap"><table class="list" id="caesarTable"></table></div>
+        <div class="tabs" role="tablist">
+          <button type="button" data-tab="caesar">シーザー / ROT</button>
+          <button type="button" data-tab="vig">Vigenère</button>
+          <button type="button" data-tab="affine">Affine</button>
+          <button type="button" data-tab="rail">Rail Fence</button>
+          <button type="button" data-tab="sub">換字式</button>
+          <button type="button" data-tab="freq">頻度分析</button>
         </div>
-        <div class="card">
-          <h3>ROT47 / Atbash</h3>
-          <table class="kv" id="clMisc"></table>
-        </div>
-        <div class="card">
-          <h3>Vigenère 暗号</h3>
-          <div class="row">
-            <input id="vigKey" placeholder="鍵（例: KEY）">
-            <button type="button" id="vigEnc">暗号化</button>
-            <button type="button" id="vigDec">復号</button>
+        <div class="tab-panels">
+          <div data-panel="caesar">
+            <div class="card">
+              <h3>シーザー暗号（全シフト）</h3>
+              <p class="hint">英文らしさのスコアが高い上位3件を強調表示します。</p>
+              <div class="table-wrap"><table class="list" id="caesarTable"></table></div>
+            </div>
+            <div class="card">
+              <h3>ROT47 / Atbash / 反転</h3>
+              <table class="kv" id="clMisc"></table>
+            </div>
           </div>
-          <div class="mono-out" id="vigOut"></div>
-        </div>
-        <div class="card">
-          <h3>文字の出現頻度</h3>
-          <p class="hint">青: 入力の頻度 / 灰: 英語の一般的な頻度。分布の形が英語に似ていれば単一換字式の可能性があります。</p>
-          <div class="freq" id="freqChart"></div>
+          <div data-panel="vig" hidden>
+            <div class="card">
+              <h3>鍵がわからない：自動解読</h3>
+              <p class="hint">一致指数（IoC）で鍵の長さを推定し、各列を頻度分析で解きます。英文で 20 文字以上（できれば 100 文字以上）あると精度が上がります。</p>
+              <button type="button" id="vigCrack">自動解読</button>
+              <p class="error" id="vigErr"></p>
+              <div id="vigCrackOut"></div>
+            </div>
+            <div class="card">
+              <h3>鍵がわかる：暗号化 / 復号</h3>
+              <div class="row">
+                <input id="vigKey" placeholder="鍵（例: KEY）">
+                <button type="button" id="vigEnc">暗号化</button>
+                <button type="button" id="vigDec">復号</button>
+              </div>
+              <div class="mono-out" id="vigOut"></div>
+            </div>
+          </div>
+          <div data-panel="affine" hidden>
+            <div class="card">
+              <h3>Affine 暗号（全 312 通りの鍵を総当たり）</h3>
+              <p class="hint">E(x) = (a·x + b) mod 26。英文らしい順に上位 10 件を表示します。</p>
+              <div class="table-wrap"><table class="list" id="affineOut"></table></div>
+            </div>
+          </div>
+          <div data-panel="rail" hidden>
+            <div class="card">
+              <h3>Rail Fence 暗号（段数 2〜12 を総当たり）</h3>
+              <div class="table-wrap"><table class="list" id="railOut"></table></div>
+            </div>
+          </div>
+          <div data-panel="sub" hidden>
+            <div class="card">
+              <h3>単一換字式：手動解読表</h3>
+              <p class="hint">上段の暗号文字に対応する平文字を入力すると、すぐに反映されます（未割り当ては「_」）。まず「頻度順で仮割り当て」を押してから直していくと早いです。</p>
+              <div class="row">
+                <button type="button" id="subGuess">頻度順で仮割り当て</button>
+                <button type="button" class="ghost" id="subClear">クリア</button>
+              </div>
+              <div class="sub-grid" id="subGrid"></div>
+              <div class="mono-out sub-out" id="subOut"></div>
+            </div>
+          </div>
+          <div data-panel="freq" hidden>
+            <div class="card">
+              <h3>文字の出現頻度</h3>
+              <p class="hint">明るい棒: 入力の頻度 / 灰色: 英語の一般的な頻度。形が英語に近ければ転置式か単一換字式、平らならば多表式（Vigenère など）の可能性があります。</p>
+              <div class="freq" id="freqChart"></div>
+              <table class="kv" id="freqStats"></table>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -169,29 +257,139 @@
       <section data-page="xor" hidden>
         <h1>XOR</h1>
         <div class="card">
-          <div class="row">
+          <div class="row between">
             <label for="xorIn">データ</label>
-            <select id="xorInFmt">
+            <select id="xorInFmt" aria-label="データの形式">
               <option value="hex">Hex</option>
               <option value="text">テキスト</option>
               <option value="b64">Base64</option>
             </select>
           </div>
           <textarea id="xorIn" rows="4" placeholder="例: 3c363b3d21"></textarea>
-          <div class="row">
-            <label for="xorKey">鍵</label>
-            <select id="xorKeyFmt">
-              <option value="text">テキスト</option>
-              <option value="hex">Hex</option>
-            </select>
-            <input id="xorKey" placeholder="例: key">
-          </div>
+          <div class="meta-line" id="xorInfo"></div>
           <p class="error" id="xorErr"></p>
-          <table class="kv" id="xorOut"></table>
         </div>
+        <div class="tabs" role="tablist">
+          <button type="button" data-tab="key">鍵を指定</button>
+          <button type="button" data-tab="single">1バイト総当たり</button>
+          <button type="button" data-tab="repeat">繰り返し鍵の自動解読</button>
+          <button type="button" data-tab="crib">既知平文から鍵を推定</button>
+        </div>
+        <div class="tab-panels">
+          <div data-panel="key">
+            <div class="card">
+              <div class="row">
+                <label for="xorKey">鍵</label>
+                <select id="xorKeyFmt" aria-label="鍵の形式">
+                  <option value="text">テキスト</option>
+                  <option value="hex">Hex</option>
+                </select>
+                <input id="xorKey" placeholder="例: key">
+              </div>
+              <table class="kv" id="xorOut"></table>
+            </div>
+          </div>
+          <div data-panel="single" hidden>
+            <div class="card">
+              <h3>1バイト鍵の総当たり（上位 20 件）</h3>
+              <div class="table-wrap"><table class="list" id="xorBrute"></table></div>
+            </div>
+          </div>
+          <div data-panel="repeat" hidden>
+            <div class="card">
+              <h3>繰り返し鍵 XOR の自動解読</h3>
+              <p class="hint">ハミング距離で鍵の長さ（2〜40）を推定し、各列を1バイト総当たりで解きます。データが長いほど正確です。</p>
+              <button type="button" id="xorRepeat">自動解読</button>
+              <div id="xorRepeatOut"></div>
+            </div>
+          </div>
+          <div data-panel="crib" hidden>
+            <div class="card">
+              <h3>既知平文（crib）から鍵を推定</h3>
+              <p class="hint">平文に含まれるとわかっている文字列（例: flag{）とデータを XOR して、その位置の鍵を求めます。鍵が読める文字になった位置を一覧表示します。</p>
+              <div class="row">
+                <input id="xorCrib" value="flag{" class="mono" aria-label="既知平文">
+              </div>
+              <div class="table-wrap"><table class="list" id="xorCribOut"></table></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RSA -->
+      <section data-page="rsa" hidden>
+        <h1>RSA</h1>
         <div class="card">
-          <h3>1バイト鍵の総当たり（上位20件）</h3>
-          <div class="table-wrap"><table class="list" id="xorBrute"></table></div>
+          <p class="hint">わかっている値だけを入力してください（10進または 0x 付き16進）。p・q・d のどれかがあれば復号し、無い場合は「n が素数」「小さい素因数」「Wiener 攻撃（d が小さい）」「Fermat 法（p と q が近い）」「小さい e」を順に試します。</p>
+          <div class="form-grid rsa-grid">
+            <div class="span2"><label for="rsaN">n</label><textarea id="rsaN" rows="2"></textarea></div>
+            <div><label for="rsaE">e</label><input id="rsaE" class="mono" value="65537"></div>
+            <div class="span2"><label for="rsaC">c（暗号文）</label><textarea id="rsaC" rows="2"></textarea></div>
+            <div><label for="rsaP">p</label><textarea id="rsaP" rows="2"></textarea></div>
+            <div><label for="rsaQ">q</label><textarea id="rsaQ" rows="2"></textarea></div>
+            <div><label for="rsaD">d</label><textarea id="rsaD" rows="2"></textarea></div>
+          </div>
+          <div class="row">
+            <button type="button" id="rsaRun">解く</button>
+            <button type="button" class="ghost" id="rsaClear">クリア</button>
+          </div>
+          <p class="error" id="rsaErr"></p>
+          <ul class="log" id="rsaLog"></ul>
+          <table class="kv" id="rsaOut"></table>
+        </div>
+      </section>
+
+      <!-- ファイル解析 -->
+      <section data-page="file" hidden>
+        <h1>ファイル解析</h1>
+        <label class="dropzone" id="drop" for="fileIn">
+          <input type="file" id="fileIn" hidden>
+          <span class="dz-icon" aria-hidden="true">⬡</span>
+          <span class="dz-main">ここにファイルをドロップ、またはクリックして選択</span>
+          <span class="dz-sub">ファイルはブラウザ内でのみ解析され、外部には送信されません</span>
+        </label>
+        <div id="fileResult" hidden>
+          <div class="card">
+            <h3>概要</h3>
+            <table class="kv" id="fileSummary"></table>
+            <div id="fileAlerts"></div>
+          </div>
+          <div class="card">
+            <h3>エントロピー分布</h3>
+            <p class="hint">8 に近いほど乱雑（圧縮・暗号化データ）、低いほど規則的です。一部だけ高い場所には別のデータが埋め込まれていることがあります。</p>
+            <div class="ent-chart" id="fileEntropy"></div>
+          </div>
+          <div class="card">
+            <h3>埋め込まれたファイルの署名</h3>
+            <div class="table-wrap"><table class="list" id="fileSigs"></table></div>
+          </div>
+          <div class="card" id="pngCard" hidden>
+            <h3>PNG チャンク</h3>
+            <div id="pngInfo"></div>
+            <div class="table-wrap"><table class="list" id="pngChunks"></table></div>
+          </div>
+          <div class="card">
+            <h3>文字列</h3>
+            <div class="row">
+              <label for="strMin">最小長</label>
+              <input id="strMin" type="number" min="2" max="64" value="5" class="narrow">
+              <input id="strFilter" class="grow" placeholder="キーワードで絞り込み">
+              <label class="check"><input type="checkbox" id="strFlagOnly"> フラグらしいものだけ</label>
+            </div>
+            <div class="meta-line" id="strInfo"></div>
+            <div class="table-wrap strings-wrap"><table class="list" id="fileStrings"></table></div>
+          </div>
+          <div class="card">
+            <div class="row between">
+              <h3>16進ダンプ</h3>
+              <div class="row">
+                <input id="dumpOffset" class="mono narrow" value="0x0" aria-label="表示開始オフセット">
+                <button type="button" class="ghost" id="dumpPrev">◀ 前へ</button>
+                <button type="button" class="ghost" id="dumpNext">次へ ▶</button>
+              </div>
+            </div>
+            <pre class="hexdump" id="fileDump"></pre>
+          </div>
         </div>
       </section>
 
@@ -202,6 +400,7 @@
           <label for="hashIn">ハッシュ値を計算する文字列</label>
           <textarea id="hashIn" rows="3"></textarea>
           <table class="kv" id="hashOut"></table>
+          <p class="hint">ファイルのハッシュは「ファイル解析」で計算できます。</p>
         </div>
         <div class="card">
           <label for="hashId">ハッシュ形式の推定</label>
@@ -238,9 +437,30 @@
             <summary>正規表現を変更する</summary>
             <input id="flagPattern">
           </details>
-          <p class="hint">そのまま・Base64/32・Hex・2進/10進・URL・HTML・Unicode・ROT47・Atbash・反転・シーザー全シフトを試します。文字をずらす系の変換は、接頭辞が一致したものだけ表示します。</p>
+          <p class="hint">そのまま・Base64/32・Hex・2進/10進・URL・HTML・Unicode・ROT47・Atbash・反転・シーザー全シフトを試します。文字をずらす系の変換は、接頭辞が一致したものだけ表示します。ここで設定した接頭辞は Magic やファイル解析でも使われます。</p>
           <p class="error" id="flagErr"></p>
           <div class="table-wrap"><table class="list" id="flagOut"></table></div>
+        </div>
+      </section>
+
+      <!-- ネットワーク・時刻 -->
+      <section data-page="net" hidden>
+        <h1>ネットワーク・時刻</h1>
+        <div class="card">
+          <h3>IPv4 / CIDR 計算</h3>
+          <input id="cidrIn" class="mono" placeholder="例: 192.168.10.77/26 または 10.0.0.1 255.255.0.0">
+          <p class="error" id="cidrErr"></p>
+          <table class="kv" id="cidrOut"></table>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <h3>タイムスタンプ変換</h3>
+            <button type="button" class="ghost" id="tsNow">現在時刻</button>
+          </div>
+          <input id="tsIn" class="mono" placeholder="例: 1700000000 / 1700000000000 / 133444736000000000 / 2026-11-02T10:00:00Z">
+          <p class="hint">UNIX 時間（秒・ミリ秒・マイクロ秒）、Windows FILETIME、日時文字列に対応しています。数値は桁数から考えられる解釈をすべて表示します。</p>
+          <p class="error" id="tsErr"></p>
+          <div id="tsOut"></div>
         </div>
       </section>
 
