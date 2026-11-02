@@ -118,11 +118,11 @@ function samplePcap() {
   return new File([buildPcap([
     { src: cli, dst: '10.10.0.1', proto: 'udp', sport: 51000, dport: 53, payload: buildDnsQuery('intranet.ctf.local') },
     { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1000, flags: ['SYN'] },
-    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 41234, seq: 5000, flags: ['SYN', 'ACK'] },
-    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001, flags: ['ACK'] },
-    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001, flags: ['PSH', 'ACK'], payload: req },
-    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 41234, seq: 5001, flags: ['PSH', 'ACK'], payload: resp },
-    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001 + req.length, flags: ['FIN', 'ACK'] },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 41234, seq: 5000, ack: 1001, flags: ['SYN', 'ACK'] },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001, ack: 5001, flags: ['ACK'] },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001, ack: 5001, flags: ['PSH', 'ACK'], payload: req },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 41234, seq: 5001, ack: 1001 + req.length, flags: ['PSH', 'ACK'], payload: resp },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001 + req.length, ack: 5001 + resp.length, flags: ['FIN', 'ACK'] },
   ])], 'sample_traffic.pcap');
 }
 

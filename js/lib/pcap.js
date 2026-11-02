@@ -337,10 +337,27 @@ export function buildPcap(packets) {
     const l4 = p.proto === 'udp'
       ? [p.sport >> 8, p.sport & 255, p.dport >> 8, p.dport & 255, (pl.length + 8) >> 8, (pl.length + 8) & 255, 0, 0]
       : [p.sport >> 8, p.sport & 255, p.dport >> 8, p.dport & 255,
-        (p.seq >>> 24) & 255, (p.seq >>> 16) & 255, (p.seq >>> 8) & 255, p.seq & 255, 0, 0, 0, 0,
+        (p.seq >>> 24) & 255, (p.seq >>> 16) & 255, (p.seq >>> 8) & 255, p.seq & 255,
+        ((p.ack ?? 0) >>> 24) & 255, ((p.ack ?? 0) >>> 16) & 255, ((p.ack ?? 0) >>> 8) & 255, (p.ack ?? 0) & 255,
         0x50, (p.flags ?? ['ACK']).reduce((a, f) => a | FL[f], 0), 0xff, 0xff, 0, 0, 0, 0];
     const total = 20 + l4.length + pl.length;
     const ip = [0x45, 0, total >> 8, total & 255, 0, 0, 0x40, 0, 64, p.proto === 'udp' ? 17 : 6, 0, 0, ...ipb(p.src), ...ipb(p.dst)];
+    // IP ヘッダと TCP / UDP のチェックサム（Wireshark で開いても警告が出ないように）
+    const sum = (bytes, init = 0) => {
+      let x = init;
+      for (let k = 0; k < bytes.length; k += 2) x += (bytes[k] << 8) | (bytes[k + 1] ?? 0);
+      while (x > 0xffff) x = (x & 0xffff) + (x >>> 16);
+      return x;
+    };
+    const ipc = ~sum(ip) & 0xffff;
+    ip[10] = ipc >> 8;
+    ip[11] = ipc & 255;
+    const segLen = l4.length + pl.length;
+    const pseudo = [...ipb(p.src), ...ipb(p.dst), 0, p.proto === 'udp' ? 17 : 6, segLen >> 8, segLen & 255];
+    const ck = ~sum([...l4, ...pl], sum(pseudo)) & 0xffff || 0xffff;
+    const at = p.proto === 'udp' ? 6 : 16;
+    l4[at] = ck >> 8;
+    l4[at + 1] = ck & 255;
     const frame = Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00, ...ip, ...l4, ...pl]);
     const ts = p.ts ?? 1700000000 + i * 0.1;
     const sec = Math.floor(ts), us = Math.round((ts - sec) * 1e6);

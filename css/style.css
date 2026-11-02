@@ -1169,7 +1169,7 @@ button.link:hover { filter: none; text-decoration-style: solid; }
 .mn-keys th { text-align: left; white-space: nowrap; padding: .45rem 1rem .45rem 0; width: 1%; font-weight: 500; color: var(--muted); }
 .mn-keys td { padding: .45rem 0; }
 .mn-keys tr + tr th, .mn-keys tr + tr td { border-top: 1px dashed var(--line); }
-kbd { display: inline-block; min-width: 1.7em; text-align: center; font-family: var(--mono); font-size: .8rem; font-weight: 600; color: var(--text); padding: .1rem .45rem;
+kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; display: inline-block; min-width: 1.7em; text-align: center; font-family: var(--mono); font-size: .8rem; font-weight: 600; color: var(--text); padding: .1rem .45rem;
   border: 1px solid var(--line-strong); border-bottom-width: 2px; background: var(--panel-solid); }
 .mn-defs { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); margin: .4rem 0 1rem; }
 .mn-defs dt, .mn-defs dd { margin: 0; padding: .55rem .4rem; border-top: 1px dashed var(--line); }
@@ -1201,6 +1201,14 @@ kbd { display: inline-block; min-width: 1.7em; text-align: center; font-family: 
 .mn-diagram .mn-no text { font-size: 11px; font-weight: 700; fill: var(--on-accent); }
 .mn-diagram .mn-link { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .mn-diagram .mn-note { font-size: 11px; fill: var(--accent); }
+.mn-diagram .mn-filter { font-size: 12px; fill: #3ef0a0; }
+.mn-diagram .mn-bake rect { fill: var(--accent); }
+.mn-diagram .mn-bake text { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: .14em; fill: var(--on-accent); }
+.mn-input { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .5rem .6rem; background: var(--field); border: 1px solid var(--line); }
+.mn-input code { flex: 1; min-width: 0; font-family: var(--mono); font-size: .8rem; word-break: break-all; color: var(--accent); }
+.mn-practice button { white-space: normal; max-width: 100%; text-align: left; }
+.mn-keys.copyable kbd { cursor: copy; }
+.mn-keys.copyable kbd:hover { border-color: var(--accent); color: var(--accent); }
 .mn-practice { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: 1rem; margin: .2rem 0 1rem; border: 1px dashed var(--line-strong); background: rgba(var(--accent-rgb), .05); }
 .mn-answer { margin: .4rem 0 0; padding: .6rem .9rem; border: 1px solid var(--line); background: var(--field); }
 .mn-answer p { margin: .5rem 0 0; line-height: 1.8; }
@@ -1211,6 +1219,12 @@ kbd { display: inline-block; min-width: 1.7em; text-align: center; font-family: 
   .mn-toc button { width: auto; border: 1px solid var(--line); margin: 0; padding: .3rem .6rem; font-size: .8rem; }
   .mn-toc button.active { border-color: var(--accent); }
   .mn-defs { grid-template-columns: 1fr; }
+  .mn-keys, .mn-keys tbody, .mn-keys tr, .mn-keys th, .mn-keys td { display: block; width: auto; }
+  .mn-keys th { white-space: normal; padding: .55rem 0 .15rem; }
+  .mn-keys td { padding: 0 0 .55rem; color: var(--muted); }
+  .mn-keys tr + tr th { border-top: 1px dashed var(--line); }
+  .mn-keys tr + tr td { border-top: none; }
+  .mn-keys kbd { white-space: normal; overflow-wrap: anywhere; text-align: left; }
   .mn-defs dd { border-top: none; padding-top: 0; }
   .mn-hero { flex-direction: column; gap: .8rem; }
   .mn-card { align-items: flex-start; }
@@ -1230,6 +1244,8 @@ kbd { display: inline-block; min-width: 1.7em; text-align: center; font-family: 
 [data-mode="light"] .mn-diagram .mn-bar { fill: rgba(var(--neon-rgb), .16); }
 [data-mode="light"] .mn-diagram .hot .mn-box { stroke: var(--neon); }
 [data-mode="light"] .mn-steps li::before { background: #fff; }
+[data-mode="light"] .mn-diagram .mn-filter { fill: #12924a; }
+[data-mode="light"] .mn-input { background: #fff; }
 
 /* =========================================================
    ライトモード（data-mode="light"）

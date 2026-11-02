@@ -71,7 +71,7 @@ export const TOOLS = [
   { id: 'net', group: '解析', name: 'ネットワーク・時刻', desc: 'CIDR 計算と UNIX 時間の変換' },
   { id: 'notes', group: '補助', name: '問題メモ', desc: '試したこととフラグを記録' },
   { id: 'cheatsheet', group: '補助', name: 'チートシート', desc: 'ジャンル別の定番コマンド集' },
-  { id: 'manuals', group: '補助', name: 'ツールの使い方', desc: 'Ghidra など外部ツールの使い方ガイド' },
+  { id: 'manuals', group: '補助', name: 'ツールの使い方', desc: 'Ghidra・Wireshark・CyberChef の使い方' },
   { id: 'diff', group: '補助', name: '差分比較', desc: '2つのテキスト・データの違い' },
   { id: 'regex', group: '補助', name: '正規表現テスター', desc: 'パターンを試してマッチを確認' },
 ];
