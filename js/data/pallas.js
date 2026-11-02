@@ -58,7 +58,7 @@ export const TOUR = [
   { page: 'identify', selector: '#idIn', text: '問題の文字列をここに貼るだけ。下の「試しに」ボタンで僕の推理力を試してみてくれ。' },
   { page: 'codec', selector: '[data-page="codec"] details.help', text: 'どのツールにも使い方パネルがある。「▶ 例を試す」で練習問題を解けるよ。説明書を読む人は、だいたい強い。' },
   { page: 'file', selector: '#drop', text: 'ファイルが配られたら、まずここへドロップ。隠し事は僕が見つける。' },
-  { page: 'notes', selector: '#noteForm', text: '解けたらここに記録。ホームの達成率も上がる。数字が増えるのは気分がいいだろう？' },
+  { page: 'notes', selector: '#noteForm', text: '解けたら、フラグと試したことをここに記録。チームに渡すときは JSON でエクスポートできる。記憶は揮発性だからね。' },
   { page: 'home', selector: '#genrePanel', text: 'ジャンル別の作戦はここで確認できる。タブを切り替えてみてくれ。ツアーはここまでだ。行こう、相棒。' },
 ];
 
