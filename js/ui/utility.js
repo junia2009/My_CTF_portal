@@ -3,6 +3,7 @@ import * as NT from '../lib/numtheory.js';
 import { readValues, unpack } from '../lib/binview.js';
 import { repairCandidates, decodeAll } from '../lib/mojibake.js';
 import { diffLines, diffChars, diffBytes, hexDiffRows, byteRanges, asText } from '../lib/diff.js';
+import { sheetKind, readBook, readCsv, decodeText, compareBooks, sheetLines, hiddenStuff, colName } from '../lib/sheet.js';
 import { hexdump } from '../lib/file.js';
 import { bytesToHex, hexToBytes, latin1Decode } from '../lib/codecs.js';
 import { DEFAULT_FLAG_PATTERN } from '../lib/flag.js';
@@ -220,8 +221,18 @@ export function initDiff() {
 
   async function loadFile(side, file) {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const text = asText(bytes);
-    files[side] = { name: file.name, bytes, text, hash: await sha256(bytes) };
+    // 表計算ファイル（CSV / xlsx / xls）はセルとして読む。CSV は Shift_JIS などでも文字にして表示する
+    const kind = sheetKind(file.name, bytes);
+    let book = null;
+    if (kind) {
+      try {
+        book = await readBook(file.name, bytes);
+      } catch (e) {
+        toast(e.message);
+      }
+    }
+    const text = kind === 'csv' ? decodeText(bytes).text : asText(bytes);
+    files[side] = { name: file.name, bytes, text, book, kind, hash: await sha256(bytes) };
     const ta = $('df' + side);
     ta.value = text ?? '';
     ta.hidden = text == null;
@@ -230,10 +241,12 @@ export function initDiff() {
     info.hidden = false;
     info.replaceChildren(
       h('b', {}, file.name), h('span', {}, `${fmtSize(bytes.length)}（${bytes.length.toLocaleString()} バイト）`),
-      h('span', {}, text != null ? 'テキスト' : 'バイナリ'), h('span', { class: 'hint', title: files[side].hash }, `SHA-256 ${files[side].hash.slice(0, 16)}…`),
+      h('span', {}, book ? `表（${book.format}・${book.info}）` : text != null ? 'テキスト' : 'バイナリ'), h('span', { class: 'hint', title: files[side].hash }, `SHA-256 ${files[side].hash.slice(0, 16)}…`),
     );
-    // どちらかがバイナリなら、バイト単位の比較に切り替える
-    if (Object.values(files).some((f) => f && f.text == null)) $('dfMode').value = 'hex';
+    // 表どうしならセル単位、どちらかがバイナリならバイト単位の比較に切り替える
+    const other = files[side === 'A' ? 'B' : 'A'];
+    if (book && (other?.book || (!other && $('df' + (side === 'A' ? 'B' : 'A')).value.trim() === ''))) $('dfMode').value = 'sheet';
+    else if (Object.values(files).some((f) => f && f.text == null && !f.book)) $('dfMode').value = 'hex';
     run();
   }
   function clearFile(side) {
@@ -257,7 +270,7 @@ export function initDiff() {
     card.addEventListener('drop', (e) => e.dataTransfer.files[0] && loadFile(side, e.dataTransfer.files[0]));
     // テキストを手で直したら、ファイルの中身ではなく入力欄の文字で比べる
     $('df' + side).addEventListener('input', () => {
-      if (files[side]?.text != null) files[side] = { ...files[side], bytes: new TextEncoder().encode($('df' + side).value), edited: true };
+      if (files[side]?.text != null) files[side] = { ...files[side], bytes: new TextEncoder().encode($('df' + side).value), edited: true, book: files[side].kind === 'csv' ? null : files[side].book };
     });
   }
 
@@ -322,12 +335,98 @@ export function initDiff() {
     out.replaceChildren(...parts);
   }
 
+  // ---------- 表（CSV / xlsx / xls）の比較 ----------
+  const bookOf = (side) => {
+    const f = files[side];
+    if (f?.book) return f.book;
+    const t = $('df' + side).value;
+    if (f && f.text == null) return null;
+    return t.trim() ? readCsv(t, f?.name ?? `${side}（貼り付け）`) : null;
+  };
+  const KIND = { add: '追加', del: '削除', mod: '変更', formula: '数式だけ変更' };
+  const cellText = (v, f) => h('div', {}, v === '' ? h('span', { class: 'hint' }, '（空）') : v, f ? h('div', { class: 'sh-f' }, f) : '');
+
+  function renderSheets(rowMode) {
+    const out = $('dfOut');
+    const A = bookOf('A'), B = bookOf('B');
+    if (!A || !B) {
+      out.replaceChildren(h('p', { class: 'hint' }, '表として比べるには、A と B の両方に CSV / xlsx / xls を読み込むか、CSV を貼り付けてください。'));
+      $('dfInfo').textContent = '';
+      return;
+    }
+    const res = compareBooks(A, B);
+    const total = res.pairs.reduce((n, p) => n + p.changes.length, 0);
+    $('dfInfo').textContent = total || res.onlyA.length || res.onlyB.length ? `変更のあるセル ${total} 個（シート ${res.pairs.length} 組を比較）` : '内容は一致しています';
+    const parts = [];
+    parts.push(h('table', { class: 'kv' }, kvRow('A', `${A.format}・${A.info}`, false), kvRow('B', `${B.format}・${B.info}`, false)));
+    // 見落としやすい隠し場所
+    const hid = [...hiddenStuff(A).map((x) => `A：${x}`), ...hiddenStuff(B).map((x) => `B：${x}`)];
+    if (hid.length) parts.push(h('div', { class: 'alert' }, h('b', {}, '隠れているものがあります（CTF ではここにフラグがあることも）'), h('ul', {}, ...hid.map((x) => h('li', {}, x)))));
+    const onlyList = (label, list) => list.map((sh) => h('div', { class: 'alert' },
+      `${label}だけにあるシート「${sh.name}」${sh.state !== 'visible' ? '（非表示）' : ''}：${sh.cells.size} セル`,
+      sh.cells.size ? h('div', { class: 'sh-only' }, ...[...sh.cells].slice(0, 40).map(([ref, c]) => h('span', {}, h('b', {}, ref), ` ${c.v}`))) : ''));
+    parts.push(...onlyList('A', res.onlyA), ...onlyList('B', res.onlyB));
+    for (const p of res.pairs) {
+      const title = p.a.name === p.b.name ? `シート「${p.a.name}」` : `「${p.a.name}」↔「${p.b.name}」`;
+      parts.push(h('p', { class: 'diff-sub' }, `${title}　${p.changes.length ? `${p.changes.length} セルが違います` : '違いはありません'}`));
+      const notes = [];
+      if (p.state) notes.push(`表示状態：${p.state.a} → ${p.state.b}`);
+      if (p.hiddenRows.added.length) notes.push(`B で非表示になった行：${p.hiddenRows.added.map((r) => r + 1).join(', ')}`);
+      if (p.hiddenRows.removed.length) notes.push(`B で再表示された行：${p.hiddenRows.removed.map((r) => r + 1).join(', ')}`);
+      if (p.hiddenCols.added.length) notes.push(`B で非表示になった列：${p.hiddenCols.added.map(colName).join(', ')}`);
+      if (p.hiddenCols.removed.length) notes.push(`B で再表示された列：${p.hiddenCols.removed.map(colName).join(', ')}`);
+      for (const c of p.comments) notes.push(`コメント ${c.ref}：「${c.a || '（なし）'}」→「${c.b || '（なし）'}」`);
+      if (notes.length) parts.push(h('ul', { class: 'sh-notes' }, ...notes.map((x) => h('li', {}, x))));
+      if (rowMode) {
+        const ops = diffLines(sheetLines(p.a).join('\n'), sheetLines(p.b).join('\n'));
+        let ra = 0, rb = 0;
+        parts.push(h('div', { class: 'sh-rows' }, ...ops.slice(0, 3000).map((o) => {
+          const n = o.type === 'del' ? ++ra : o.type === 'add' ? ++rb : (++ra, ++rb);
+          return h('div', { class: `dl ${o.type}` }, h('span', { class: 'dm' }, o.type === 'add' ? '+' : o.type === 'del' ? '−' : ' '), h('span', { class: 'sh-rn' }, n), (o.text || ' ').split('\t').join('  │  '));
+        })));
+        continue;
+      }
+      if (!p.changes.length) continue;
+      // 変わったセルの一覧
+      parts.push(h('div', { class: 'table-wrap' }, h('table', { class: 'list sh-list' },
+        h('tr', {}, h('th', {}, 'セル'), h('th', {}, '変化'), h('th', {}, 'A'), h('th', {}, 'B')),
+        ...p.changes.slice(0, 500).map((c) => h('tr', { class: `sh-${c.kind}` },
+          h('td', { class: 'num' }, c.ref), h('td', {}, KIND[c.kind]), h('td', {}, cellText(c.a, c.fa)), h('td', {}, cellText(c.b, c.fb)))))),
+      p.changes.length > 500 ? h('p', { class: 'hint' }, `ほか ${p.changes.length - 500} セル`) : '');
+      // 表の形で見る（変わったセルのまわりだけ）
+      const rs = p.changes.map((c) => c.r), cs = p.changes.map((c) => c.c);
+      const r0 = Math.max(0, Math.min(...rs) - 1), r1 = Math.min(r0 + 49, Math.max(...rs) + 1);
+      const c0 = Math.max(0, Math.min(...cs) - 1), c1 = Math.min(c0 + 25, Math.max(...cs) + 1);
+      const byRef = new Map(p.changes.map((c) => [c.ref, c]));
+      const rows = [h('tr', {}, h('th', {}), ...Array.from({ length: c1 - c0 + 1 }, (_, i) => h('th', { class: p.b.hiddenCols.has(c0 + i) ? 'sh-hidden' : '' }, colName(c0 + i))))];
+      for (let r = r0; r <= r1; r++) {
+        const tds = [];
+        for (let c = c0; c <= c1; c++) {
+          const ref = colName(c) + (r + 1);
+          const ch = byRef.get(ref);
+          const v = p.b.cells.get(ref)?.v ?? '';
+          if (!ch) tds.push(h('td', {}, v));
+          else tds.push(h('td', { class: `sh-${ch.kind}`, title: `${ref}　A：${ch.a || '（空）'} → B：${ch.b || '（空）'}${ch.fa || ch.fb ? `\n数式：${ch.fa ?? '（なし）'} → ${ch.fb ?? '（なし）'}` : ''}` },
+            ch.kind === 'del' ? h('s', {}, ch.a) : ch.kind === 'mod' ? [h('s', {}, ch.a), h('br'), ch.b] : v));
+        }
+        rows.push(h('tr', {}, h('th', { class: p.b.hiddenRows.has(r) ? 'sh-hidden' : '' }, r + 1), ...tds));
+      }
+      parts.push(h('p', { class: 'hint sh-legend' }, h('span', { class: 'sh-mod' }, '変更'), h('span', { class: 'sh-add' }, '追加'), h('span', { class: 'sh-del' }, '削除'), h('span', { class: 'sh-formula' }, '数式だけ変更'), '　セルにカーソルを合わせると A → B を表示（表示は B の内容）'),
+        h('div', { class: 'table-wrap sh-grid-wrap' }, h('table', { class: 'sh-grid' }, ...rows)));
+    }
+    out.replaceChildren(...parts);
+  }
+
   function run() {
     const a = $('dfA').value, b = $('dfB').value, mode = $('dfMode').value;
     const out = $('dfOut');
     if (!a && !b && !files.A && !files.B) {
       out.replaceChildren();
       $('dfInfo').textContent = '';
+      return;
+    }
+    if (mode === 'sheet' || mode === 'sheetrow') {
+      renderSheets(mode === 'sheetrow');
       return;
     }
     if (mode === 'hex') {
@@ -343,7 +442,7 @@ export function initDiff() {
       return;
     }
     if (Object.values(files).some((f) => f && f.text == null)) {
-      out.replaceChildren(h('p', { class: 'hint' }, 'バイナリファイルは「バイト」単位で比べてください。'));
+      out.replaceChildren(h('p', { class: 'hint' }, Object.values(files).some((f) => f?.book) ? 'Excel ファイルは「表」単位で比べてください。' : 'バイナリファイルは「バイト」単位で比べてください。'));
       $('dfInfo').textContent = '';
       return;
     }
