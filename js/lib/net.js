@@ -67,13 +67,22 @@ export function cidrInfo(input) {
 // ---------- タイムスタンプ ----------
 const FILETIME_EPOCH_MS = 11644473600000n; // 1601-01-01 から 1970-01-01 までのミリ秒
 
+// UTC と日本時間を同じ形（2023/11/15 07:13:20）で表す。ミリ秒があるときだけ .123 を付ける
+function fmtDate(ms, offsetHours, zone) {
+  const d = new Date(ms + offsetHours * 3600e3);
+  const p = (n, w = 2) => String(n).padStart(w, '0');
+  const frac = d.getUTCMilliseconds() ? `.${p(d.getUTCMilliseconds(), 3)}` : '';
+  return `${p(d.getUTCFullYear(), 4)}/${p(d.getUTCMonth() + 1)}/${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}${frac} (${zone})`;
+}
+
 function describe(ms, label) {
   const d = new Date(ms);
   if (Number.isNaN(d.getTime()) || Math.abs(ms) > 8.64e15) return null;
   return {
     label,
-    utc: d.toISOString(),
-    jst: d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false }) + ' (JST)',
+    utc: fmtDate(ms, 0, 'UTC'),
+    jst: fmtDate(ms, 9, 'JST'), // 日本はサマータイムが無いので常に +9 時間
+    iso: d.toISOString(),
     unix: Math.floor(ms / 1000),
     unixMs: ms,
     filetime: (BigInt(Math.round(ms)) + FILETIME_EPOCH_MS) * 10000n,

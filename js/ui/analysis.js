@@ -324,7 +324,7 @@ export function initNet() {
         h('div', { class: 'ts-block' },
           h('h4', {}, r.label),
           h('table', { class: 'kv' },
-            kvRow('UTC', r.utc), kvRow('日本時間', r.jst), kvRow('UNIX 秒', r.unix), kvRow('UNIX ミリ秒', r.unixMs), kvRow('FILETIME', r.filetime.toString()),
+            kvRow('日本時間', r.jst), kvRow('UTC', r.utc), kvRow('ISO 8601', r.iso), kvRow('UNIX 秒', r.unix), kvRow('UNIX ミリ秒', r.unixMs), kvRow('FILETIME', r.filetime.toString()),
           ),
         ),
       ));
