@@ -11,6 +11,7 @@ import { initPallas } from './ui/pallas.js';
 import { initImage, initAudio } from './ui/media.js';
 import { initPcap, initLogs } from './ui/traffic.js';
 import { initMath, initBinview, initMojibake, initDiff, initRegex } from './ui/utility.js';
+import { initPinject } from './ui/pinject.js';
 
 const onShow = {};
 let pallas = null;
@@ -55,6 +56,7 @@ initBinview();
 initMojibake();
 initDiff();
 initRegex();
+initPinject();
 onShow.guide = initGuide();
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();

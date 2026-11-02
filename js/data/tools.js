@@ -26,6 +26,7 @@ export const ICONS = {
   mojibake: 'M4 6h7M7.5 6v12M4 18h7M14 8l6 8M20 8l-6 8',
   diff: 'M8 4v16M16 4v16M4.5 9h7M12.5 15h7M16 12v6M13 15h6',
   regex: 'M17 3v8M13.5 5l7 4M20.5 5l-7 4M5 19h.01M4 21h3v-3H4z',
+  pinject: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6zM9 12l2 2 4-4',
   arrow: 'M5 12h14M13 6l6 6-6 6',
   upload: 'M12 16V4M7 9l5-5 5 5M4 16v4h16v-4',
 };
@@ -58,6 +59,7 @@ export const TOOLS = [
   { id: 'audio', group: '解析', name: '音声解析', desc: 'スペクトログラムで音に隠れた文字を見る' },
   { id: 'pcap', group: '解析', name: 'pcap 解析', desc: '通信の再構成・HTTP・DNS' },
   { id: 'logs', group: '解析', name: 'ログ解析', desc: 'IP 集計・失敗の多い IP・急増の検出' },
+  { id: 'pinject', group: '解析', name: 'AI 入力チェック', desc: 'プロンプトインジェクションの検出と無害化' },
   { id: 'hash', group: '解析', name: 'ハッシュ', desc: '計算と形式の推定' },
   { id: 'jwt', group: '解析', name: 'JWT デコード', desc: 'トークンの中身と注意点' },
   { id: 'flag', group: '解析', name: 'フラグ検索', desc: '長いログから flag{…} を探す' },

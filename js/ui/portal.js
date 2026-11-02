@@ -1,6 +1,6 @@
 // ポータル全体の画面：テーマ / 時計 / 起動演出 / 見出し / ホーム / 基数変換 / 問題メモ / チートシート
 import * as C from '../lib/codecs.js';
-import { GENRES } from '../data/genres.js';
+import { GENRES, CHEATSHEET_EXTRA } from '../data/genres.js';
 import { $, h, store, toast, copy, kvRow, debounce, registerReceiver, fill } from './common.js';
 
 // ---------- テーマ（カラー切替） ----------
@@ -238,11 +238,12 @@ export function initNotes() {
 
 // ---------- チートシート ----------
 export function initCheatsheet() {
-  $('csGenre').append(h('option', { value: '' }, 'すべてのジャンル'), ...GENRES.map((g) => h('option', { value: g.id }, g.label)));
+  const SHEETS = [...GENRES, ...CHEATSHEET_EXTRA];
+  $('csGenre').append(h('option', { value: '' }, 'すべてのジャンル'), ...SHEETS.map((g) => h('option', { value: g.id }, g.label)));
   function render() {
     const g = $('csGenre').value;
     const q = $('csSearch').value.trim().toLowerCase();
-    const blocks = GENRES.filter((x) => !g || x.id === g)
+    const blocks = SHEETS.filter((x) => !g || x.id === g)
       .map((x) => ({ ...x, items: x.sheet.filter(([c, d]) => !q || c.toLowerCase().includes(q) || d.toLowerCase().includes(q)) }))
       .filter((x) => x.items.length);
     $('csList').replaceChildren(
@@ -262,7 +263,7 @@ export function initCheatsheet() {
   $('csGenre').addEventListener('change', render);
   $('csSearch').addEventListener('input', debounce(render));
   return (arg) => {
-    if (arg !== undefined && GENRES.some((x) => x.id === arg)) $('csGenre').value = arg;
+    if (arg !== undefined && SHEETS.some((x) => x.id === arg)) $('csGenre').value = arg;
     render();
   };
 }

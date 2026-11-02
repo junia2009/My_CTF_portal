@@ -759,6 +759,28 @@ tr.p-icmp td:nth-child(5), tr.p-arp td:nth-child(5) { color: var(--warn); }
 .rx-highlight:empty { display: none; }
 .rx-highlight mark { background: rgba(var(--accent-rgb), .28); color: var(--text); outline: 1px solid rgba(var(--accent-rgb), .7); }
 
+/* ---------- AI 入力チェック ---------- */
+.pi-gauge { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2rem; align-items: center; margin-bottom: .9rem; --lv: var(--muted); }
+.pi-gauge.lv3 { --lv: var(--error); } .pi-gauge.lv2 { --lv: var(--warn); } .pi-gauge.lv1 { --lv: var(--accent); }
+.pi-meter { height: 12px; background: rgba(var(--accent-rgb), .1); border: 1px solid var(--line); overflow: hidden; }
+.pi-meter i { display: block; height: 100%; background: var(--lv); box-shadow: 0 0 12px var(--lv); transition: width .5s; }
+.pi-level { display: flex; align-items: baseline; gap: .6rem; }
+.pi-level span { font-size: .78rem; color: var(--muted); }
+.pi-level b { font-family: var(--display); font-size: 1.8rem; color: var(--lv); text-shadow: 0 0 14px var(--lv); }
+.pi-level .pi-score { font-family: var(--mono); }
+.pi-secret { font-family: var(--mono); color: var(--warn); word-break: break-all; }
+.pi-visual { font-family: var(--mono); font-size: .86rem; line-height: 1.9; white-space: pre-wrap; word-break: break-all; padding: .7rem; margin: .6rem 0; background: var(--field); border: 1px solid var(--line); max-height: 360px; overflow: auto; }
+.pi-visual mark { background: rgba(255, 107, 122, .22); color: var(--text); outline: 1px solid rgba(255, 107, 122, .7); }
+.pi-ch { display: inline-block; font-size: .62rem; line-height: 1.2; padding: 0 .2rem; margin: 0 1px; vertical-align: middle; border: 1px solid; }
+.pi-ch.c-tag { color: var(--warn); border-color: var(--warn); background: rgba(255, 194, 71, .12); }
+.pi-ch.c-bidi { color: #ff8a96; border-color: #ff8a96; }
+.pi-ch.c-zw, .pi-ch.c-vs, .pi-ch.c-ctrl { color: var(--accent); border-color: var(--line-strong); }
+.pi-item { border: 1px solid var(--line); border-left: 3px solid var(--muted); padding: .7rem .9rem; margin-bottom: .6rem; background: var(--panel-solid); }
+.pi-item.risk3 { border-left-color: var(--error); } .pi-item.risk2 { border-left-color: var(--warn); }
+.pi-item-head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.pi-item .mono-out mark { background: rgba(255, 107, 122, .22); color: var(--text); }
+.pi-out { max-height: 320px; overflow: auto; }
+
 /* ---------- 案内役 PALLAS ---------- */
 /* 画面全体を覆う層。クリックを受けるのはドローンと吹き出しだけ */
 .pallas { position: fixed; inset: 0; z-index: 65; pointer-events: none; overflow: hidden; }
@@ -893,6 +915,7 @@ main { padding-bottom: 230px; }
   .plane-row { grid-template-columns: 1.4rem repeat(3, minmax(0, 1fr)); }
   .plane-row .plane-ch { grid-row: span 3; }
   .lsb-grid, .form-grid.three { grid-template-columns: 1fr 1fr; }
+  .pi-gauge { grid-template-columns: 1fr; gap: .4rem; }
   .diff-inputs { grid-template-columns: 1fr; gap: 0; }
   .spec-stage canvas { height: 260px; }
   .log-grid { grid-template-columns: 1fr; }

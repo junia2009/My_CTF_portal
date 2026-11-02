@@ -76,6 +76,7 @@
       <a href="#audio" data-route="audio">音声解析</a>
       <a href="#pcap" data-route="pcap">pcap 解析</a>
       <a href="#logs" data-route="logs">ログ解析</a>
+      <a href="#pinject" data-route="pinject">AI 入力チェック</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
@@ -752,6 +753,64 @@
             <div class="row between"><h3>該当する行</h3><input id="logFilter" class="grow" placeholder="キーワードや IP で絞り込み"></div>
             <div class="meta-line" id="logLineInfo"></div>
             <pre class="hexdump log-lines" id="logLines"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI 入力チェック -->
+      <section data-page="pinject" hidden>
+        <h1>AI 入力チェック</h1>
+        <p class="lead">AI（LLM）に読ませる文章・Web ページ・Markdown に、人には見えにくい指示や情報の持ち出し経路が紛れ込んでいないかを調べ、安全な形に整えます。</p>
+        <div class="card">
+          <div class="row between">
+            <label for="piIn">調べる文章（HTML・Markdown もそのまま貼れます）</label>
+            <div class="row"><label class="btn ghost" for="piFile">ファイルを読み込む</label><input type="file" id="piFile" accept=".txt,.md,.html,.htm,.json,.csv,.xml,text/*" hidden></div>
+          </div>
+          <textarea id="piIn" rows="8" placeholder="メール・Web ページの HTML・ドキュメントなどを貼り付け"></textarea>
+        </div>
+        <div id="piResult" hidden>
+          <div class="tabs" role="tablist">
+            <button type="button" data-tab="pisum">総合判定</button>
+            <button type="button" data-tab="piinv">見えない文字</button>
+            <button type="button" data-tab="pihid">隠しコンテンツ</button>
+            <button type="button" data-tab="pipat">注入パターン</button>
+            <button type="button" data-tab="pisan">無害化</button>
+          </div>
+          <div class="tab-panels">
+            <div data-panel="pisum"><div class="card" id="piSummary"></div></div>
+            <div data-panel="piinv" hidden>
+              <div class="card">
+                <div class="meta-line" id="piInvCounts"></div>
+                <div id="piReveal"></div>
+                <h4>見えない文字を記号で表示</h4>
+                <div class="pi-visual" id="piVisual"></div>
+                <div class="table-wrap"><table class="list" id="piInvTable"></table></div>
+              </div>
+            </div>
+            <div data-panel="pihid" hidden><div class="card"><div id="piHidden"></div></div></div>
+            <div data-panel="pipat" hidden>
+              <div class="card">
+                <p class="hint">指示の乗っ取りによく使われる表現を、日本語・英語で探します。当てはまっても攻撃とは限りませんが、AI に渡す前に確認が必要です。</p>
+                <div class="pi-visual" id="piPatText"></div>
+                <div class="table-wrap"><table class="list" id="piPatTable"></table></div>
+              </div>
+            </div>
+            <div data-panel="pisan" hidden>
+              <div class="card">
+                <div class="row">
+                  <label class="check"><input type="checkbox" class="piOpt" value="nfkc" checked> Unicode 正規化（NFKC）</label>
+                  <label class="check"><input type="checkbox" class="piOpt" value="invisible" checked> 見えない文字を除去</label>
+                  <label class="check"><input type="checkbox" class="piOpt" value="homoglyph" checked> 紛らわしい文字を英字に</label>
+                  <label class="check"><input type="checkbox" class="piOpt" value="html" checked> コメント・非表示要素・外部画像を除去</label>
+                  <label class="check"><input type="checkbox" class="piOpt" value="wrap"> データとして区切る</label>
+                </div>
+                <div class="row between"><h4>無害化した文章</h4><button type="button" class="ghost small" id="piCopy">コピー</button></div>
+                <pre class="mono-out pi-out" id="piSanOut"></pre>
+                <h4>変更点</h4>
+                <div class="diff-out" id="piSanDiff"></div>
+                <p class="hint">無害化は被害を減らす手段の1つで、これだけで安全になるわけではありません。権限の最小化や人による確認と組み合わせましょう（チートシートの「AI セキュリティ」を参照）。</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

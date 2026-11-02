@@ -3,6 +3,7 @@ import { identifyHash } from './hash.js';
 import { caesarAll, englishChi as chi } from './ciphers.js';
 import { flagRegex } from './magic.js';
 import { parseIPv4 } from './net.js';
+import { analyze as analyzeInjection } from './pinject.js';
 
 // 問題文に書かれた n = ... / e = ... / c = ... を読み取る
 export function parseRsaParams(text) {
@@ -129,6 +130,17 @@ export function identify(input, prefixes) {
   if (/&(#x?[0-9a-f]+|[a-z]+);/i.test(text)) enc('HTML エンティティ', '「&#...;」や「&amp;」のような部分があります。', HIGH);
   if (/\\u[0-9a-f]{4}|\\x[0-9a-f]{2}/i.test(text)) enc('Unicode / エスケープ表記', '「\\u0041」や「\\x41」のような書き方が含まれています。', HIGH);
   if (/^<~[\s\S]*~>$/.test(text)) enc('Base85（ASCII85）', '「<~」で始まり「~>」で終わっています。', HIGH);
+
+  // ---- AI への隠れた指示（プロンプトインジェクション） ----
+  const pi = analyzeInjection(text);
+  if (pi.level === '高' || pi.level === '中') {
+    add({
+      id: 'pinject', level: pi.level === '高' ? HIGH : MID, title: pi.tags ? '見えない文字で隠された文（Unicode タグ文字）' : 'AI への隠れた指示（プロンプトインジェクション）の疑い',
+      tool: 'pinject', payload: text,
+      reason: pi.reasons.slice(0, 2).join('。') + '。',
+      next: 'AI 入力チェックで、見えない文字・隠しコンテンツ・乗っ取りらしい表現を確認し、必要なら無害化しましょう。',
+    });
+  }
 
   // ---- 文字化け ----
   const moji = (text.match(/[縺繧繝譁蜈荳螟險邨陦鬮][\uff61-\uff9f]?|ã[\u0080-\u00bf\u201a-\u203a]|Ã.|â€|ï¼|ç[\u0080-\u00bf]/g) ?? []).length;
