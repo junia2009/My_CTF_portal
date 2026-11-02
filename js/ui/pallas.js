@@ -15,6 +15,7 @@ export function initPallas() {
   let page = 'home';
   let drone = null; // 3D 表示（読み込み後）
   let tourStep = -1;
+  let tourFrame = null; // ツアー中：{ el, side }。吹き出しを説明中の部品に重ねないための配置
   let closeTimer = 0, typeTimer = 0;
   let booting = true;
   // ページ案内は「ブラウザを開くたびに各ページ1回」。案内済みのページはセッションの間だけ覚えておく
@@ -127,10 +128,38 @@ export function initPallas() {
   }
 
   // 吹き出しをドローンの空いている側に置く
+  // 画面上部で固定表示されている部分（上部バー、スマホではメニューの帯）の下端
+  const headerBottom = () => Math.max(60, ...[document.querySelector('.topbar'), isMobile() ? $('nav') : null].filter(Boolean).map((e) => e.getBoundingClientRect().bottom)) + 6;
+
+  // ツアー中の配置：説明する部品の上（入らなければ下）の帯に吹き出しを置き、ドローンはその脇へ
+  function tourLayout() {
+    const r = tourFrame.el.getBoundingClientRect();
+    const s = size(), bw = bubble.offsetWidth, bh = bubble.offsetHeight, top = headerBottom();
+    let y = tourFrame.side === 'above' ? r.top - 14 - bh : r.bottom + 14;
+    y = clamp(y, top, Math.max(top, innerHeight - bh - 8));
+    let x;
+    if (isMobile()) {
+      x = (innerWidth - bw) / 2;
+      // ドローンは吹き出しの上の右端へ（吹き出しのボタンや文字にかぶらないように）
+      setTarget({ x: innerWidth - s - 6, y: y - s * 0.78 });
+    } else {
+      // 吹き出しは部品の左端あたりにそろえ、ドローンはその左に寄り添わせる
+      x = clamp(r.left + s * 0.62, 8, innerWidth - bw - 8);
+      setTarget({ x: x - s * 0.78, y: y + bh / 2 - s / 2 });
+    }
+    return { x, y };
+  }
+
   function placeBubble() {
     if (bubble.hidden) return;
     const s = size(), bw = bubble.offsetWidth, bh = bubble.offsetHeight;
     let x, y;
+    if (tourFrame?.el.isConnected) {
+      ({ x, y } = tourLayout());
+      bubble.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+      bubble.classList.toggle('tail-right', false);
+      return;
+    }
     if (isMobile()) {
       x = (innerWidth - bw) / 2;
       y = pos.y - bh - 6 >= 60 ? pos.y - bh - 6 : pos.y + s + 6;
@@ -140,7 +169,8 @@ export function initPallas() {
       y = pos.y + s * 0.5 - bh * 0.75;
     }
     x = clamp(x, 8, innerWidth - bw - 8);
-    y = clamp(y, 64, Math.max(64, innerHeight - bh - 8));
+    const top = headerBottom();
+    y = clamp(y, top, Math.max(top, innerHeight - bh - 8));
     bubble.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     bubble.classList.toggle('tail-right', !isMobile() && x + bw / 2 < pos.x + s / 2);
   }
@@ -342,22 +372,29 @@ export function initPallas() {
     showStep();
   }
 
+  // 使い方パネルなど閉じた <details> は、ツアーの間だけ開く（利用者の設定は変えない）
+  let tourOpened = null;
+  const restoreOpened = () => {
+    if (!tourOpened) return;
+    const d = tourOpened;
+    tourOpened = null;
+    d.open = false;
+    setTimeout(() => delete d.dataset.tourOpen, 150);
+  };
+
   function showStep() {
     const step = P.TOUR[tourStep];
     clearFocus();
+    restoreOpened();
+    tourFrame = null;
     bubble.hidden = true;
     if (location.hash.slice(1).split('/')[0] !== step.page) location.hash = '#' + step.page;
     setTimeout(() => {
       const el = document.querySelector(step.selector);
-      if (el) {
-        el.classList.add('pallas-focus');
-        el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
-      }
-      // スクロールが落ち着いてから、要素の横へ飛んで話す
-      const speak = () => {
+      const speak = (side) => {
         const last = tourStep === P.TOUR.length - 1;
+        if (el) tourFrame = { el, side };
         say(`${tourStep + 1} / ${P.TOUR.length}　${step.text}`, {
-          anchor: el,
           mood: last ? 'happy' : 'talk',
           acts: [
             { label: last ? 'ツアーを終わる' : '次へ ›', primary: true, run: () => (last ? (close(), goHome()) : (tourStep++, showStep())) },
@@ -365,13 +402,32 @@ export function initPallas() {
           ].filter(Boolean),
         });
       };
-      if (el) whenSettled(el, speak);
-      else speak();
+      if (!el) return speak('above');
+      if (el.tagName === 'DETAILS' && !el.open) {
+        el.dataset.tourOpen = '1';
+        el.open = true;
+        tourOpened = el;
+      }
+      el.classList.add('pallas-focus');
+      // 吹き出しが入る高さを、部品の上に空けるようにスクロールする（ページの先頭付近で空かなければ下に置く）
+      const need = isMobile() ? 250 : 215;
+      const r = el.getBoundingClientRect();
+      window.scrollTo({ top: Math.max(0, scrollY + r.top - (headerBottom() + need + 14)), behavior: reduce ? 'auto' : 'smooth' });
+      whenSettled(el, () => {
+        const r2 = el.getBoundingClientRect();
+        if (r2.top - headerBottom() >= need) return speak('above');
+        if (innerHeight - r2.bottom >= need) return speak('below');
+        // 上にも下にも入らない（ページ先頭付近の背の高い部品）：部品の下端が見える位置まで送って、下に置く
+        window.scrollTo({ top: Math.max(0, scrollY + r2.bottom - (innerHeight - need - 14)), behavior: reduce ? 'auto' : 'smooth' });
+        whenSettled(el, () => speak('below'));
+      });
     }, 300);
   }
 
   function endTour() {
     tourStep = -1;
+    tourFrame = null;
+    restoreOpened();
     clearFocus();
   }
 

@@ -130,6 +130,7 @@ export function initHelp() {
       ),
     );
     panel.addEventListener('toggle', () => {
+      if (panel.dataset.tourOpen) return; // ツアーが一時的に開け閉めしたときは、設定を変えない
       store.set('ctfportal.helpOpen', panel.open);
       // 1つ開閉したら、他のページのパネルもそろえる
       document.querySelectorAll('details.help').forEach((d) => d !== panel && (d.open = panel.open));
