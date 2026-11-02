@@ -1105,7 +1105,7 @@ button.link:hover { filter: none; text-decoration-style: solid; }
 
 
 /* ---------- ツールの使い方ガイド ---------- */
-.mn-index { display: grid; gap: .8rem; margin-top: 1rem; }
+.mn-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: .8rem; margin-top: 1rem; }
 .mn-card { display: flex; align-items: center; gap: 1.1rem; padding: 1.1rem 1.3rem; text-decoration: none; color: var(--text);
   background: linear-gradient(120deg, rgba(var(--accent-rgb), .1), transparent 55%), var(--panel-solid); border: 1px solid var(--line); border-left: 3px solid var(--accent);
   transition: border-color .2s, transform .2s, box-shadow .2s; }
@@ -1210,6 +1210,13 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .mn-keys.copyable kbd { cursor: copy; }
 .mn-keys.copyable kbd:hover { border-color: var(--accent); color: var(--accent); }
 .mn-practice { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: 1rem; margin: .2rem 0 1rem; border: 1px dashed var(--line-strong); background: rgba(var(--accent-rgb), .05); }
+.mn-lab { position: relative; padding: 1rem 1.1rem; margin: .2rem 0 1rem; border: 1px solid var(--line-strong); background:
+  repeating-linear-gradient(-45deg, rgba(var(--accent-rgb), .04) 0 10px, transparent 10px 20px), var(--field); }
+.mn-lab-title { font-family: var(--display); font-size: .62rem; letter-spacing: .3em; color: var(--accent); margin-bottom: .6rem; }
+.mn-lab-row { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .7rem; padding: .5rem 0; border-top: 1px dashed var(--line); }
+.mn-lab-row b { font-family: var(--display); color: var(--accent); }
+.mn-lab-out { font-family: var(--mono); font-size: .85rem; color: var(--accent); }
+[data-mode="light"] .mn-lab { background: repeating-linear-gradient(-45deg, rgba(var(--neon-rgb), .06) 0 10px, transparent 10px 20px), #fff; }
 .mn-answer { margin: .4rem 0 0; padding: .6rem .9rem; border: 1px solid var(--line); background: var(--field); }
 .mn-answer p { margin: .5rem 0 0; line-height: 1.8; }
 @media (max-width: 900px) {
