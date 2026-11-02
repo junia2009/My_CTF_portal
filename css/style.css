@@ -439,14 +439,18 @@ td.copyable:hover { color: var(--accent); }
 .tt-go { margin-left: auto; color: var(--muted); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s, color .2s; }
 .tool-tile:hover .tt-go { opacity: 1; transform: none; color: var(--accent); }
 
-.genre-tabs { display: flex; gap: 0; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.genre-tabs {
+  display: flex; gap: 0; overflow-x: auto; overflow-y: hidden; border-bottom: 1px solid var(--line); scrollbar-width: none;
+  /* 横スクロールの帯が iPhone で上下にも動かないように：縦は固定、指の操作は横方向だけ */
+  touch-action: pan-x; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+}
 .genre-tabs::-webkit-scrollbar { display: none; }
 .genre-tabs button {
   --c: 0px; flex-shrink: 0; background: none; color: var(--muted); font-family: var(--display); font-size: .74rem; font-weight: 700; letter-spacing: .14em;
-  padding: .75rem 1rem; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: .75rem 1rem; border: none;
 }
 .genre-tabs button:hover { color: var(--text); filter: none; }
-.genre-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); text-shadow: var(--glow); background: linear-gradient(0deg, rgba(var(--accent-rgb), .12), transparent); }
+.genre-tabs button.active { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); text-shadow: var(--glow); background: linear-gradient(0deg, rgba(var(--accent-rgb), .12), transparent); }
 .genre-panel {
   position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) 260px; gap: 1.8rem; padding: 1.6rem 1.6rem 1.4rem;
   background: linear-gradient(120deg, rgba(var(--accent-rgb), .07), transparent 55%), var(--panel-solid);
@@ -522,10 +526,10 @@ summary { cursor: pointer; color: var(--accent); font-size: .85rem; letter-spaci
 .tabs { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 1rem; border-bottom: 1px solid var(--line); }
 .tabs button {
   --c: 0px; background: transparent; color: var(--muted); font-weight: 700; letter-spacing: .06em;
-  padding: .55rem 1rem; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: .55rem 1rem; border: none;
 }
 .tabs button:hover { color: var(--text); background: rgba(var(--accent-rgb), .06); filter: none; }
-.tabs button.active { color: var(--accent); border-bottom-color: var(--accent); background: linear-gradient(0deg, rgba(var(--accent-rgb), .14), transparent); text-shadow: 0 0 8px rgba(var(--accent-rgb), .6); }
+.tabs button.active { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); background: linear-gradient(0deg, rgba(var(--accent-rgb), .14), transparent); text-shadow: 0 0 8px rgba(var(--accent-rgb), .6); }
 
 /* ---------- 小物 ---------- */
 h4 { font-family: var(--display); font-size: .7rem; letter-spacing: .18em; color: var(--accent); margin: 1.1rem 0 .5rem; font-weight: 500; }
@@ -771,7 +775,8 @@ main { padding-bottom: 230px; }
   .clock { font-size: .75rem; }
   .layout { flex-direction: column; }
   .sidebar {
-    width: 100%; height: auto; position: sticky; top: 60px; z-index: 15; display: flex; overflow-x: auto; gap: .15rem;
+    width: 100%; height: auto; position: sticky; top: 60px; z-index: 15; display: flex; overflow-x: auto; overflow-y: hidden; gap: .15rem;
+    touch-action: pan-x; overscroll-behavior-x: contain; scrollbar-width: none;
     padding: .4rem 16px; border-right: none; border-bottom: 1px solid var(--line); background: rgba(4, 9, 17, .92); backdrop-filter: blur(10px);
   }
   .sidebar a { white-space: nowrap; padding: .35rem .6rem; }
@@ -805,7 +810,7 @@ main { padding-bottom: 230px; }
   .rsa-grid { grid-template-columns: 1fr; }
   .rsa-grid .span2 { grid-column: auto; }
   .sub-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .tabs { flex-wrap: nowrap; overflow-x: auto; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; overscroll-behavior-x: contain; scrollbar-width: none; }
   .tabs button { white-space: nowrap; padding: .5rem .75rem; }
   td.chain { white-space: normal; }
   .hexdump { font-size: .66rem; }
