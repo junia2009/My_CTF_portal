@@ -8,6 +8,9 @@ import { initFile, initHash, initJwt, initFlag, initNet } from './ui/analysis.js
 import { initPwa } from './ui/pwa.js';
 import { initGuide, initIdentify, initHelp } from './ui/beginner.js';
 import { initPallas } from './ui/pallas.js';
+import { initImage, initAudio } from './ui/media.js';
+import { initPcap, initLogs } from './ui/traffic.js';
+import { initMath, initBinview, initMojibake, initDiff, initRegex } from './ui/utility.js';
 
 const onShow = {};
 let pallas = null;
@@ -43,6 +46,15 @@ initJwt();
 initFlag();
 initNet();
 initIdentify();
+initImage();
+initAudio();
+initPcap();
+initLogs();
+initMath();
+initBinview();
+initMojibake();
+initDiff();
+initRegex();
 onShow.guide = initGuide();
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();

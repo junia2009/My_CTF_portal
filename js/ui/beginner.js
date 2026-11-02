@@ -4,7 +4,7 @@ import { GENRES } from '../data/genres.js';
 import { WORKFLOW, GENRE_STEPS, GLOSSARY, MANNERS, PAGE_HELP } from '../data/help.js';
 import { SAMPLES } from '../data/samples.js';
 import { TOOL_LABEL } from '../data/tools.js';
-import { $, h, store, toast, debounce, getPrefixes, sendTo } from './common.js';
+import { $, h, store, toast, debounce, getPrefixes, sendTo, registerReceiver, fill, openFileSmart, sendSample } from './common.js';
 
 
 // ================= はじめての CTF =================
@@ -67,6 +67,7 @@ export function toPayload(r) {
 
 export function initIdentify() {
   const out = $('idOut');
+  registerReceiver('identify', (p) => fill('idIn', p.text));
   function run() {
     const v = $('idIn').value;
     if (!v.trim()) return out.replaceChildren();
@@ -95,7 +96,7 @@ export function initIdentify() {
   const drop = $('idDrop');
   ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
-  const sendFile = (f) => f && sendTo('file', f);
+  const sendFile = (f) => f && openFileSmart(f);
   drop.addEventListener('drop', (e) => sendFile(e.dataTransfer.files[0]));
   $('idFile').addEventListener('change', (e) => {
     sendFile(e.target.files[0]);
@@ -120,8 +121,7 @@ export function initHelp() {
               h('button', {
                 type: 'button', class: 'small',
                 onclick: async () => {
-                  sendTo(page, await sample());
-                  toast('例を読み込みました');
+                  if (await sendSample(page, sample)) toast('例を読み込みました');
                 },
               }, '▶ 例を試す'),
               h('span', { class: 'hint' }, `サンプル: ${help.sample}`),

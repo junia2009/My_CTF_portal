@@ -1,7 +1,7 @@
 // 案内役 PALLAS：画面を飛び回り、吹き出しで案内・ツアー・出来事への反応をする。3D 表示は pallas3d.js を後から読み込む
 import * as P from '../data/pallas.js';
 import { SAMPLES } from '../data/samples.js';
-import { $, h, store, sendTo } from './common.js';
+import { $, h, store, sendTo, sendSample } from './common.js';
 
 const KEY = 'ctfportal.pallas';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -322,7 +322,7 @@ export function initPallas() {
       { label: 'ヒントをちょうだい', run: tip },
       { label: 'ツアーを見る', run: () => startTour() },
     ];
-    if (SAMPLES[page]) acts.unshift({ label: '▶ この画面の例を試す', primary: true, run: async () => { sendTo(page, await SAMPLES[page]()); close(); } });
+    if (SAMPLES[page]) acts.unshift({ label: '▶ この画面の例を試す', primary: true, run: async () => { close(); await sendSample(page, SAMPLES[page]); } });
     if (!['identify', 'guide'].includes(page)) acts.push({ label: '迷ったら診断へ', run: () => { location.hash = '#identify'; } });
     if (state.home || Math.hypot(pos.x - homePos().x, pos.y - homePos().y) > 40) acts.push({ label: '定位置に戻る', run: () => { state.home = null; save(); goHome(); close(); } });
     say(P.PAGE_LINES[page] ?? 'どうした、相棒？', { acts });

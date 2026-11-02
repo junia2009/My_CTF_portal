@@ -1,6 +1,8 @@
 // 「例を試す」で読み込むサンプル問題（すべてこのポータル用のオリジナル）
 import { crc32 } from '../lib/hash.js';
 import { streamTransform } from '../lib/recipe.js';
+import { buildPcap, buildDnsQuery } from '../lib/pcap.js';
+import { embedBits } from '../lib/stego.js';
 
 const b64url = (o) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
@@ -35,6 +37,107 @@ async function samplePng() {
   return new File([png], 'sample_challenge.png', { type: 'image/png' });
 }
 
+
+// ビットプレーン（R の bit 1）に文字を描き、LSB（RGB の bit 0）にメッセージを埋め込んだ画像
+async function sampleImage() {
+  const W = 360, H = 200;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#0b2a4a');
+  g.addColorStop(1, '#36a6c8');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 40; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.04 + (i % 5) * 0.02})`;
+    ctx.beginPath();
+    ctx.arc((i * 97) % W, (i * 53) % H, 6 + (i % 7) * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const im = ctx.getImageData(0, 0, W, H);
+  // 文字の形を別のキャンバスに描いて、R チャンネルの bit 1 に写す
+  const t = document.createElement('canvas');
+  t.width = W;
+  t.height = H;
+  const tc = t.getContext('2d');
+  tc.fillStyle = '#fff';
+  tc.font = 'bold 30px sans-serif';
+  tc.textAlign = 'center';
+  tc.fillText('flag{b1t_pl4n3s}', W / 2, H / 2 + 10);
+  const mask = tc.getImageData(0, 0, W, H).data;
+  for (let i = 0; i < im.data.length; i += 4) im.data[i] = (im.data[i] & ~2) | (mask[i + 3] > 128 ? 2 : 0);
+  embedBits(im.data, W, H, new TextEncoder().encode('LSB secret: flag{l5b_rgb_r0w}\n'), { channels: 'RGB', bit: 0 });
+  ctx.putImageData(im, 0, 0);
+  const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+  return new File([blob], 'sample_stego.png', { type: 'image/png' });
+}
+
+// スペクトログラムに文字が浮かぶ WAV
+function sampleAudio() {
+  const sr = 22050, text = 'flag{sp3ctr0}';
+  const t = document.createElement('canvas');
+  t.width = 170;
+  t.height = 24;
+  const tc = t.getContext('2d');
+  tc.fillStyle = '#fff';
+  tc.font = 'bold 18px monospace';
+  tc.textBaseline = 'middle';
+  tc.fillText(text, 2, 12);
+  const px = tc.getImageData(0, 0, t.width, t.height).data;
+  const colDur = 0.03, n = Math.round(sr * colDur * t.width);
+  const pcm = new Float32Array(n);
+  const fLo = 2500, fHi = 9000;
+  for (let x = 0; x < t.width; x++) {
+    const rows = [];
+    for (let y = 0; y < t.height; y++) if (px[(y * t.width + x) * 4 + 3] > 100) rows.push(fHi - (y / (t.height - 1)) * (fHi - fLo));
+    const s0 = Math.round(x * colDur * sr), s1 = Math.round((x + 1) * colDur * sr);
+    for (let i = s0; i < s1; i++) {
+      let v = 0;
+      for (const f of rows) v += Math.sin((2 * Math.PI * f * i) / sr);
+      pcm[i] = rows.length ? (v / Math.max(6, rows.length)) * 0.8 : (Math.random() - 0.5) * 0.01;
+    }
+  }
+  const wav = new DataView(new ArrayBuffer(44 + n * 2));
+  const str = (o, s) => [...s].forEach((ch, i) => wav.setUint8(o + i, ch.charCodeAt(0)));
+  str(0, 'RIFF'); wav.setUint32(4, 36 + n * 2, true); str(8, 'WAVEfmt ');
+  wav.setUint32(16, 16, true); wav.setUint16(20, 1, true); wav.setUint16(22, 1, true); wav.setUint32(24, sr, true);
+  wav.setUint32(28, sr * 2, true); wav.setUint16(32, 2, true); wav.setUint16(34, 16, true); str(36, 'data'); wav.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) wav.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 32767, true);
+  return new File([wav.buffer], 'sample_spectrogram.wav', { type: 'audio/wav' });
+}
+
+// HTTP でフラグを受け取り、DNS を引いた通信
+function samplePcap() {
+  const te = new TextEncoder();
+  const cli = '10.10.0.23', srv = '172.16.5.80';
+  const req = te.encode('GET /admin/backup.txt HTTP/1.1\r\nHost: intranet.ctf.local\r\nUser-Agent: curl/8.4.0\r\n\r\n');
+  const body = 'backup note\nThe password policy is weak.\nflag{p4ck3t_hunt3r}\n';
+  const resp = te.encode(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${body.length}\r\n\r\n${body}`);
+  return new File([buildPcap([
+    { src: cli, dst: '10.10.0.1', proto: 'udp', sport: 51000, dport: 53, payload: buildDnsQuery('intranet.ctf.local') },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1000, flags: ['SYN'] },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 41234, seq: 5000, flags: ['SYN', 'ACK'] },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001, flags: ['ACK'] },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001, flags: ['PSH', 'ACK'], payload: req },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 41234, seq: 5001, flags: ['PSH', 'ACK'], payload: resp },
+    { src: cli, dst: srv, proto: 'tcp', sport: 41234, dport: 80, seq: 1001 + req.length, flags: ['FIN', 'ACK'] },
+  ])], 'sample_traffic.pcap');
+}
+
+function sampleLog() {
+  const lines = [];
+  const pad = (n) => String(n).padStart(2, '0');
+  for (let m = 0; m < 40; m++) {
+    for (let k = 0; k < 2; k++) lines.push(`198.51.100.${(m * 7 + k) % 50 + 2} - - [02/Nov/2026:09:${pad(m)}:${pad(k * 20)} +0900] "GET /${['index.html', 'news', 'about', 'img/logo.png'][(m + k) % 4]} HTTP/1.1" 200 ${1000 + m * 13} "-" "Mozilla/5.0"`);
+    if (m >= 21 && m <= 24) for (let k = 0; k < 15; k++) lines.push(`203.0.113.66 - - [02/Nov/2026:09:${pad(m)}:${pad(k * 4)} +0900] "POST /login HTTP/1.1" 401 32 "-" "python-requests/2.31"`);
+  }
+  lines.push('203.0.113.66 - - [02/Nov/2026:09:25:03 +0900] "POST /login HTTP/1.1" 302 0 "-" "python-requests/2.31"');
+  lines.push('203.0.113.66 - - [02/Nov/2026:09:25:09 +0900] "GET /admin?note=ZmxhZ3tsMGdfZjByM25zMWNzfQ== HTTP/1.1" 200 412 "-" "python-requests/2.31"');
+  return lines.sort((a, b) => a.match(/:(\d\d:\d\d:\d\d)/)[1].localeCompare(b.match(/:(\d\d:\d\d:\d\d)/)[1])).join('\n');
+}
+
 export const SAMPLES = {
   codec: () => ({ text: 'NjY2YzYxNjc3Yjc3MzM2YzYzMzA2ZDMzNWY3NDMwNWY2Mzc0NjY3ZA==', magic: true }),
   base: () => ({ text: '0x666c61677b6e756d6233727d' }),
@@ -59,4 +162,17 @@ export const SAMPLES = {
     ].join('\n'),
   }),
   net: () => ({ cidr: '192.168.10.77/26', ts: '1700000000' }),
+  image: sampleImage,
+  audio: sampleAudio,
+  pcap: samplePcap,
+  logs: () => ({ text: sampleLog() }),
+  math: () => ({ factor: '1000000016000000063' }),
+  binview: () => ({ fmt: 'hex', text: '7f454c46 02 01 01 00 0000000000000000 0300 3e00 01000000 4010000000000000', struct: '<4sBBBB8xHHI' }),
+  mojibake: () => ({ text: new TextDecoder('shift_jis').decode(new TextEncoder().encode('文字化けを直せたらフラグ：flag{m0j1b4k3}')) }),
+  diff: () => ({
+    mode: 'char',
+    a: 'Meeting notes: the server room key is kept in the blue cabinet.',
+    b: 'Meeting notes: thf server room kly is kapt in thg blue {cabinet}.',
+  }),
+  regex: () => ({ pattern: '[A-Za-z0-9_]+\\{[^}]+\\}', text: 'noise ctf{first_one} more noise\nflag{second_one} and FLAG{THIRD}\nnot_a_flag{ unfinished' }),
 };

@@ -675,6 +675,90 @@ code.inline { font-family: var(--mono); color: var(--accent); background: var(--
 .id-card p { margin: .35rem 0; font-size: .95rem; }
 .id-card button { margin-top: .4rem; }
 
+/* ---------- 画像解析 ---------- */
+.plane-grid { display: grid; gap: .7rem; }
+.plane-row { display: grid; grid-template-columns: 2rem repeat(9, minmax(0, 1fr)); gap: .4rem; align-items: start; }
+.plane-ch { font-family: var(--display); font-weight: 900; font-size: 1rem; padding-top: .4rem; text-align: center; }
+.plane-ch.ch0 { color: #ff6b7a; } .plane-ch.ch1 { color: #5dff9c; } .plane-ch.ch2 { color: #5b9bff; } .plane-ch.ch3 { color: var(--muted); }
+.plane-item { --c: 0px; display: flex; flex-direction: column; align-items: center; gap: .2rem; padding: 3px; background: var(--field) !important; border: 1px solid var(--line); color: var(--muted); font-size: .66rem; font-family: var(--mono); letter-spacing: 0; font-weight: 500; }
+.plane-item canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+.plane-item:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+.plane-item.low { border-color: rgba(var(--accent-rgb), .45); }
+.img-stage { overflow: auto; max-height: 70vh; background: repeating-conic-gradient(#111a24 0 25%, #0b131c 0 50%) 0 0 / 16px 16px; border: 1px solid var(--line); }
+.img-stage canvas { display: block; max-width: 100%; height: auto; image-rendering: pixelated; margin: 0 auto; }
+.lsb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* ---------- 音声解析 ---------- */
+#audPlayer { width: 100%; margin: .6rem 0; filter: invert(.88) hue-rotate(180deg); }
+.spec-stage { position: relative; border: 1px solid var(--line-strong); background: #04080f; }
+.spec-stage canvas { display: block; width: 100%; height: 380px; image-rendering: auto; }
+.spec-axis span { position: absolute; font-family: var(--mono); font-size: .68rem; color: var(--accent); background: rgba(4, 9, 17, .7); padding: 0 .3rem; }
+.ax-top { left: 4px; top: 4px; } .ax-bottom { left: 4px; bottom: 4px; } .ax-right { right: 4px; bottom: 4px; }
+
+/* ---------- pcap ---------- */
+.pkt-wrap { max-height: 560px; overflow: auto; }
+#pktTable td { white-space: nowrap; font-size: .8rem; }
+#pktTable td:last-child { white-space: normal; min-width: 260px; }
+#pktTable tr.pkt { cursor: pointer; }
+#pktTable tr.open td { background: rgba(var(--accent-rgb), .12); }
+#pktTable tr.detail td { background: var(--field); }
+tr.p-http td:nth-child(5), tr.p-tcp td:nth-child(5) { color: #7fb8ff; }
+tr.p-dns td:nth-child(5), tr.p-udp td:nth-child(5) { color: #b993ff; }
+tr.p-icmp td:nth-child(5), tr.p-arp td:nth-child(5) { color: var(--warn); }
+.dir-c { color: #ff8a96; } .dir-s { color: #7fb8ff; }
+.stream-dir { margin-top: .7rem; border-left: 3px solid; padding-left: .7rem; }
+.stream-dir.c { border-color: #ff8a96; } .stream-dir.s { border-color: #7fb8ff; }
+.stream-dir.c pre { color: #ffc2c8; } .stream-dir.s pre { color: #c4defe; }
+.stream-dir pre { font-family: var(--mono); font-size: .8rem; white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow: auto; margin: .3rem 0 0; background: var(--field); padding: .6rem; }
+.stream-label { font-family: var(--display); font-size: .62rem; letter-spacing: .2em; color: var(--muted); }
+.http-card { border: 1px solid var(--line); background: var(--panel-solid); padding: .9rem 1rem; margin-bottom: .8rem; }
+.http-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.http-msg { margin-top: .6rem; padding-top: .6rem; border-top: 1px dashed var(--line); }
+.http-line { font-family: var(--mono); font-size: .9rem; color: var(--accent); margin: .2rem 0; word-break: break-all; }
+.http-body { max-height: 300px; overflow: auto; white-space: pre-wrap; }
+
+/* ---------- ログ解析 ---------- */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin-bottom: 1.1rem; }
+.mini-stat { padding: .8rem 1rem; background: var(--panel-solid); border: 1px solid var(--line); border-top: 2px solid var(--accent); }
+.mini-stat b { display: block; font-family: var(--display); font-size: 1.25rem; word-break: break-all; }
+.mini-stat span { font-size: .75rem; color: var(--muted); letter-spacing: .06em; }
+.timeline { display: flex; align-items: flex-end; gap: 1px; height: 140px; padding: 4px; background: repeating-linear-gradient(0deg, rgba(var(--accent-rgb), .07) 0 1px, transparent 1px 25%), var(--field); border: 1px solid var(--line); overflow-x: auto; }
+.tl-bar { --c: 0px; flex: 1 0 4px; min-width: 4px; padding: 0; background: rgba(var(--accent-rgb), .55) !important; border: none; }
+.tl-bar:hover { background: var(--text) !important; filter: none; }
+.tl-bar.spike { background: var(--warn) !important; box-shadow: 0 0 8px rgba(255, 194, 71, .6); }
+.log-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 1.1rem; }
+.log-grid tr { cursor: pointer; }
+.log-lines { max-height: 460px; overflow: auto; white-space: pre; }
+
+/* ---------- 数論・バイナリ・文字化け ---------- */
+.form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.form-grid .span2 { grid-column: span 2; }
+.bv-dump { max-height: 260px; overflow: auto; }
+.mj-card { padding: .9rem 1.1rem; }
+.mj-card.best::before { background: linear-gradient(135deg, var(--accent) 0 22px, var(--line-strong) 22px); }
+.mj-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; margin-bottom: .4rem; }
+.mj-card .mono-out { font-family: var(--ui); font-size: 1.05rem; }
+
+/* ---------- 差分 ---------- */
+.diff-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+.diff-out { font-family: var(--mono); font-size: .85rem; margin-top: .6rem; max-height: 600px; overflow: auto; background: var(--field); border: 1px solid var(--line); }
+.diff-out:empty { display: none; }
+.dl { display: flex; white-space: pre-wrap; word-break: break-all; padding: 0 .6rem; }
+.dl .dm { width: 1.4rem; flex-shrink: 0; color: var(--muted); }
+.dl.eq { color: var(--muted); }
+.dl.del { background: rgba(255, 107, 122, .12); color: #ffb3bb; }
+.dl.add { background: rgba(var(--accent-rgb), .12); color: var(--text); }
+.dl.add .dm { color: var(--accent); } .dl.del .dm { color: var(--error); }
+.diff-inline { padding: .7rem; white-space: pre-wrap; word-break: break-all; line-height: 1.8; }
+.diff-inline ins { text-decoration: none; background: rgba(var(--accent-rgb), .25); color: var(--accent); outline: 1px solid rgba(var(--accent-rgb), .6); }
+.diff-inline del { background: rgba(255, 107, 122, .2); color: #ffb3bb; }
+
+/* ---------- 正規表現 ---------- */
+.rx-slash { font-family: var(--mono); font-size: 1.2rem; color: var(--accent); }
+.rx-highlight { font-family: var(--mono); font-size: .88rem; white-space: pre-wrap; word-break: break-all; padding: .7rem; margin: .6rem 0; background: var(--field); border: 1px solid var(--line); max-height: 320px; overflow: auto; }
+.rx-highlight:empty { display: none; }
+.rx-highlight mark { background: rgba(var(--accent-rgb), .28); color: var(--text); outline: 1px solid rgba(var(--accent-rgb), .7); }
+
 /* ---------- 案内役 PALLAS ---------- */
 /* 画面全体を覆う層。クリックを受けるのはドローンと吹き出しだけ */
 .pallas { position: fixed; inset: 0; z-index: 65; pointer-events: none; overflow: hidden; }
@@ -806,6 +890,12 @@ main { padding-bottom: 230px; }
   .form-grid { grid-template-columns: 1fr 1fr; }
   .cs-item { grid-template-columns: 1fr; gap: .3rem; }
   .glossary { grid-template-columns: 1fr; }
+  .plane-row { grid-template-columns: 1.4rem repeat(3, minmax(0, 1fr)); }
+  .plane-row .plane-ch { grid-row: span 3; }
+  .lsb-grid, .form-grid.three { grid-template-columns: 1fr 1fr; }
+  .diff-inputs { grid-template-columns: 1fr; gap: 0; }
+  .spec-stage canvas { height: 260px; }
+  .log-grid { grid-template-columns: 1fr; }
   .glossary dd { border-top: none; padding-top: 0; }
   .rsa-grid { grid-template-columns: 1fr; }
   .rsa-grid .span2 { grid-column: auto; }

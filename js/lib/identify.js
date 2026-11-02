@@ -130,6 +130,16 @@ export function identify(input, prefixes) {
   if (/\\u[0-9a-f]{4}|\\x[0-9a-f]{2}/i.test(text)) enc('Unicode / エスケープ表記', '「\\u0041」や「\\x41」のような書き方が含まれています。', HIGH);
   if (/^<~[\s\S]*~>$/.test(text)) enc('Base85（ASCII85）', '「<~」で始まり「~>」で終わっています。', HIGH);
 
+  // ---- 文字化け ----
+  const moji = (text.match(/[縺繧繝譁蜈荳螟險邨陦鬮][\uff61-\uff9f]?|ã[\u0080-\u00bf\u201a-\u203a]|Ã.|â€|ï¼|ç[\u0080-\u00bf]/g) ?? []).length;
+  if (moji >= 2) {
+    add({
+      id: 'mojibake', level: moji >= 4 ? HIGH : MID, title: '文字化けした日本語', tool: 'mojibake', payload: text,
+      reason: '「縺」「繧」や「ã」「â€」のような、文字コードを取り違えたときに特有の文字が並んでいます。',
+      next: '文字化け修復で、正しい文字コードに読み直しましょう。',
+    });
+  }
+
   // ---- 古典暗号 ----
   const letters = text.replace(/[^a-z]/gi, '').length;
   const words = text.split(/\s+/).filter(Boolean).length;

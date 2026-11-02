@@ -4,7 +4,7 @@ import { GENRES } from '../data/genres.js';
 import { GENRE_STEPS } from '../data/help.js';
 import { TOOLS, TOOL_GROUPS, TOOL_LABEL, icon } from '../data/tools.js';
 import { toPayload } from './beginner.js';
-import { $, h, store, debounce, getPrefixes, sendTo, fill } from './common.js';
+import { $, h, store, debounce, getPrefixes, sendTo, fill, openFileSmart } from './common.js';
 
 export function initHome() {
   initCommand();
@@ -53,7 +53,7 @@ function initCommand() {
   $('cmdFile').addEventListener('change', (e) => {
     const f = e.target.files[0];
     e.target.value = '';
-    if (f) sendTo('file', f);
+    if (f) openFileSmart(f);
   });
   $('cmdForm').querySelector('.cmd-file').append(icon('upload', 'ico'));
 }
@@ -141,7 +141,7 @@ function initDrop() {
     depth = 0;
     veil.hidden = true;
     const f = e.dataTransfer.files[0];
-    if (f) sendTo('file', f);
+    if (f) openFileSmart(f);
   });
 }
 

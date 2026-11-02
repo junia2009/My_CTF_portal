@@ -141,3 +141,24 @@ export const openTab = (name) => document.querySelector(`[data-tab="${name}"]`)?
 
 // 案内役 PALLAS に話しかけてもらう（mood: talk / happy / think / alert、flag を渡すと「問題メモに記録」ボタンが出る）
 export const pallasSay = (detail) => window.dispatchEvent(new CustomEvent('pallas', { detail }));
+
+// ファイルの中身を見て、いちばん合うツールで開く（画像・音声・pcap は専用ツール、それ以外はファイル解析）
+export async function openFileSmart(file) {
+  const { identifyType } = await import('../lib/file.js');
+  const head = new Uint8Array(await file.slice(0, 512).arrayBuffer());
+  const ext = identifyType(head)?.ext;
+  const page = ['png', 'jpg', 'gif', 'bmp', 'webp'].includes(ext) ? 'image'
+    : ['wav', 'mp3', 'flac', 'ogg'].includes(ext) ? 'audio'
+    : ['pcap', 'pcapng'].includes(ext) ? 'pcap'
+    : 'file';
+  sendTo(page, file);
+  return page;
+}
+
+// 例（サンプル）を作ってから送る。作っている間にユーザーが別のページへ移ったら、引き戻さない
+export async function sendSample(page, make) {
+  const data = await make();
+  if ((location.hash.slice(1).split('/')[0] || 'home') !== page) return false;
+  sendTo(page, data);
+  return true;
+}

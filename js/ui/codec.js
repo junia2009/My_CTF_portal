@@ -197,8 +197,8 @@ export function initCodec() {
   });
 
   registerReceiver('codec', (p) => {
-    inFmt.value = 'text';
-    input.value = p.text;
+    inFmt.value = p.hex !== undefined ? 'hex' : 'text';
+    input.value = p.hex ?? p.text;
     recipe = [];
     save();
     update();

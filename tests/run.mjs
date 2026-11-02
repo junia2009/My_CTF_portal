@@ -13,6 +13,15 @@ import * as F from '../js/lib/file.js';
 import * as R from '../js/lib/rsa.js';
 import { cidrInfo, convertTimestamp } from '../js/lib/net.js';
 import { identify, parseRsaParams } from '../js/lib/identify.js';
+import * as NT from '../js/lib/numtheory.js';
+import { readValues, unpack } from '../js/lib/binview.js';
+import { bitPlane, extractBits, embedBits } from '../js/lib/stego.js';
+import { fft, spectrogram } from '../js/lib/fft.js';
+import { readMetadata } from '../js/lib/exif.js';
+import { parseCapture, tcpStreams, httpExchanges, buildPcap, buildDnsQuery } from '../js/lib/pcap.js';
+import { analyzeLog } from '../js/lib/logs.js';
+import { repairCandidates, decodeAll, encodeAs } from '../js/lib/mojibake.js';
+import { diffLines, diffChars, diffBytes } from '../js/lib/diff.js';
 
 let passed = 0;
 const t = async (name, fn) => {
@@ -319,6 +328,160 @@ await t('診断: RSA の値を読み取る', () => {
   const r = identify('Here are the params:\nn = 0x1234abcd\ne = 3\nc = 987654321\n');
   assert.equal(r[0].id, 'rsa');
   assert.deepEqual(parseRsaParams('N: 77, E=7, ct = 5'), { n: '77', e: '7', c: '5' });
+});
+
+// ---------- 数論 ----------
+await t('数論: CRT・逆元・素因数分解', () => {
+  assert.deepEqual(NT.crt([2n, 3n, 2n], [3n, 5n, 7n]), { x: 23n, m: 105n });
+  assert.deepEqual(NT.crt([1n, 3n], [4n, 6n]), { x: 9n, m: 12n });
+  assert.throws(() => NT.crt([1n, 2n], [4n, 6n]));
+  assert.equal(NT.modInv(3n, 11n), 4n);
+  const { g, x, y } = NT.egcd(240n, 46n);
+  assert.equal(g, 2n); assert.equal(240n * x + 46n * y, 2n);
+  const f = NT.factorize(2n ** 4n * 3n ** 2n * 1000003n * 1000033n);
+  assert.equal(NT.formatFactors(f.factors), '2^4 × 3^2 × 1000003 × 1000033');
+  assert.equal(NT.phiFromFactors(new Map([[3n, 1n], [11n, 1n]])), 20n);
+  const p = generatePrimeSync(40, { bigint: true }), q = generatePrimeSync(40, { bigint: true });
+  const r = NT.factorize(p * q);
+  assert.ok(r.complete && r.factors.has(p) && r.factors.has(q), 'Pollard rho');
+});
+
+// ---------- バイナリビューア ----------
+await t('バイナリビューア', () => {
+  const b = Uint8Array.from([0x01, 0x02, 0x03, 0x04, 0, 0, 0x80, 0x3f]);
+  const v = readValues(b, 0);
+  assert.equal(v.find((x) => x.type === 'u32').le, '67305985');
+  assert.equal(v.find((x) => x.type === 'u32').be, '16909060');
+  assert.equal(readValues(b, 4).find((x) => x.type === 'f32').le, '1');
+  const u = unpack('<HHf', b);
+  assert.deepEqual(u.values.map((x) => x.value), [513, 1027, 1]);
+  assert.equal(unpack('>2B4s', b).values[2].value.length, 4);
+});
+
+// ---------- 画像（ビットプレーン・LSB） ----------
+await t('LSB の埋め込みと取り出し', () => {
+  const w = 40, h = 10;
+  const rgba = new Uint8ClampedArray(w * h * 4).map((_, i) => (i * 37) & 255);
+  embedBits(rgba, w, h, C.toBytes('flag{lsb}'), { channels: 'RGB', bit: 0 });
+  const out = extractBits(rgba, w, h, { channels: 'RGB', bits: [0] });
+  assert.equal(C.latin1Decode(out.subarray(0, 9)), 'flag{lsb}');
+  const plane = bitPlane(rgba, 0, 0);
+  assert.ok(plane.every((v, i) => i % 4 === 3 ? v === 255 : v === 0 || v === 255));
+});
+
+// ---------- FFT ----------
+await t('FFT / スペクトログラム', () => {
+  const n = 1024, sr = 8000, f = 1000;
+  const s = Float32Array.from({ length: 8192 }, (_, i) => Math.sin(2 * Math.PI * f * i / sr));
+  const sp = spectrogram(s, { fftSize: n });
+  const frame = sp.data.subarray(0, sp.bins);
+  const peak = frame.indexOf(Math.max(...frame));
+  assert.equal(peak, Math.round(f / sr * n));
+});
+
+// ---------- メタデータ ----------
+await t('PNG のテキストチャンク', async () => {
+  const text = (k, v) => chunk('tEXt', [...Buffer.from(k), 0, ...Buffer.from(v)]);
+  const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, ...chunk('IHDR', [...be(4), ...be(4), 8, 2, 0, 0, 0]), ...text('Comment', 'flag{meta}'), ...chunk('IEND', [])]);
+  const m = await readMetadata(png);
+  assert.ok(m.entries.some((e) => e.name === 'Comment' && e.value === 'flag{meta}'), JSON.stringify(m.entries));
+});
+await t('JPEG の EXIF（GPS 付き）', async () => {
+  // TIFF（リトルエンディアン）: IFD0 に Make と GPS へのポインタ
+  const tiff = [];
+  const u16 = (v) => [v & 255, v >> 8], u32 = (v) => [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255];
+  tiff.push(0x49, 0x49, 42, 0, ...u32(8));
+  // IFD0: 2 entries（Make ASCII, GPS pointer）
+  const makeOff = 8 + 2 + 2 * 12 + 4, gpsOff = makeOff + 8;
+  tiff.push(...u16(2), ...u16(0x010f), ...u16(2), ...u32(6), ...u32(makeOff), ...u16(0x8825), ...u16(4), ...u32(1), ...u32(gpsOff), ...u32(0));
+  tiff.push(...Buffer.from('ACME\0\0'), 0, 0);
+  const ratOff = gpsOff + 2 + 4 * 12 + 4;
+  tiff.push(...u16(4),
+    ...u16(1), ...u16(2), ...u32(2), ...Buffer.from('N\0'), 0, 0,
+    ...u16(2), ...u16(5), ...u32(3), ...u32(ratOff),
+    ...u16(3), ...u16(2), ...u32(2), ...Buffer.from('E\0'), 0, 0,
+    ...u16(4), ...u16(5), ...u32(3), ...u32(ratOff + 24), ...u32(0));
+  for (const [n, d] of [[35, 1], [41, 1], [2400, 100], [139, 1], [41, 1], [3000, 100]]) tiff.push(...u32(n), ...u32(d));
+  const app1 = [...Buffer.from('Exif\0\0'), ...tiff];
+  const jpg = Uint8Array.from([0xff, 0xd8, 0xff, 0xe1, (app1.length + 2) >> 8, (app1.length + 2) & 255, ...app1, 0xff, 0xd9]);
+  const m = await readMetadata(jpg);
+  assert.ok(m.entries.some((e) => e.name === 'Make' && e.value === 'ACME'), JSON.stringify(m.entries));
+  assert.ok(Math.abs(m.gps.lat - 35.69) < 0.001 && Math.abs(m.gps.lon - 139.6916) < 0.001, JSON.stringify(m.gps));
+});
+
+// ---------- pcap ----------
+await t('pcap: パケット・TCP 再構成・HTTP・DNS', () => {
+  const cli = '10.0.0.5', srv = '192.168.1.10';
+  const req = C.toBytes('GET /secret HTTP/1.1\r\nHost: ctf.local\r\n\r\n');
+  const body = 'flag{pcap_http}';
+  const resp1 = C.toBytes('HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nflag{\r\n');
+  const resp2 = C.toBytes('a\r\npcap_http}\r\n0\r\n\r\n');
+  const pcap = buildPcap([
+    { src: cli, dst: srv, proto: 'tcp', sport: 40000, dport: 80, seq: 100, flags: ['SYN'] },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 40000, seq: 500, flags: ['SYN', 'ACK'] },
+    { src: cli, dst: srv, proto: 'tcp', sport: 40000, dport: 80, seq: 101, flags: ['PSH', 'ACK'], payload: req },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 40000, seq: 501 + resp1.length, flags: ['PSH', 'ACK'], payload: resp2 }, // 順番が入れ替わって届く
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 40000, seq: 501, flags: ['PSH', 'ACK'], payload: resp1 },
+    { src: srv, dst: cli, proto: 'tcp', sport: 80, dport: 40000, seq: 501, flags: ['PSH', 'ACK'], payload: resp1 }, // 再送
+    { src: cli, dst: '8.8.8.8', proto: 'udp', sport: 5555, dport: 53, payload: buildDnsQuery('ZmxhZw.exfil.example') },
+  ]);
+  const cap = parseCapture(pcap);
+  assert.equal(cap.packets.length, 7);
+  assert.equal(cap.packets[2].info, 'GET /secret HTTP/1.1');
+  assert.equal(cap.packets[6].proto, 'DNS');
+  assert.equal(cap.packets[6].dns.questions[0].name, 'ZmxhZw.exfil.example');
+  const st = tcpStreams(cap.packets);
+  assert.equal(st.length, 1);
+  assert.equal(st[0].client, `${cli}:40000`);
+  const http = httpExchanges(st);
+  assert.equal(http[0].request.firstLine, 'GET /secret HTTP/1.1');
+  assert.equal(C.fromBytes(http[0].response.body), body);
+});
+
+// ---------- ログ ----------
+await t('ログ解析', () => {
+  const lines = [];
+  for (let i = 0; i < 30; i++) lines.push(`203.0.113.9 - - [02/Nov/2026:10:${String(5 + (i % 2)).padStart(2, '0')}:${String(i).padStart(2, '0')} +0900] "POST /login HTTP/1.1" 401 12 "-" "curl/8.0"`);
+  for (let i = 0; i < 20; i++) lines.push(`198.51.100.${i} - - [02/Nov/2026:10:${String(i).padStart(2, '0')}:00 +0900] "GET /index.html HTTP/1.1" 200 512 "-" "Mozilla/5.0"`);
+  const r = analyzeLog(lines.join('\n'));
+  assert.equal(r.total, 50);
+  assert.equal(r.ips[0].ip, '203.0.113.9');
+  assert.equal(r.suspicious[0].ip, '203.0.113.9');
+  assert.deepEqual(r.statuses.map((x) => x[0]).sort(), ['200', '401']);
+  assert.equal(r.unit, 60000);
+  assert.ok(r.spikes.length >= 1, JSON.stringify(r.timeline.map((x) => x.count)));
+  assert.equal(new Date(r.first).toISOString(), '2026-11-02T01:00:00.000Z');
+});
+
+// ---------- 文字化け ----------
+await t('文字化け修復', () => {
+  const orig = 'フラグは flag{m0j1b4k3} です。こんにちは';
+  const garbled = new TextDecoder('shift_jis').decode(C.toBytes(orig)); // UTF-8 を Shift_JIS として読んだ化け方
+  const r = repairCandidates(garbled);
+  // 「。」などは化けた時点で失われるが、残りは復元できる
+  assert.ok(r.candidates[0].text.startsWith('フラグは flag{m0j1b4k3} です'), JSON.stringify(r.candidates.slice(0, 3)));
+  assert.ok(r.candidates[0].text.endsWith('こんにちは'));
+  assert.equal(r.candidates[0].from, 'shift_jis');
+  assert.ok(r.candidates[0].lost > 0);
+  const g2 = new TextDecoder('shift_jis').decode(C.toBytes('文字化けを直せたらフラグ：flag{m0j1b4k3}'));
+  const r2 = repairCandidates(g2).candidates[0];
+  assert.ok(r2.to === 'utf-8' && r2.text.includes('化けを直せたらフラグ') && r2.text.includes('flag{m0j1b4k3}'), JSON.stringify(r2));
+  const clean = new TextDecoder('shift_jis').decode(C.toBytes('こんにちは世界'));
+  assert.equal(repairCandidates(clean).candidates[0].text, 'こんにちは世界');
+  const latin = new TextDecoder('windows-1252').decode(C.toBytes('日本語のテキスト'));
+  assert.equal(repairCandidates(latin).candidates[0].text, '日本語のテキスト');
+  const sj = encodeAs('漢字テスト', 'shift_jis');
+  assert.equal(decodeAll(sj)[0].text, '漢字テスト');
+});
+
+// ---------- 差分 ----------
+await t('差分', () => {
+  const d = diffLines('a\nb\nc\nd', 'a\nB\nc\nd\ne');
+  assert.deepEqual(d.map((x) => x.type + ':' + x.text), ['eq:a', 'del:b', 'add:B', 'eq:c', 'eq:d', 'add:e']);
+  const c = diffChars('kitten', 'sitting');
+  assert.equal(c.filter((x) => x.type !== 'add').map((x) => x.text).join(''), 'kitten');
+  assert.equal(c.filter((x) => x.type !== 'del').map((x) => x.text).join(''), 'sitting');
+  assert.deepEqual(diffBytes(Uint8Array.from([1, 2, 3]), Uint8Array.from([1, 9, 3])).positions, [1]);
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);

@@ -63,12 +63,19 @@
       <div class="nav-group">変換</div>
       <a href="#codec" data-route="codec">エンコード / デコード</a>
       <a href="#base" data-route="base">基数変換</a>
+      <a href="#binview" data-route="binview">バイナリビューア</a>
+      <a href="#mojibake" data-route="mojibake">文字化け修復</a>
       <div class="nav-group">暗号</div>
       <a href="#classic" data-route="classic">古典暗号</a>
       <a href="#xor" data-route="xor">XOR</a>
       <a href="#rsa" data-route="rsa">RSA</a>
+      <a href="#math" data-route="math">数論計算機</a>
       <div class="nav-group">解析</div>
       <a href="#file" data-route="file">ファイル解析</a>
+      <a href="#image" data-route="image">画像解析</a>
+      <a href="#audio" data-route="audio">音声解析</a>
+      <a href="#pcap" data-route="pcap">pcap 解析</a>
+      <a href="#logs" data-route="logs">ログ解析</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
@@ -76,6 +83,8 @@
       <div class="nav-group">競技の補助</div>
       <a href="#notes" data-route="notes">問題メモ・フラグ記録</a>
       <a href="#cheatsheet" data-route="cheatsheet">チートシート</a>
+      <a href="#diff" data-route="diff">差分比較</a>
+      <a href="#regex" data-route="regex">正規表現テスター</a>
     </nav>
 
     <main id="main">
@@ -565,6 +574,312 @@
           <p class="hint">UNIX 時間（秒・ミリ秒・マイクロ秒）、Windows FILETIME、日時文字列に対応しています。数値は桁数から考えられる解釈をすべて表示します。</p>
           <p class="error" id="tsErr"></p>
           <div id="tsOut"></div>
+        </div>
+      </section>
+
+      <!-- 画像解析 -->
+      <section data-page="image" hidden>
+        <h1>画像解析</h1>
+        <label class="dropzone compact" id="imgDrop" for="imgIn">
+          <input type="file" id="imgIn" accept="image/*" hidden>
+          <span class="dz-main">画像をドロップ、またはクリックして選択（PNG / JPEG / GIF / BMP / WebP）</span>
+        </label>
+        <div id="imgResult" hidden>
+          <div class="meta-line" id="imgInfo"></div>
+          <div class="tabs" role="tablist">
+            <button type="button" data-tab="planes">ビットプレーン</button>
+            <button type="button" data-tab="lsb">LSB 抽出</button>
+            <button type="button" data-tab="meta">メタデータ</button>
+            <button type="button" data-tab="qr">QR コード</button>
+          </div>
+          <div class="tab-panels">
+            <div data-panel="planes">
+              <div class="card">
+                <p class="hint">各チャンネル（R / G / B / A）の各ビットを白黒で表示します。下位ビット（0〜1）に文字や模様が浮かべば、何かが隠されています。一覧のサムネイルをクリックすると大きく表示します。</p>
+                <div class="plane-grid" id="planeGrid"></div>
+              </div>
+              <div class="card">
+                <div class="row between">
+                  <h3 id="planeTitle">元の画像</h3>
+                  <div class="row">
+                    <button type="button" class="ghost small" id="planeOrig">元の画像</button>
+                    <button type="button" class="ghost small" id="planeSave">PNG で保存</button>
+                  </div>
+                </div>
+                <div class="img-stage"><canvas id="planeCanvas"></canvas></div>
+              </div>
+            </div>
+            <div data-panel="lsb" hidden>
+              <div class="card">
+                <h3>自動スキャン</h3>
+                <p class="hint">よく使われる埋め込み方（チャンネルの組み合わせ・ビット・読む向き）を順に試し、読める文字・フラグ・ファイルの署名が出たものを表示します。</p>
+                <button type="button" id="lsbScan">スキャンする</button>
+                <div class="table-wrap"><table class="list" id="lsbScanOut"></table></div>
+              </div>
+              <div class="card">
+                <h3>条件を指定して取り出す</h3>
+                <div class="form-grid lsb-grid">
+                  <div><label for="lsbCh">チャンネルの順</label><select id="lsbCh"><option>RGB</option><option>BGR</option><option>RGBA</option><option>R</option><option>G</option><option>B</option><option>A</option></select></div>
+                  <div><label for="lsbBits">ビット</label><select id="lsbBits"><option value="0">0（最下位）</option><option value="1">1</option><option value="1,0">1,0（下位2ビット）</option><option value="2">2</option><option value="7">7（最上位）</option></select></div>
+                  <div><label for="lsbOrder">読む向き</label><select id="lsbOrder"><option value="row">横（行ごと）</option><option value="col">縦（列ごと）</option></select></div>
+                  <div><label for="lsbMsb">ビットの詰め方</label><select id="lsbMsb"><option value="1">上位から（一般的）</option><option value="0">下位から</option></select></div>
+                </div>
+                <div class="row"><button type="button" id="lsbRun">取り出す</button><button type="button" class="ghost" id="lsbSave">保存</button><button type="button" class="ghost" id="lsbToCodec">エンコード / デコードへ</button></div>
+                <div class="meta-line" id="lsbInfo"></div>
+                <pre class="hexdump" id="lsbOut"></pre>
+              </div>
+            </div>
+            <div data-panel="meta" hidden>
+              <div class="card">
+                <p class="hint">撮影日時・機種・位置情報・コメントなど、画像に埋め込まれた情報です。OSINT の手がかりや、フラグが直接書かれていることもあります。</p>
+                <div id="metaOut"></div>
+              </div>
+            </div>
+            <div data-panel="qr" hidden>
+              <div class="card">
+                <p class="hint">画像の中の QR コードを読み取ります。読めないときは、白黒を反転したもの・各ビットプレーンでも試します。</p>
+                <button type="button" id="qrRun">読み取る</button>
+                <div id="qrOut"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 音声解析 -->
+      <section data-page="audio" hidden>
+        <h1>音声解析</h1>
+        <label class="dropzone compact" id="audDrop" for="audIn">
+          <input type="file" id="audIn" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a" hidden>
+          <span class="dz-main">音声ファイルをドロップ、またはクリックして選択（WAV / MP3 / M4A など）</span>
+        </label>
+        <div id="audResult" hidden>
+          <div class="card">
+            <div class="meta-line" id="audInfo"></div>
+            <audio id="audPlayer" controls></audio>
+            <div class="row">
+              <div><label for="audFft">FFT サイズ</label><select id="audFft"><option>512</option><option>1024</option><option selected>2048</option><option>4096</option></select></div>
+              <div><label for="audScale">周波数軸</label><select id="audScale"><option value="lin">リニア</option><option value="log">対数</option></select></div>
+              <div><label for="audCh">チャンネル</label><select id="audCh"></select></div>
+              <div class="grow"><label for="audGain">明るさ</label><input type="range" id="audGain" min="10" max="90" value="60"></div>
+              <button type="button" class="ghost" id="audSave">PNG で保存</button>
+            </div>
+            <p class="hint">スペクトログラムは横が時間・縦が周波数です。音に文字や絵が隠されていると、ここに浮かび上がります。</p>
+            <div class="spec-stage"><canvas id="audCanvas"></canvas><div class="spec-axis" id="audAxis"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- pcap 解析 -->
+      <section data-page="pcap" hidden>
+        <h1>pcap 解析</h1>
+        <label class="dropzone compact" id="pcapDrop" for="pcapIn">
+          <input type="file" id="pcapIn" accept=".pcap,.pcapng,.cap" hidden>
+          <span class="dz-main">pcap / pcapng ファイルをドロップ、またはクリックして選択</span>
+        </label>
+        <div id="pcapResult" hidden>
+          <div class="meta-line" id="pcapInfo"></div>
+          <div id="pcapAlerts"></div>
+          <div class="tabs" role="tablist">
+            <button type="button" data-tab="pkts">パケット一覧</button>
+            <button type="button" data-tab="streams">TCP の会話</button>
+            <button type="button" data-tab="http">HTTP</button>
+            <button type="button" data-tab="dns">DNS</button>
+          </div>
+          <div class="tab-panels">
+            <div data-panel="pkts">
+              <div class="card">
+                <input id="pktFilter" placeholder="絞り込み（IP・プロトコル・ポート・内容。例: 10.0.0.5 / HTTP / 53）">
+                <div class="meta-line" id="pktCount"></div>
+                <div class="table-wrap pkt-wrap"><table class="list" id="pktTable"></table></div>
+              </div>
+            </div>
+            <div data-panel="streams" hidden>
+              <div class="card">
+                <div class="table-wrap"><table class="list" id="streamTable"></table></div>
+              </div>
+              <div class="card" id="streamView" hidden>
+                <div class="row between">
+                  <h3 id="streamTitle"></h3>
+                  <div class="row">
+                    <select id="streamFmt" aria-label="表示形式"><option value="text">テキスト</option><option value="hex">16進ダンプ</option></select>
+                    <button type="button" class="ghost small" id="streamSaveC">送信側を保存</button>
+                    <button type="button" class="ghost small" id="streamSaveS">受信側を保存</button>
+                  </div>
+                </div>
+                <p class="hint"><span class="dir-c">■ クライアント → サーバー</span>　<span class="dir-s">■ サーバー → クライアント</span></p>
+                <div class="stream-body" id="streamBody"></div>
+              </div>
+            </div>
+            <div data-panel="http" hidden>
+              <div class="card"><div id="httpOut"></div></div>
+            </div>
+            <div data-panel="dns" hidden>
+              <div class="card">
+                <p class="hint">問い合わせたドメイン名の一覧です。サブドメインに Base64 などでデータを載せて外へ送る手口（DNS トンネリング）にも注意しましょう。</p>
+                <div class="table-wrap"><table class="list" id="dnsTable"></table></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ログ解析 -->
+      <section data-page="logs" hidden>
+        <h1>ログ解析</h1>
+        <div class="card">
+          <div class="row between">
+            <label for="logIn">ログ（アクセスログ・認証ログ・syslog など）</label>
+            <div class="row"><label class="btn ghost" for="logFile">ファイルを読み込む</label><input type="file" id="logFile" hidden></div>
+          </div>
+          <textarea id="logIn" rows="8" placeholder="ログを貼り付けるか、ファイルを読み込んでください"></textarea>
+        </div>
+        <div id="logResult" hidden>
+          <div class="stat-row" id="logSummary"></div>
+          <div class="card">
+            <h3>時間ごとの件数</h3>
+            <p class="hint">急に増えた時間帯（警告色）は、攻撃や異常が起きた可能性があります。棒をクリックすると、その時間帯の行を表示します。</p>
+            <div class="timeline" id="logTimeline"></div>
+            <div class="meta-line" id="logRange"></div>
+          </div>
+          <div class="log-grid">
+            <div class="card"><h3>アクセスの多い IP</h3><div class="table-wrap"><table class="list" id="logIps"></table></div></div>
+            <div class="card"><h3>失敗の多い IP</h3><div class="table-wrap"><table class="list" id="logSusp"></table></div></div>
+            <div class="card"><h3>ステータスコード</h3><div class="table-wrap"><table class="list" id="logStatus"></table></div></div>
+            <div class="card"><h3>よくアクセスされたパス</h3><div class="table-wrap"><table class="list" id="logPaths"></table></div></div>
+          </div>
+          <div class="card">
+            <div class="row between"><h3>該当する行</h3><input id="logFilter" class="grow" placeholder="キーワードや IP で絞り込み"></div>
+            <div class="meta-line" id="logLineInfo"></div>
+            <pre class="hexdump log-lines" id="logLines"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 数論計算機 -->
+      <section data-page="math" hidden>
+        <h1>数論計算機</h1>
+        <div class="tabs" role="tablist">
+          <button type="button" data-tab="factor">素因数分解</button>
+          <button type="button" data-tab="modular">GCD・逆元・べき乗</button>
+          <button type="button" data-tab="crt">中国剰余定理</button>
+          <button type="button" data-tab="root">n 乗根・素数判定</button>
+        </div>
+        <div class="tab-panels">
+          <div data-panel="factor">
+            <div class="card">
+              <label for="facIn">整数（10進 / 0x16進）</label>
+              <div class="row"><input id="facIn" class="mono grow" placeholder="例: 1234567890123"><button type="button" id="facRun">分解する</button></div>
+              <p class="hint">小さい素因数は割り算で、大きめの素因数は Pollard の ρ 法で探します（最大 4 秒）。RSA の n のように大きな素数2つの積は、ここでは分解できないのが普通です。</p>
+              <table class="kv" id="facOut"></table>
+            </div>
+          </div>
+          <div data-panel="modular" hidden>
+            <div class="card">
+              <div class="form-grid three"><div><label for="mA">a</label><input id="mA" class="mono"></div><div><label for="mB">b（指数）</label><input id="mB" class="mono"></div><div><label for="mN">n（法）</label><input id="mN" class="mono"></div></div>
+              <p class="hint">入力すると、GCD・LCM・a⁻¹ mod n・aᵇ mod n・拡張ユークリッドの係数をまとめて計算します。</p>
+              <p class="error" id="modErr"></p>
+              <table class="kv" id="modOut"></table>
+            </div>
+          </div>
+          <div data-panel="crt" hidden>
+            <div class="card">
+              <label for="crtIn">合同式（1行に「余り, 法」）</label>
+              <textarea id="crtIn" rows="5" class="mono" placeholder="2, 3&#10;3, 5&#10;2, 7"></textarea>
+              <p class="hint">x ≡ 余り (mod 法) をすべて満たす x を求めます。法が互いに素でなくても、矛盾が無ければ解けます。</p>
+              <p class="error" id="crtErr"></p>
+              <table class="kv" id="crtOut"></table>
+            </div>
+          </div>
+          <div data-panel="root" hidden>
+            <div class="card">
+              <div class="form-grid three"><div class="span2"><label for="rtN">整数</label><input id="rtN" class="mono"></div><div><label for="rtK">n（何乗根）</label><input id="rtK" class="mono" value="2"></div></div>
+              <p class="error" id="rtErr"></p>
+              <table class="kv" id="rtOut"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- バイナリビューア -->
+      <section data-page="binview" hidden>
+        <h1>バイナリビューア</h1>
+        <div class="card">
+          <div class="row between">
+            <label for="bvIn">データ</label>
+            <select id="bvFmt" aria-label="データの形式"><option value="hex">Hex</option><option value="b64">Base64</option><option value="text">テキスト</option></select>
+          </div>
+          <textarea id="bvIn" rows="3" class="mono" placeholder="例: 7f454c46 02010100 ..."></textarea>
+          <p class="error" id="bvErr"></p>
+          <pre class="hexdump bv-dump" id="bvDump"></pre>
+        </div>
+        <div class="card">
+          <div class="row"><label for="bvOff">オフセット</label><input id="bvOff" class="mono narrow" value="0"><span class="hint">10進または 0x 付きの16進</span></div>
+          <div class="table-wrap"><table class="list" id="bvTable"></table></div>
+        </div>
+        <div class="card">
+          <label for="bvStruct">struct 形式で読む（Python の struct.unpack と同じ書き方）</label>
+          <input id="bvStruct" class="mono" placeholder="例: <IHH4s  （< リトル / > ビッグ、B=1, H=2, I=4, Q=8 バイト、f=float, d=double, s=バイト列）">
+          <p class="error" id="bvStructErr"></p>
+          <table class="kv" id="bvStructOut"></table>
+        </div>
+      </section>
+
+      <!-- 文字化け修復 -->
+      <section data-page="mojibake" hidden>
+        <h1>文字化け修復</h1>
+        <div class="card">
+          <div class="row between">
+            <label for="mjIn">化けた文字列（または Hex のバイト列）</label>
+            <select id="mjFmt" aria-label="入力の形式"><option value="text">文字列</option><option value="hex">Hex（バイト列を各文字コードで読む）</option></select>
+          </div>
+          <textarea id="mjIn" rows="4" placeholder="例: 繝輔Λ繧ｰ縺ｯ / æ—¥æœ¬èªž"></textarea>
+          <p class="hint">「本当は UTF-8 なのに Shift_JIS として読んだ」のような取り違えを逆にたどり、読みやすい順に候補を出します。化けた時点で失われた文字は「?」になります。</p>
+        </div>
+        <div id="mjOut"></div>
+      </section>
+
+      <!-- 差分比較 -->
+      <section data-page="diff" hidden>
+        <h1>差分比較</h1>
+        <div class="diff-inputs">
+          <div class="card"><label for="dfA">A（元）</label><textarea id="dfA" rows="8" class="mono"></textarea></div>
+          <div class="card"><label for="dfB">B（比較先）</label><textarea id="dfB" rows="8" class="mono"></textarea></div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <label for="dfMode">比較の単位</label>
+            <select id="dfMode"><option value="line">行</option><option value="char">文字</option><option value="hex">バイト（Hex 入力）</option></select>
+            <span class="meta-line" id="dfInfo"></span>
+          </div>
+          <div class="diff-out" id="dfOut"></div>
+        </div>
+      </section>
+
+      <!-- 正規表現テスター -->
+      <section data-page="regex" hidden>
+        <h1>正規表現テスター</h1>
+        <div class="card">
+          <label for="rxPat">パターン</label>
+          <div class="row">
+            <span class="rx-slash">/</span><input id="rxPat" class="mono grow" placeholder="例: flag\{[^}]+\}"><span class="rx-slash">/</span>
+            <label class="check"><input type="checkbox" class="rxFlag" value="g" checked> g</label>
+            <label class="check"><input type="checkbox" class="rxFlag" value="i"> i</label>
+            <label class="check"><input type="checkbox" class="rxFlag" value="m"> m</label>
+            <label class="check"><input type="checkbox" class="rxFlag" value="s"> s</label>
+          </div>
+          <div class="row" id="rxPresets"></div>
+          <p class="error" id="rxErr"></p>
+          <label for="rxText">テストする文字列</label>
+          <textarea id="rxText" rows="6"></textarea>
+          <label for="rxRep">置換（任意。$1 などでグループを参照）</label>
+          <input id="rxRep" class="mono">
+        </div>
+        <div class="card">
+          <div class="meta-line" id="rxInfo"></div>
+          <div class="rx-highlight" id="rxHl"></div>
+          <div class="table-wrap"><table class="list" id="rxTable"></table></div>
+          <div id="rxRepOut"></div>
         </div>
       </section>
 
