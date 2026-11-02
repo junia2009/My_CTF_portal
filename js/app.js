@@ -4,6 +4,7 @@ import { initTheme, initClock, initBoot, initEyebrows, renderHome, initBase, ini
 import { initCodec } from './ui/codec.js';
 import { initClassic, initXor, initRsa } from './ui/crypto.js';
 import { initFile, initHash, initJwt, initFlag, initNet } from './ui/analysis.js';
+import { initPwa } from './ui/pwa.js';
 
 const onShow = {};
 
@@ -18,6 +19,7 @@ function route() {
 
 document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy($(b.dataset.copy).value)));
 initBoot();
+initPwa();
 initTheme();
 initClock();
 initEyebrows();

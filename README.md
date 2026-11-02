@@ -20,6 +20,18 @@
 | 競技の補助 | 問題メモ・フラグ記録 | ジャンル・配点・状態・フラグ・メモを記録（ブラウザ内保存、JSON でエクスポート / インポート） |
 | 競技の補助 | チートシート | MISC / WEB / CRYPT / NW / REVERSING / OSINT / FORENSIC / DEFENSE / CONFIG 別の定番コマンド集 |
 
+## アプリとしてインストール（PWA）
+
+ホーム画面やデスクトップにインストールでき、**一度開けばオフラインでも全ツールが動きます**（会場のネットワークが不安定でも使えます）。
+
+- **PC（Chrome / Edge）**：右上の「INSTALL」ボタン、またはアドレスバーのインストールアイコン
+- **Android（Chrome）**：メニュー →「ホーム画面に追加」/「アプリをインストール」
+- **iPhone / iPad（Safari）**：共有ボタン →「ホーム画面に追加」
+
+新しいバージョンを公開すると、画面下に「新しいバージョンがあります」と表示されます。「更新する」を押すと切り替わります。
+
+仕組み：デプロイ時に `scripts/build-sw.mjs` が公開ファイルの一覧とビルドID（コミットSHA）を `sw.js` に埋め込みます。ローカル開発時（ビルドID が `dev`）はネットワーク優先で動くので、キャッシュに邪魔されずに編集を確認できます。
+
 ## GitHub Pages での公開
 
 GitHub Actions（`.github/workflows/pages.yml`）で自動公開します。
@@ -29,7 +41,7 @@ GitHub Actions（`.github/workflows/pages.yml`）で自動公開します。
    - **Actions** タブの「Deploy to GitHub Pages」から「Run workflow」で手動実行もできます
 3. 公開先: `https://<ユーザー名>.github.io/My_CTF_portal/`
 
-テストが失敗した場合は公開されません。公開されるのは `index.html` / `css` / `js` だけで、テストや README は含まれません。
+テストが失敗した場合は公開されません。公開されるのは `index.html` / `manifest.webmanifest` / `sw.js` / `css` / `js` / `icons` だけで、テストや README は含まれません。
 
 ## ローカルで動かす
 
@@ -50,6 +62,8 @@ node tests/run.mjs
 
 ```
 index.html          画面
+manifest.webmanifest / sw.js / icons/   PWA（インストール・オフライン対応）
+scripts/build-sw.mjs  デプロイ時に Service Worker へキャッシュ対象を埋め込む
 css/style.css       スタイル（ライト / ダーク対応）
 js/app.js           起動とページ切り替え
 js/ui/              各画面の動作

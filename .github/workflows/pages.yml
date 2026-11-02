@@ -31,7 +31,10 @@ jobs:
       - name: 公開するファイルだけをまとめる
         run: |
           mkdir _site
-          cp -r index.html css js .nojekyll _site/
+          cp -r index.html manifest.webmanifest sw.js css js icons .nojekyll _site/
+
+      - name: Service Worker にキャッシュ対象とビルドIDを埋め込む
+        run: node scripts/build-sw.mjs _site "${GITHUB_SHA::12}"
 
       - uses: actions/configure-pages@v5
 

@@ -485,6 +485,22 @@ td.chain .arrow { color: var(--muted); margin: 0 .3rem; }
   background: var(--field); border: 1px solid var(--line); border-left: 2px solid var(--accent); color: var(--text); white-space: pre; }
 .ts-block + .ts-block { margin-top: .5rem; }
 
+/* ---------- PWA ---------- */
+.sys.offline { color: var(--warn); }
+.sys.offline .dot { background: var(--warn); box-shadow: 0 0 10px rgba(255, 194, 71, .8); }
+.install-btn { color: var(--text); }
+.update-bar {
+  position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 70;
+  display: flex; align-items: center; gap: .9rem; padding: .55rem .6rem .55rem 1.1rem;
+  background: rgba(4, 9, 17, .96); border: 1px solid var(--accent); box-shadow: var(--glow);
+  font-weight: 700; letter-spacing: .04em; max-width: calc(100vw - 32px);
+}
+.update-bar[hidden] { display: none; }
+/* インストールして単体ウィンドウで開いたとき、ノッチ等の安全領域を避ける */
+@media (display-mode: standalone) {
+  .topbar { padding-top: env(safe-area-inset-top); height: calc(60px + env(safe-area-inset-top)); }
+}
+
 /* ---------- スクロールバー ---------- */
 * { scrollbar-width: thin; scrollbar-color: rgba(var(--accent-rgb), .4) transparent; }
 

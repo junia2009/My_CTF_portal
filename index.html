@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CTF Portal</title>
   <meta name="description" content="CTF競技用のツールをまとめたポータル。ブラウザ内だけで動作します。">
+  <meta name="theme-color" content="#04080f">
+  <meta name="color-scheme" content="dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CTF Portal">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
@@ -37,7 +47,8 @@
       <span class="brand-text">CTF<em>//</em>PORTAL</span>
     </a>
     <div class="topbar-right">
-      <div class="sys"><i class="dot"></i><span>SYSTEM ONLINE</span></div>
+      <div class="sys" id="sysStatus"><i class="dot"></i><span id="sysText">SYSTEM ONLINE</span></div>
+      <button class="theme-btn install-btn" id="installBtn" type="button" hidden>INSTALL</button>
       <div class="clock" id="clock">--:--:--</div>
       <button class="theme-btn" id="themeBtn" type="button" aria-label="カラーテーマ切替"><span id="themeName">CYAN</span></button>
     </div>
@@ -526,6 +537,10 @@
     </main>
   </div>
 
+  <div class="update-bar" id="updateBar" role="status" hidden>
+    <span>新しいバージョンがあります</span>
+    <button type="button" class="small" id="updateBtn">更新する</button>
+  </div>
   <div class="toast" id="toast" role="status"></div>
   <script type="module" src="js/app.js"></script>
 </body>
