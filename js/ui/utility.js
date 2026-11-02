@@ -2,11 +2,11 @@
 import * as NT from '../lib/numtheory.js';
 import { readValues, unpack } from '../lib/binview.js';
 import { repairCandidates, decodeAll } from '../lib/mojibake.js';
-import { diffLines, diffChars, diffBytes } from '../lib/diff.js';
+import { diffLines, diffChars, diffBytes, hexDiffRows, byteRanges, asText } from '../lib/diff.js';
 import { hexdump } from '../lib/file.js';
 import { bytesToHex, hexToBytes, latin1Decode } from '../lib/codecs.js';
 import { DEFAULT_FLAG_PATTERN } from '../lib/flag.js';
-import { $, h, copy, kvRow, debounce, readBytes, setTable, registerReceiver, fill, openTab } from './common.js';
+import { $, h, copy, kvRow, debounce, readBytes, setTable, registerReceiver, fill, openTab, fmtSize, download, toast } from './common.js';
 
 // ================= 数論計算機 =================
 export function initMath() {
@@ -213,10 +213,119 @@ export function initMojibake() {
 
 // ================= 差分比較 =================
 export function initDiff() {
+  // ファイルを読み込んだ側は、そのバイト列で比べる（テキストなら入力欄にも表示する）
+  const files = { A: null, B: null };
+  const hexOf = (b) => [...b].map((x) => x.toString(16).padStart(2, '0'));
+  const sha256 = async (b) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', b))].map((x) => x.toString(16).padStart(2, '0')).join('');
+
+  async function loadFile(side, file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const text = asText(bytes);
+    files[side] = { name: file.name, bytes, text, hash: await sha256(bytes) };
+    const ta = $('df' + side);
+    ta.value = text ?? '';
+    ta.hidden = text == null;
+    $(`df${side}Clear`).hidden = false;
+    const info = $(`df${side}Info`);
+    info.hidden = false;
+    info.replaceChildren(
+      h('b', {}, file.name), h('span', {}, `${fmtSize(bytes.length)}（${bytes.length.toLocaleString()} バイト）`),
+      h('span', {}, text != null ? 'テキスト' : 'バイナリ'), h('span', { class: 'hint', title: files[side].hash }, `SHA-256 ${files[side].hash.slice(0, 16)}…`),
+    );
+    // どちらかがバイナリなら、バイト単位の比較に切り替える
+    if (Object.values(files).some((f) => f && f.text == null)) $('dfMode').value = 'hex';
+    run();
+  }
+  function clearFile(side) {
+    files[side] = null;
+    $('df' + side).hidden = false;
+    $('df' + side).value = '';
+    $(`df${side}Clear`).hidden = true;
+    $(`df${side}Info`).hidden = true;
+    run();
+  }
+  for (const side of ['A', 'B']) {
+    $(`df${side}File`).addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      e.target.value = '';
+      if (f) loadFile(side, f);
+    });
+    $(`df${side}Clear`).addEventListener('click', () => clearFile(side));
+    const card = $(`df${side}Card`);
+    ['dragenter', 'dragover'].forEach((ev) => card.addEventListener(ev, (e) => { e.preventDefault(); card.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach((ev) => card.addEventListener(ev, (e) => { e.preventDefault(); card.classList.remove('over'); }));
+    card.addEventListener('drop', (e) => e.dataTransfer.files[0] && loadFile(side, e.dataTransfer.files[0]));
+    // テキストを手で直したら、ファイルの中身ではなく入力欄の文字で比べる
+    $('df' + side).addEventListener('input', () => {
+      if (files[side]?.text != null) files[side] = { ...files[side], bytes: new TextEncoder().encode($('df' + side).value), edited: true };
+    });
+  }
+
+  // バイト列：ファイルがあればその中身、なければ入力欄を Hex として読む
+  const bytesOf = (side) => (files[side] ? files[side].bytes : hexToBytes($('df' + side).value));
+
+  const show = (b) => `${hexOf(b.subarray(0, 24)).join(' ')}${b.length > 24 ? ' …' : ''}  ${latin1Decode(b.subarray(0, 24)).replace(/[^\x20-\x7e]/g, '·')}`;
+
+  function renderBytes(A, B) {
+    const out = $('dfOut');
+    const hd = hexDiffRows(A, B);
+    const same = A.length === B.length && hd.diffCount === 0;
+    $('dfInfo').textContent = same ? '完全に一致しています' : `違うバイト ${hd.diffCount.toLocaleString()} 個（A ${A.length.toLocaleString()} B / B ${B.length.toLocaleString()} B）`;
+    const parts = [];
+    const sum = [
+      kvRow('サイズ', `A ${A.length.toLocaleString()} バイト / B ${B.length.toLocaleString()} バイト${A.length !== B.length ? `（差 ${(B.length - A.length).toLocaleString()}）` : ''}`, false),
+      kvRow('最初に違う位置', hd.first >= 0 ? `0x${hd.first.toString(16)}（${hd.first} バイト目）` : 'なし', false),
+    ];
+    if (files.A && files.B) sum.push(kvRow('SHA-256', files.A.hash === files.B.hash ? '一致' : '不一致', false));
+    parts.push(h('table', { class: 'kv' }, ...sum));
+    if (same) {
+      out.replaceChildren(...parts);
+      return;
+    }
+    // 長さが違う＝途中に挿入・削除がある可能性。小さいファイルなら、ずれを考えた差分も出す
+    if (A.length !== B.length) {
+      if (A.length + B.length <= 400000) {
+        const ranges = byteRanges(A, B);
+        if (ranges.length && ranges.length <= 300) {
+          parts.push(h('p', { class: 'diff-sub' }, `挿入・削除を考えた差分（${ranges.length} か所）`),
+            h('div', { class: 'table-wrap' }, h('table', { class: 'list' },
+              h('tr', {}, h('th', {}, '種類'), h('th', {}, 'A の位置'), h('th', {}, 'B の位置'), h('th', {}, 'バイト数'), h('th', {}, '中身')),
+              ...ranges.slice(0, 200).map((r) => h('tr', { class: `diff-${r.type}` },
+                h('td', {}, r.type === 'add' ? '追加（B のみ）' : r.type === 'del' ? '削除（A のみ）' : '置き換え'),
+                h('td', { class: 'num' }, `0x${r.offA.toString(16)}`), h('td', { class: 'num' }, `0x${r.offB.toString(16)}`), h('td', { class: 'num' }, r.old ? `${r.old.length} → ${r.bytes.length}` : r.bytes.length),
+                h('td', { class: 'mono copyable', title: 'クリックで中身（Hex）をコピー', onclick: () => copy(bytesToHex(r.bytes)) }, r.old ? `${show(r.old)}  →  ${show(r.bytes)}` : show(r.bytes)),
+              )))));
+        }
+      } else parts.push(h('p', { class: 'hint' }, '長さが違います。途中にデータが挿入・削除されていると、それ以降はすべて「違う」と表示されます（大きいファイルのため、ずれを考えた差分は省略）。'));
+    }
+    // 同じ位置どうしの比較（16進ダンプを上下に並べる）
+    const cell = (x, y) => (x === undefined ? h('i', { class: 'hx none' }, '  ') : h('i', { class: x !== y ? 'hx d' : 'hx' }, x.toString(16).padStart(2, '0')));
+    const asc = (row, other) => [...row].map((x, i) => h('i', { class: x !== other[i] ? 'd' : '' }, x >= 0x20 && x < 0x7f ? String.fromCharCode(x) : '.'));
+    const lines = hd.rows.map((r) => {
+      if (r.gap) return h('div', { class: 'hx-gap' }, '⋯');
+      const pad = (row, other) => Array.from({ length: 16 }, (_, i) => cell(row[i], other[i]));
+      return h('div', { class: `hx-pair${r.diff ? ' changed' : ''}` },
+        h('div', { class: 'hx-line a' }, h('span', { class: 'hx-off' }, r.off.toString(16).padStart(8, '0')), h('span', { class: 'hx-tag' }, 'A'), h('span', { class: 'hx-bytes' }, ...pad(r.a, r.b)), h('span', { class: 'hx-asc' }, ...asc(r.a, r.b))),
+        h('div', { class: 'hx-line b' }, h('span', { class: 'hx-off' }), h('span', { class: 'hx-tag' }, 'B'), h('span', { class: 'hx-bytes' }, ...pad(r.b, r.a)), h('span', { class: 'hx-asc' }, ...asc(r.b, r.a))),
+      );
+    });
+    parts.push(h('p', { class: 'diff-sub' }, '同じ位置どうしの比較（違うバイトを強調、前後 1 行つき）'), h('div', { class: 'hx-diff' }, ...lines),
+      hd.truncated ? h('p', { class: 'hint' }, '違いが多いため、途中までを表示しています。') : '');
+    // 違うバイトだけを並べる・XOR
+    const d = diffBytes(A, B);
+    const onlyB = Uint8Array.from(d.positions.filter((p) => p < B.length).slice(0, 4096).map((p) => B[p]));
+    parts.push(h('table', { class: 'kv' },
+      kvRow('B で違うバイトだけ（文字）', latin1Decode(onlyB).replace(/[^\x20-\x7e]/g, '·') || '（なし）'),
+      kvRow('A XOR B（Hex、先頭 4KB）', bytesToHex(d.xor.subarray(0, 4096))),
+      kvRow('A XOR B（文字、先頭 4KB）', latin1Decode(d.xor.subarray(0, 4096)).replace(/[^\x20-\x7e]/g, '·')),
+    ), h('div', { class: 'row' }, h('button', { type: 'button', class: 'ghost small', onclick: () => download(d.xor, 'xor.bin') }, 'A XOR B を保存')));
+    out.replaceChildren(...parts);
+  }
+
   function run() {
     const a = $('dfA').value, b = $('dfB').value, mode = $('dfMode').value;
     const out = $('dfOut');
-    if (!a && !b) {
+    if (!a && !b && !files.A && !files.B) {
       out.replaceChildren();
       $('dfInfo').textContent = '';
       return;
@@ -224,21 +333,18 @@ export function initDiff() {
     if (mode === 'hex') {
       let A, B;
       try {
-        A = hexToBytes(a);
-        B = hexToBytes(b);
+        A = bytesOf('A');
+        B = bytesOf('B');
       } catch (e) {
-        out.replaceChildren(h('p', { class: 'error' }, e.message));
+        out.replaceChildren(h('p', { class: 'error' }, `${e.message}（ファイルを開くか、16進のバイト列を入れてください）`));
         return;
       }
-      const d = diffBytes(A, B);
-      $('dfInfo').textContent = `違うバイト ${d.positions.length} か所（A ${A.length} B / B ${B.length} B）`;
-      out.replaceChildren(
-        h('table', { class: 'kv' },
-          kvRow('違う位置', d.positions.slice(0, 200).map((p) => `0x${p.toString(16)}`).join(', ') + (d.positions.length > 200 ? ' …' : '') || 'なし'),
-          kvRow('A XOR B（Hex）', bytesToHex(d.xor)),
-          kvRow('A XOR B（文字）', latin1Decode(d.xor).replace(/[^\x20-\x7e]/g, '·')),
-        ),
-      );
+      renderBytes(A, B);
+      return;
+    }
+    if (Object.values(files).some((f) => f && f.text == null)) {
+      out.replaceChildren(h('p', { class: 'hint' }, 'バイナリファイルは「バイト」単位で比べてください。'));
+      $('dfInfo').textContent = '';
       return;
     }
     const ops = mode === 'char' ? diffChars(a, b) : diffLines(a, b);
@@ -253,6 +359,9 @@ export function initDiff() {
   ['dfA', 'dfB'].forEach((id) => $(id).addEventListener('input', debounce(run, 250)));
   $('dfMode').addEventListener('change', run);
   registerReceiver('diff', (p) => {
+    if (p instanceof File) return loadFile(files.A ? 'B' : 'A', p);
+    clearFile('A');
+    clearFile('B');
     $('dfMode').value = p.mode ?? 'line';
     $('dfA').value = p.a;
     fill('dfB', p.b);

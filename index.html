@@ -1080,13 +1080,35 @@
       <section data-page="diff" hidden>
         <h1>差分比較</h1>
         <div class="diff-inputs">
-          <div class="card"><label for="dfA">A（元）</label><textarea id="dfA" rows="8" class="mono"></textarea></div>
-          <div class="card"><label for="dfB">B（比較先）</label><textarea id="dfB" rows="8" class="mono"></textarea></div>
+          <div class="card diff-side" id="dfACard">
+            <div class="row between">
+              <label for="dfA">A（元）</label>
+              <span class="row">
+                <label class="btn ghost small" for="dfAFile">ファイルを開く</label>
+                <input type="file" id="dfAFile" hidden>
+                <button type="button" class="ghost small" id="dfAClear" hidden>ファイルを外す</button>
+              </span>
+            </div>
+            <textarea id="dfA" rows="8" class="mono" placeholder="文字列を貼る、またはファイルをここへドロップ"></textarea>
+            <div class="diff-file" id="dfAInfo" hidden></div>
+          </div>
+          <div class="card diff-side" id="dfBCard">
+            <div class="row between">
+              <label for="dfB">B（比較先）</label>
+              <span class="row">
+                <label class="btn ghost small" for="dfBFile">ファイルを開く</label>
+                <input type="file" id="dfBFile" hidden>
+                <button type="button" class="ghost small" id="dfBClear" hidden>ファイルを外す</button>
+              </span>
+            </div>
+            <textarea id="dfB" rows="8" class="mono" placeholder="文字列を貼る、またはファイルをここへドロップ"></textarea>
+            <div class="diff-file" id="dfBInfo" hidden></div>
+          </div>
         </div>
         <div class="card">
           <div class="row">
             <label for="dfMode">比較の単位</label>
-            <select id="dfMode"><option value="line">行</option><option value="char">文字</option><option value="hex">バイト（Hex 入力）</option></select>
+            <select id="dfMode"><option value="line">行</option><option value="char">文字</option><option value="hex">バイト（ファイル / Hex）</option></select>
             <span class="meta-line" id="dfInfo"></span>
           </div>
           <div class="diff-out" id="dfOut"></div>

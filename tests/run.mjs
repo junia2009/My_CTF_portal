@@ -21,7 +21,7 @@ import { readMetadata } from '../js/lib/exif.js';
 import { parseCapture, tcpStreams, httpExchanges, buildPcap, buildDnsQuery } from '../js/lib/pcap.js';
 import { analyzeLog } from '../js/lib/logs.js';
 import { repairCandidates, decodeAll, encodeAs } from '../js/lib/mojibake.js';
-import { diffLines, diffChars, diffBytes } from '../js/lib/diff.js';
+import { diffLines, diffChars, diffBytes, hexDiffRows, byteRanges, asText } from '../js/lib/diff.js';
 import * as PI from '../js/lib/pinject.js';
 import * as GEO from '../js/lib/geo.js';
 import { readFileSync } from 'node:fs';
@@ -491,6 +491,20 @@ await t('差分', () => {
   assert.equal(c.filter((x) => x.type !== 'add').map((x) => x.text).join(''), 'kitten');
   assert.equal(c.filter((x) => x.type !== 'del').map((x) => x.text).join(''), 'sitting');
   assert.deepEqual(diffBytes(Uint8Array.from([1, 2, 3]), Uint8Array.from([1, 9, 3])).positions, [1]);
+  const A = new Uint8Array(100).map((_, i) => i), B = A.slice();
+  B[40] = 0xff;
+  B[90] = 0xee;
+  const hd = hexDiffRows(A, B);
+  assert.equal(hd.diffCount, 2);
+  assert.equal(hd.first, 40);
+  assert.deepEqual(hd.rows.map((r) => (r.gap ? 'gap' : r.off)), [16, 32, 48, 64, 80, 96]);
+  assert.ok(hd.rows.find((r) => r.off === 32).diff && !hd.rows.find((r) => r.off === 16).diff);
+  const ins = Uint8Array.from([...A.slice(0, 10), 0x41, 0x42, ...A.slice(10, 50), ...A.slice(53)]);
+  assert.deepEqual(byteRanges(A, ins).map((r) => [r.type, r.offA, r.offB, [...r.bytes]]), [['add', 10, 10, [0x41, 0x42]], ['del', 50, 52, [50, 51, 52]]]);
+  const rep = Uint8Array.from([...A.slice(0, 20), 0x46, 0x4c, ...A.slice(22)]);
+  assert.deepEqual(byteRanges(A, rep).map((r) => [r.type, r.offA, [...r.old], [...r.bytes]]), [['rep', 20, [20, 21], [0x46, 0x4c]]]);
+  assert.equal(asText(new TextEncoder().encode('日本語')), '日本語');
+  assert.equal(asText(Uint8Array.from([0x41, 0, 0x42])), null);
 });
 
 // ---------- AI 入力チェック ----------
