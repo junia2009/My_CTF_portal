@@ -239,6 +239,7 @@ export function initImage() {
     out.replaceChildren(h('p', { class: 'hint' }, 'QR コードは見つかりませんでした。一部が欠けている・傾いている場合は、ビットプレーンで形を確認してみましょう。'));
   });
 
+  $('imgToGeo').addEventListener('click', () => img && sendTo('geo', new File([img.bytes], img.name, { type: 'image/' + (identifyType(img.bytes)?.ext === 'jpg' ? 'jpeg' : identifyType(img.bytes)?.ext ?? 'png') })));
   dropzone('imgDrop', 'imgIn', load);
   registerReceiver('image', (f) => load(f));
 }

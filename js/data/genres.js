@@ -74,7 +74,7 @@ export const GENRES = [
   },
   {
     id: 'OSINT', label: 'OSINT', desc: '公開情報から場所・人物・日時などを特定する。',
-    tools: ['file', 'net', 'codec'],
+    tools: ['geo', 'image', 'net', 'codec'],
     sheet: [
       ['exiftool <画像>', '撮影日時、機種、GPS 座標などのメタデータを確認する'],
       ['Google レンズ / Bing 画像検索 / Yandex', '画像の逆引き検索をする'],

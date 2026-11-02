@@ -5,6 +5,8 @@ const PRECACHE = [];
 
 const APP_CACHE = `ctfportal-app-${BUILD_ID}`;
 const FONT_CACHE = 'ctfportal-fonts-v1';
+// OCR（Tesseract）の大きなファイル用。アプリを更新しても消さない（中身はバージョン付きで固定のため）
+const OCR_CACHE = 'ctfportal-ocr-v1';
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (event) => {
@@ -39,6 +41,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+
+  // OCR のエンジン・言語データ：初回だけダウンロードし、以後は専用キャッシュから返す
+  if (url.pathname.includes('/vendor/tesseract/')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(OCR_CACHE);
+      const hit = await cache.match(req, { ignoreSearch: true });
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok) cache.put(req, res.clone());
+      return res;
+    })());
+    return;
+  }
 
   // ページ本体：ハッシュ（#codec など）付きでも index.html を返す
   if (req.mode === 'navigate') {

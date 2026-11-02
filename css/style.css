@@ -781,6 +781,20 @@ tr.p-icmp td:nth-child(5), tr.p-arp td:nth-child(5) { color: var(--warn); }
 .pi-item .mono-out mark { background: rgba(255, 107, 122, .22); color: var(--text); }
 .pi-out { max-height: 320px; overflow: auto; }
 
+/* ---------- 位置特定アシスタント ---------- */
+.geo-note { border-left: 3px solid var(--warn); padding-left: .6rem; }
+.geo-top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.1rem; }
+.geo-preview img { display: block; width: 100%; max-height: 420px; object-fit: contain; background: var(--field); border: 1px solid var(--line); }
+.geo-progress { position: relative; height: 26px; margin: .5rem 0; background: var(--field); border: 1px solid var(--line); overflow: hidden; }
+.geo-progress i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(var(--accent-rgb), .25), rgba(var(--accent-rgb), .6)); transition: width .2s; }
+.geo-progress span { position: relative; display: block; padding: 0 .7rem; line-height: 26px; font-size: .8rem; font-family: var(--mono); }
+#geoClues td.actions { flex-wrap: wrap; justify-content: flex-start; }
+.geo-check { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .9rem 1.4rem; margin-bottom: .8rem; }
+.geo-check-cat { font-family: var(--display); font-size: .66rem; letter-spacing: .2em; color: var(--accent); margin-bottom: .3rem; }
+.geo-item { display: flex; align-items: flex-start; gap: .5rem; font-size: .9rem; font-weight: 500; margin: .3rem 0; letter-spacing: 0; color: var(--text); }
+.geo-item input { margin-top: .3rem; }
+.geo-rev { gap: .5rem; }
+
 /* ---------- 案内役 PALLAS ---------- */
 /* 画面全体を覆う層。クリックを受けるのはドローンと吹き出しだけ */
 .pallas { position: fixed; inset: 0; z-index: 65; pointer-events: none; overflow: hidden; }
@@ -916,6 +930,7 @@ main { padding-bottom: 230px; }
   .plane-row .plane-ch { grid-row: span 3; }
   .lsb-grid, .form-grid.three { grid-template-columns: 1fr 1fr; }
   .pi-gauge { grid-template-columns: 1fr; gap: .4rem; }
+  .geo-top { grid-template-columns: 1fr; gap: 0; }
   .diff-inputs { grid-template-columns: 1fr; gap: 0; }
   .spec-stage canvas { height: 260px; }
   .log-grid { grid-template-columns: 1fr; }

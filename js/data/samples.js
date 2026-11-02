@@ -157,6 +157,44 @@ function samplePinject() {
   ].join('\n');
 }
 
+// 看板の写った街角（店名・電話番号・住所はすべて架空）
+async function sampleGeo() {
+  const W = 960, H = 600;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const x = c.getContext('2d');
+  const sky = x.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#9cc9ef');
+  sky.addColorStop(1, '#dfeefa');
+  x.fillStyle = sky;
+  x.fillRect(0, 0, W, H);
+  x.fillStyle = '#8a8f98';
+  x.fillRect(60, 120, 420, 420);
+  x.fillStyle = '#6d727b';
+  x.fillRect(520, 60, 380, 480);
+  x.fillStyle = '#3d4249';
+  x.fillRect(0, 520, W, 80);
+  x.strokeStyle = '#2b2b2b';
+  x.lineWidth = 8;
+  x.beginPath(); x.moveTo(500, 520); x.lineTo(500, 40); x.stroke(); // 電柱
+  x.lineWidth = 2;
+  x.beginPath(); x.moveTo(0, 70); x.quadraticCurveTo(250, 110, 500, 60); x.quadraticCurveTo(750, 110, W, 70); x.stroke();
+  const sign = (sx, sy, sw, sh, bg, fg, lines) => {
+    x.fillStyle = bg;
+    x.fillRect(sx, sy, sw, sh);
+    x.fillStyle = fg;
+    lines.forEach(([t, size, dy]) => {
+      x.font = `bold ${size}px "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif`;
+      x.fillText(t, sx + 18, sy + dy);
+    });
+  };
+  sign(90, 160, 360, 230, '#ffffff', '#111111', [['喫茶 みなと珈琲', 40, 58], ['MINATO COFFEE', 30, 108], ['TEL 045-123-4567', 30, 160], ['横浜駅 西口 徒歩5分', 30, 208]]);
+  sign(545, 120, 330, 120, '#1f6f43', '#ffffff', [['〒220-0005', 30, 48], ['神奈川県横浜市西区南幸1丁目', 24, 92]]);
+  const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+  return new File([blob], 'sample_streetcorner.png', { type: 'image/png' });
+}
+
 export const SAMPLES = {
   codec: () => ({ text: 'NjY2YzYxNjc3Yjc3MzM2YzYzMzA2ZDMzNWY3NDMwNWY2Mzc0NjY3ZA==', magic: true }),
   base: () => ({ text: '0x666c61677b6e756d6233727d' }),
@@ -182,6 +220,7 @@ export const SAMPLES = {
   }),
   net: () => ({ cidr: '192.168.10.77/26', ts: '1700000000' }),
   pinject: () => ({ text: samplePinject() }),
+  geo: sampleGeo,
   image: sampleImage,
   audio: sampleAudio,
   pcap: samplePcap,

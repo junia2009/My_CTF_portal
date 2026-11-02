@@ -73,6 +73,7 @@
       <div class="nav-group">解析</div>
       <a href="#file" data-route="file">ファイル解析</a>
       <a href="#image" data-route="image">画像解析</a>
+      <a href="#geo" data-route="geo">位置特定</a>
       <a href="#audio" data-route="audio">音声解析</a>
       <a href="#pcap" data-route="pcap">pcap 解析</a>
       <a href="#logs" data-route="logs">ログ解析</a>
@@ -633,6 +634,7 @@
             <div data-panel="meta" hidden>
               <div class="card">
                 <p class="hint">撮影日時・機種・位置情報・コメントなど、画像に埋め込まれた情報です。OSINT の手がかりや、フラグが直接書かれていることもあります。</p>
+                <button type="button" class="ghost small" id="imgToGeo">位置特定アシスタントで調べる</button>
                 <div id="metaOut"></div>
               </div>
             </div>
@@ -643,6 +645,66 @@
                 <div id="qrOut"></div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 位置特定アシスタント -->
+      <section data-page="geo" hidden>
+        <h1>位置特定アシスタント</h1>
+        <p class="lead">画像から撮影場所の手がかりを集め、地図で調べるところまでを手伝います。画像は外部へ送らず、すべてこの端末の中で処理します。</p>
+        <p class="hint geo-note">※ 大会の問題として出された画像だけに使ってください。実在する人の写真から居場所を割り出すことは、プライバシーの侵害になります。</p>
+        <label class="dropzone compact" id="geoDrop" for="geoIn">
+          <input type="file" id="geoIn" accept="image/*" hidden>
+          <span class="dz-main">画像をドロップ、またはクリックして選択</span>
+        </label>
+        <div id="geoResult" hidden>
+          <div class="geo-top">
+            <div class="card geo-preview"><img id="geoImg" alt="調べる画像"><div class="meta-line" id="geoInfo"></div></div>
+            <div class="card">
+              <h3>① EXIF の位置情報</h3>
+              <div id="geoExif"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="row between">
+              <h3>② 写っている文字を読み取る（OCR）</h3>
+              <div class="row">
+                <select id="geoLang" aria-label="読み取る言語"><option value="jpn+eng">日本語＋英語</option><option value="eng">英語のみ</option><option value="jpn">日本語のみ</option></select>
+                <label class="check"><input type="checkbox" id="geoPre" checked> 拡大・白黒化して読む</label>
+                <button type="button" id="geoOcr">読み取る</button>
+              </div>
+            </div>
+            <p class="hint">看板・店名・電話番号・住所表示などを読み取ります。初回だけ読み取り用のデータ（約 13MB）をダウンロードし、以後はオフラインでも使えます。結果は手で直すと、下の手がかりも更新されます。</p>
+            <div class="geo-progress" id="geoProg" hidden><i></i><span></span></div>
+            <textarea id="geoText" rows="5" placeholder="読み取った文字（ここに直接書き込んでも手がかりを探せます）"></textarea>
+          </div>
+          <div class="card">
+            <h3>手がかりと地図検索</h3>
+            <div id="geoHints"></div>
+            <div class="table-wrap"><table class="list" id="geoClues"></table></div>
+            <div class="row">
+              <input id="geoQuery" class="grow" placeholder="自分で検索する（例: 渋谷 ハチ公 交差点）">
+              <a class="btn small" id="geoQGoogle" target="_blank" rel="noopener">Google マップ</a>
+              <a class="btn ghost small" id="geoQOsm" target="_blank" rel="noopener">OpenStreetMap</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>④ 画像の逆引き検索</h3>
+            <p class="hint">同じ写真や似た景色が載ったページを探します。「画像をコピー」してから各サービスを開き、貼り付け（Ctrl+V / ⌘V）またはアップロードしてください。※ 画像がそのサービスに送られるので、大会ルールで外部サービスが使えるか確認してから使いましょう。</p>
+            <div class="row geo-rev">
+              <button type="button" id="geoCopy">画像をコピー</button>
+              <a class="btn ghost small" href="https://lens.google.com/" target="_blank" rel="noopener">Google レンズ</a>
+              <a class="btn ghost small" href="https://www.bing.com/visualsearch" target="_blank" rel="noopener">Bing ビジュアル検索</a>
+              <a class="btn ghost small" href="https://yandex.com/images/" target="_blank" rel="noopener">Yandex 画像検索</a>
+              <a class="btn ghost small" href="https://tineye.com/" target="_blank" rel="noopener">TinEye</a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="row between"><h3>⑤ 手がかりのチェックリスト</h3><button type="button" class="ghost small" id="geoCheckReset">リセット</button></div>
+            <div class="geo-check" id="geoCheck"></div>
+            <label for="geoMemo">メモ（気付いたこと・候補地）</label>
+            <textarea id="geoMemo" rows="3"></textarea>
           </div>
         </div>
       </section>

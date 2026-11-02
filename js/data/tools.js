@@ -27,6 +27,7 @@ export const ICONS = {
   diff: 'M8 4v16M16 4v16M4.5 9h7M12.5 15h7M16 12v6M13 15h6',
   regex: 'M17 3v8M13.5 5l7 4M20.5 5l-7 4M5 19h.01M4 21h3v-3H4z',
   pinject: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6zM9 12l2 2 4-4',
+  geo: 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 1 0 0-5',
   arrow: 'M5 12h14M13 6l6 6-6 6',
   upload: 'M12 16V4M7 9l5-5 5 5M4 16v4h16v-4',
 };
@@ -56,6 +57,7 @@ export const TOOLS = [
   { id: 'math', group: '暗号', name: '数論計算機', desc: '素因数分解・逆元・中国剰余定理' },
   { id: 'file', group: '解析', name: 'ファイル解析', desc: '隠しファイル・末尾データ・PNG 復元' },
   { id: 'image', group: '解析', name: '画像解析', desc: 'ビットプレーン・LSB・EXIF・QR' },
+  { id: 'geo', group: '解析', name: '位置特定アシスタント', desc: 'EXIF・看板の文字から撮影場所を探す' },
   { id: 'audio', group: '解析', name: '音声解析', desc: 'スペクトログラムで音に隠れた文字を見る' },
   { id: 'pcap', group: '解析', name: 'pcap 解析', desc: '通信の再構成・HTTP・DNS' },
   { id: 'logs', group: '解析', name: 'ログ解析', desc: 'IP 集計・失敗の多い IP・急増の検出' },

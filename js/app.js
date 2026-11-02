@@ -12,6 +12,7 @@ import { initImage, initAudio } from './ui/media.js';
 import { initPcap, initLogs } from './ui/traffic.js';
 import { initMath, initBinview, initMojibake, initDiff, initRegex } from './ui/utility.js';
 import { initPinject } from './ui/pinject.js';
+import { initGeo } from './ui/geo.js';
 
 const onShow = {};
 let pallas = null;
@@ -57,6 +58,7 @@ initMojibake();
 initDiff();
 initRegex();
 initPinject();
+initGeo();
 onShow.guide = initGuide();
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();

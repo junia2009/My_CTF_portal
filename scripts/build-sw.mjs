@@ -17,7 +17,8 @@ const walk = (d) =>
 
 const files = walk(dir)
   .map((p) => relative(dir, p).split(sep).join('/'))
-  .filter((p) => p !== 'sw.js' && !p.startsWith('.'))
+  // OCR のエンジンと言語データは大きいので事前キャッシュせず、初回使用時に専用キャッシュへ入れる（sw.js 参照）
+  .filter((p) => p !== 'sw.js' && !p.startsWith('.') && !/^vendor\/tesseract\//.test(p))
   .sort()
   .map((p) => './' + p);
 

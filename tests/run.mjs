@@ -23,6 +23,7 @@ import { analyzeLog } from '../js/lib/logs.js';
 import { repairCandidates, decodeAll, encodeAs } from '../js/lib/mojibake.js';
 import { diffLines, diffChars, diffBytes } from '../js/lib/diff.js';
 import * as PI from '../js/lib/pinject.js';
+import * as GEO from '../js/lib/geo.js';
 
 let passed = 0;
 const t = async (name, fn) => {
@@ -534,6 +535,39 @@ await t('AI 入力チェック: 無害化', () => {
   const out = PI.sanitize(s);
   assert.equal(out, 'paypal ABC [画像: a（読み込みを無効化）]');
   assert.ok(PI.sanitize('x', { wrap: true }).includes('<data>\nx\n</data>'));
+});
+
+// ---------- 位置特定アシスタント ----------
+await t('位置特定: 手がかりの抽出', () => {
+  const ocr = `渋谷駅 ハチ公口\nTEL 03-1234-5678\n〒150-0002 東京都渋谷区渋谷2丁目21-1\nwww.example-cafe.jp\nBLUE OCEAN COFFEE\n35°39'31"N 139°42'4"E`;
+  const r = GEO.extractClues(ocr);
+  const by = (type) => r.clues.filter((c) => c.type === type).map((c) => c.value);
+  assert.ok(by('施設・地名').includes('渋谷駅'), JSON.stringify(r.clues));
+  assert.deepEqual(by('電話番号'), ['03-1234-5678']);
+  assert.equal(r.clues.find((c) => c.type === '電話番号').note, '市外局番から：東京都 23区');
+  assert.deepEqual(by('郵便番号'), ['〒150-0002']);
+  assert.ok(by('住所')[0].startsWith('東京都渋谷区渋谷2丁目'), by('住所').join());
+  assert.ok(r.clues.find((c) => c.type === 'URL・ドメイン').note.includes('日本'));
+  assert.ok(by('英字の名称').includes('BLUE OCEAN COFFEE'));
+  const c = r.clues.find((x) => x.type === '座標').coords;
+  assert.ok(Math.abs(c.lat - 35.6586) < 0.001 && Math.abs(c.lon - 139.7011) < 0.001, JSON.stringify(c));
+  assert.ok(r.hints[0].includes('日本'));
+});
+await t('位置特定: OCR の空白・改行のゆれ', () => {
+  const r = GEO.extractClues('〒220-0005\n神奈川県横浜市西区南幸 1 丁目\nMINATO COFFEE\nTEL 045-123-4567\n横浜駅西口徒歩 5 分');
+  const by = (type) => r.clues.filter((c) => c.type === type).map((c) => c.value);
+  assert.ok(by('住所')[0].startsWith('神奈川県横浜市西区南幸1丁目'), by('住所').join());
+  assert.deepEqual(by('英字の名称'), ['MINATO COFFEE']);
+  assert.ok(by('施設・地名').includes('横浜駅'));
+});
+await t('位置特定: 市外局番・座標・文字種', () => {
+  assert.equal(GEO.phoneArea('06-6123-4567'), '大阪府 大阪市');
+  assert.equal(GEO.phoneArea('052-123-4567'), '愛知県 名古屋市');
+  assert.equal(GEO.phoneArea('0120-123-456'), 'フリーダイヤル（地域は分からない）');
+  assert.equal(GEO.phoneArea('+81 3-1234-5678'), '東京都 23区');
+  assert.deepEqual(GEO.parseCoords('location: 35.6895, 139.6917').map((x) => [x.lat, x.lon]), [[35.6895, 139.6917]]);
+  assert.ok(GEO.extractClues('서울특별시 카페').hints.some((h) => h.includes('韓国')));
+  assert.ok(GEO.mapLinks('渋谷駅').google.includes(encodeURIComponent('渋谷駅')));
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);
