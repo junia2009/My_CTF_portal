@@ -130,8 +130,11 @@ export function initGeo() {
       }
       prog('読み取り中', 0);
       const { data } = await ocr.worker.recognize(prepare());
-      // 日本語は文字の間に空白が入りやすいので詰める
-      const text = data.text.replace(/([　-鿿＀-￯])[ \t]+(?=[　-鿿＀-￯])/g, '$1').trim();
+      // 日本語は文字の間（漢字と数字の間も）に空白が入りやすいので詰める
+      const text = data.text
+        .replace(/([　-鿿＀-￯])[ \t]+(?=[　-鿿＀-￯\d])/g, '$1')
+        .replace(/(\d)[ \t]+(?=[　-鿿＀-￯])/g, '$1')
+        .trim();
       $('geoText').value = text;
       $('geoProg').hidden = true;
       const r = renderClues();
