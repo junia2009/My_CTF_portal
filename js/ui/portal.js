@@ -17,6 +17,24 @@ export function initTheme() {
     cur = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
     apply(cur);
     store.set('ctfportal.theme', cur);
+    window.dispatchEvent(new CustomEvent('themechange'));
+  });
+
+  // ライト / ダーク（カラーとは別に切り替える）
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const applyMode = (m) => {
+    if (m === 'light') document.documentElement.dataset.mode = 'light';
+    else delete document.documentElement.dataset.mode;
+    $('modeBtn').setAttribute('aria-label', m === 'light' ? 'ダークモードに切り替え' : 'ライトモードに切り替え');
+    meta?.setAttribute('content', m === 'light' ? '#f7fafc' : '#04080f');
+  };
+  let mode = store.get('ctfportal.mode', 'dark') === 'light' ? 'light' : 'dark';
+  applyMode(mode);
+  $('modeBtn').addEventListener('click', () => {
+    mode = mode === 'light' ? 'dark' : 'light';
+    applyMode(mode);
+    store.set('ctfportal.mode', mode);
+    window.dispatchEvent(new CustomEvent('themechange'));
   });
 }
 
