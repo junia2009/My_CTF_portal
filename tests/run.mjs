@@ -301,9 +301,11 @@ await t('CIDR', () => {
   assert.equal(cidrInfo('8.8.8.8').kind, 'グローバル');
 });
 await t('タイムスタンプ', () => {
-  assert.equal(convertTimestamp('1700000000').at(-1).utc, '2023-11-14T22:13:20.000Z');
-  assert.equal(convertTimestamp('1700000000000')[0].utc, '2023-11-14T22:13:20.000Z');
-  assert.equal(convertTimestamp('133444736000000000')[0].utc, '2023-11-14T22:13:20.000Z');
+  assert.equal(convertTimestamp('1700000000').at(-1).utc, '2023/11/14 22:13:20 (UTC)');
+  assert.equal(convertTimestamp('1700000000').at(-1).jst, '2023/11/15 07:13:20 (JST)');
+  assert.equal(convertTimestamp('1700000000123')[0].jst, '2023/11/15 07:13:20.123 (JST)');
+  assert.equal(convertTimestamp('1700000000000')[0].iso, '2023-11-14T22:13:20.000Z');
+  assert.equal(convertTimestamp('133444736000000000')[0].utc, '2023/11/14 22:13:20 (UTC)');
   assert.equal(convertTimestamp('2023-11-14T22:13:20Z')[0].unix, 1700000000);
 });
 
