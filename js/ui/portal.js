@@ -32,7 +32,8 @@ export function initTheme() {
   applyMode(mode);
   $('modeBtn').addEventListener('click', () => {
     mode = mode === 'light' ? 'dark' : 'light';
-    applyMode(mode);
+    if (document.startViewTransition) document.startViewTransition(() => applyMode(mode));
+    else applyMode(mode);
     store.set('ctfportal.mode', mode);
     window.dispatchEvent(new CustomEvent('themechange'));
   });
