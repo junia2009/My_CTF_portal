@@ -46,6 +46,9 @@
 /* button などの display 指定より hidden 属性を優先する */
 [hidden] { display: none !important; }
 html { background: var(--bg); }
+/* 横方向のはみ出しでページがずれないようにする（clip は sticky を壊さない） */
+html { overflow-x: hidden; }
+@supports (overflow-x: clip) { html, body { overflow-x: clip; } }
 body {
   margin: 0; color: var(--text); font-family: var(--ui); font-size: 16px; line-height: 1.6;
   background:
@@ -60,13 +63,19 @@ a { color: var(--accent); }
 
 /* ---------- 背景エフェクト ---------- */
 .fx-grid {
-  position: fixed; inset: -50% -50% 0; z-index: -1; pointer-events: none;
+  /* 外枠は画面ぴったり。遠近をつけるために大きく描くグリッドは ::before に置き、はみ出しは切り取る
+     （iOS Safari は画面外にはみ出した固定要素でも横スクロールしてしまうため） */
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+}
+.fx-grid::before {
+  content: ""; position: absolute; left: -50%; right: -50%; top: -50%; bottom: 0;
   background-image:
     linear-gradient(rgba(var(--accent-rgb), 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(var(--accent-rgb), 0.07) 1px, transparent 1px);
   background-size: 48px 48px;
   transform: perspective(700px) rotateX(58deg) translateY(30%);
   transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 65%);
   mask-image: linear-gradient(to top, #000 0%, transparent 65%);
   animation: grid-move 6s linear infinite;
 }
@@ -393,6 +402,7 @@ summary { cursor: pointer; color: var(--accent); font-size: .85rem; letter-spaci
 
 /* ---------- トースト ---------- */
 .toast {
+  max-width: calc(100vw - 32px); text-align: center;
   position: fixed; bottom: 1.25rem; left: 50%; z-index: 60; transform: translateX(-50%) translateY(.5rem);
   font-family: var(--display); font-size: .72rem; letter-spacing: .2em; color: var(--accent);
   background: rgba(4, 9, 17, .95); border: 1px solid var(--accent); box-shadow: var(--glow);
