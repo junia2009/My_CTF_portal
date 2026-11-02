@@ -659,25 +659,41 @@
           <span class="dz-main">画像をドロップ、またはクリックして選択</span>
         </label>
         <div id="geoResult" hidden>
-          <div class="geo-top">
-            <div class="card geo-preview"><img id="geoImg" alt="調べる画像"><div class="meta-line" id="geoInfo"></div></div>
-            <div class="card">
-              <h3>① EXIF の位置情報</h3>
-              <div id="geoExif"></div>
-            </div>
+          <div class="card">
+            <h3>① EXIF の位置情報</h3>
+            <div class="meta-line" id="geoInfo"></div>
+            <div id="geoExif"></div>
           </div>
           <div class="card">
             <div class="row between">
               <h3>② 写っている文字を読み取る（OCR）</h3>
               <div class="row">
-                <select id="geoLang" aria-label="読み取る言語"><option value="jpn+eng">日本語＋英語</option><option value="eng">英語のみ</option><option value="jpn">日本語のみ</option></select>
-                <label class="check"><input type="checkbox" id="geoPre" checked> 拡大・白黒化して読む</label>
+                <button type="button" class="ghost small" id="geoRotL" title="左に90°回転">⟲ 左へ回転</button>
+                <button type="button" class="ghost small" id="geoRotR" title="右に90°回転">⟳ 右へ回転</button>
+                <button type="button" class="ghost small" id="geoClearSel">範囲を解除</button>
                 <button type="button" id="geoOcr">読み取る</button>
               </div>
             </div>
-            <p class="hint">看板・店名・電話番号・住所表示などを読み取ります。初回だけ読み取り用のデータ（約 13MB）をダウンロードし、以後はオフラインでも使えます。結果は手で直すと、下の手がかりも更新されます。</p>
+            <p class="hint">写真の中の文字向けの OCR（PaddleOCR）を端末の中で動かします。<b>看板の部分をドラッグで囲む</b>と、その範囲だけを拡大して読むので、遠くの小さな文字に強くなります。初回だけ読み取り用のデータ（約 34MB）をダウンロードし、以後はオフラインでも使えます。</p>
+            <div class="geo-stage" id="geoStage">
+              <canvas id="geoCanvas"></canvas>
+              <div class="geo-sel" id="geoSel" hidden></div>
+              <div class="geo-boxes" id="geoBoxes"></div>
+            </div>
             <div class="geo-progress" id="geoProg" hidden><i></i><span></span></div>
+            <div class="row between">
+              <label for="geoText">読み取った文字（手で直すと、下の手がかりも更新されます）</label>
+              <button type="button" class="ghost small" id="geoPaste">クリップボードから貼り付け</button>
+            </div>
             <textarea id="geoText" rows="5" placeholder="読み取った文字（ここに直接書き込んでも手がかりを探せます）"></textarea>
+            <details class="geo-tip">
+              <summary>スマホの文字認識を使う方法（読み取りに失敗したとき）</summary>
+              <ul class="steps">
+                <li><b>iPhone</b>：写真アプリで画像を開き、右下の「テキスト認識表示」ボタン（または文字を長押し）→ 文字を選んでコピー</li>
+                <li><b>Android</b>：Google フォトで画像を開き「レンズ」→「テキスト」→ コピー</li>
+                <li>コピーした文字を、上の「クリップボードから貼り付け」で取り込むと、手がかりの抽出がそのまま使えます</li>
+              </ul>
+            </details>
           </div>
           <div class="card">
             <h3>手がかりと地図検索</h3>

@@ -1,5 +1,6 @@
-// 位置特定アシスタント：EXIF の GPS・OCR（Tesseract.js、端末内で処理）・手がかりの抽出・逆引き検索・チェックリスト
+// 位置特定アシスタント：EXIF の GPS・OCR（PaddleOCR、端末内で処理）・手がかりの抽出・逆引き検索・チェックリスト
 import { readMetadata } from '../lib/exif.js';
+import { PaddleOCR } from '../lib/paddleocr.js';
 import { extractClues, mapLinks, coordLinks, CHECKLIST } from '../lib/geo.js';
 import { $, h, store, toast, copy, debounce, fmtSize, setTable, registerReceiver, pallasSay } from './common.js';
 
@@ -7,9 +8,7 @@ const abs = (p) => new URL(p, location.href).href;
 const link = (href, label, cls = 'btn ghost small') => h('a', { class: cls, href, target: '_blank', rel: 'noopener' }, label);
 
 export function initGeo() {
-  let current = null; // { file, url, bitmap }
-  let ocr = null; // { lang, worker }
-  let tessLoading = null;
+  let current = null; // { file, bitmap, rot, sel }
 
   function dropzone() {
     const zone = $('geoDrop');
@@ -31,13 +30,12 @@ export function initGeo() {
       toast('画像として読み込めませんでした');
       return;
     }
-    if (current?.url) URL.revokeObjectURL(current.url);
-    current = { file, url: URL.createObjectURL(file), bitmap };
+    current = { file, bitmap, rot: 0, sel: null };
     $('geoResult').hidden = false;
     $('geoDrop').querySelector('.dz-main').textContent = `${file.name}（${fmtSize(file.size)}）— 別の画像を選ぶ`;
-    $('geoImg').src = current.url;
     $('geoInfo').replaceChildren(h('span', {}, `${bitmap.width} × ${bitmap.height}`), h('span', {}, file.type || '形式不明'));
     $('geoText').value = '';
+    draw();
     renderClues();
     await renderExif(file);
   }
@@ -58,44 +56,87 @@ export function initGeo() {
     if (m.gps) pallasSay({ kind: 'geoGps', mood: 'happy', anchor: '#geoExif' });
   }
 
-  // ---- ② OCR ----
-  async function tesseract() {
-    if (window.Tesseract) return window.Tesseract;
-    tessLoading ??= new Promise((res, rej) => {
-      const s = h('script', { src: 'vendor/tesseract/tesseract.min.js' });
-      s.onload = () => res(window.Tesseract);
-      s.onerror = rej;
-      document.head.append(s);
-    });
-    return tessLoading;
+  // ---- 画像の表示（回転を反映）と範囲選択 ----
+  function draw() {
+    const b = current.bitmap, rot = current.rot;
+    const c = $('geoCanvas');
+    const swap = rot % 180 !== 0;
+    c.width = swap ? b.height : b.width;
+    c.height = swap ? b.width : b.height;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.save();
+    x.translate(c.width / 2, c.height / 2);
+    x.rotate((rot * Math.PI) / 180);
+    x.drawImage(b, -b.width / 2, -b.height / 2);
+    x.restore();
+    current.sel = null;
+    $('geoSel').hidden = true;
+    $('geoBoxes').replaceChildren();
   }
+  const rotate = (d) => {
+    if (!current) return;
+    current.rot = (current.rot + d + 360) % 360;
+    draw();
+  };
+  $('geoRotL').addEventListener('click', () => rotate(-90));
+  $('geoRotR').addEventListener('click', () => rotate(90));
+  $('geoClearSel').addEventListener('click', () => {
+    if (!current) return;
+    current.sel = null;
+    $('geoSel').hidden = true;
+  });
 
-  // 小さい画像は拡大し、白黒にしてコントラストを上げると読み取りやすい
-  function prepare() {
-    const b = current.bitmap;
-    const pre = $('geoPre').checked;
-    const scale = pre ? Math.min(3, Math.max(1, 1600 / Math.max(b.width, b.height))) : 1;
-    const c = document.createElement('canvas');
-    c.width = Math.round(b.width * scale);
-    c.height = Math.round(b.height * scale);
-    const ctx = c.getContext('2d', { willReadFrequently: true });
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(b, 0, 0, c.width, c.height);
-    if (pre) {
-      const im = ctx.getImageData(0, 0, c.width, c.height);
-      const d = im.data;
-      let lo = 255, hi = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-        d[i] = g;
-        if (g < lo) lo = g;
-        if (g > hi) hi = g;
-      }
-      const k = 255 / Math.max(1, hi - lo);
-      for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = (d[i] - lo) * k;
-      ctx.putImageData(im, 0, 0);
+  // 画面上の座標 → 画像上の座標
+  const toImage = (ev) => {
+    const c = $('geoCanvas'), r = c.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(c.width, ((ev.clientX - r.left) / r.width) * c.width)), y: Math.max(0, Math.min(c.height, ((ev.clientY - r.top) / r.height) * c.height)) };
+  };
+  const place = (el, b) => {
+    const c = $('geoCanvas');
+    Object.assign(el.style, { left: `${(b.x0 / c.width) * 100}%`, top: `${(b.y0 / c.height) * 100}%`, width: `${((b.x1 - b.x0) / c.width) * 100}%`, height: `${((b.y1 - b.y0) / c.height) * 100}%` });
+  };
+  let dragStart = null;
+  const stage = $('geoStage');
+  stage.addEventListener('pointerdown', (e) => {
+    if (!current || e.target.closest('.geo-box')) return;
+    dragStart = toImage(e);
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (!dragStart) return;
+    const p = toImage(e);
+    const b = { x0: Math.min(dragStart.x, p.x), y0: Math.min(dragStart.y, p.y), x1: Math.max(dragStart.x, p.x), y1: Math.max(dragStart.y, p.y) };
+    if (b.x1 - b.x0 < 8 || b.y1 - b.y0 < 8) return;
+    current.sel = b;
+    $('geoSel').hidden = false;
+    place($('geoSel'), b);
+  });
+  stage.addEventListener('pointerup', () => (dragStart = null));
+  stage.addEventListener('pointercancel', () => (dragStart = null));
+
+  // ---- ② OCR（PaddleOCR） ----
+  let engine = null, engineLoading = null;
+  async function getEngine() {
+    if (engine) return engine;
+    engineLoading ??= (async () => {
+      const ort = await import('../../vendor/onnxruntime/ort.wasm.min.mjs');
+      ort.env.wasm.wasmPaths = abs('vendor/onnxruntime/');
+      // GitHub Pages ではクロスオリジン分離ができないため、マルチスレッドは使えない
+      ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1;
+      engine = await PaddleOCR.create(ort, {
+        detUrl: abs('vendor/paddleocr/PP-OCRv5_mobile_det_infer.ort'),
+        recUrl: abs('vendor/paddleocr/PP-OCRv5_mobile_rec_infer.onnx'),
+        dictUrl: abs('vendor/paddleocr/ppocrv5_dict.txt'),
+        onProgress: prog,
+      });
+      return engine;
+    })();
+    try {
+      return await engineLoading;
+    } catch (e) {
+      engineLoading = null;
+      throw e;
     }
-    return c;
   }
 
   const prog = (label, p) => {
@@ -105,45 +146,61 @@ export function initGeo() {
     el.querySelector('span').textContent = label;
   };
 
+  // 読み取る範囲を取り出す。小さい範囲は拡大して、検出しやすい大きさにする
+  function region() {
+    const c = $('geoCanvas');
+    const s = current.sel ?? { x0: 0, y0: 0, x1: c.width, y1: c.height };
+    const w = Math.round(s.x1 - s.x0), hh = Math.round(s.y1 - s.y0);
+    const scale = current.sel ? Math.min(4, Math.max(1, 960 / Math.max(w, hh))) : 1;
+    const out = document.createElement('canvas');
+    out.width = Math.round(w * scale);
+    out.height = Math.round(hh * scale);
+    const x = out.getContext('2d', { willReadFrequently: true });
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(c, s.x0, s.y0, w, hh, 0, 0, out.width, out.height);
+    return { img: { width: out.width, height: out.height, data: x.getImageData(0, 0, out.width, out.height).data }, ox: s.x0, oy: s.y0, scale };
+  }
+
+  function showBoxes(items, r) {
+    $('geoBoxes').replaceChildren(...items.map((it) => {
+      const el = h('button', { type: 'button', class: 'geo-box', title: `${it.text}（確信度 ${Math.round(it.conf * 100)}%）クリックでコピー`, onclick: () => copy(it.text) }, h('span', {}, it.text));
+      place(el, { x0: r.ox + it.x0 / r.scale, y0: r.oy + it.y0 / r.scale, x1: r.ox + it.x1 / r.scale, y1: r.oy + it.y1 / r.scale });
+      if (it.conf < 0.8) el.classList.add('low');
+      return el;
+    }));
+  }
+
   $('geoOcr').addEventListener('click', async () => {
     if (!current) return;
     const btn = $('geoOcr');
     btn.disabled = true;
     try {
-      const T = await tesseract();
-      const lang = $('geoLang').value;
-      if (!ocr || ocr.lang !== lang) {
-        await ocr?.worker.terminate();
-        prog('読み取りエンジンを準備中…（初回はデータをダウンロードします）', 0);
-        const worker = await T.createWorker(lang, 1, {
-          workerPath: abs('vendor/tesseract/worker.min.js'),
-          corePath: abs('vendor/tesseract/core'),
-          langPath: abs('vendor/tesseract/lang'),
-          workerBlobURL: false,
-          cacheMethod: 'none',
-          logger: (m) => {
-            const label = { 'loading tesseract core': 'エンジンを読み込み中', 'loading language traineddata': '言語データを読み込み中', 'initializing api': '初期化中', 'recognizing text': '読み取り中' }[m.status] ?? m.status;
-            prog(label, m.progress);
-          },
-        });
-        ocr = { lang, worker };
-      }
-      prog('読み取り中', 0);
-      const { data } = await ocr.worker.recognize(prepare());
-      // 日本語は文字の間（漢字と数字の間も）に空白が入りやすいので詰める
-      const text = data.text
-        .replace(/([　-鿿＀-￯])[ \t]+(?=[　-鿿＀-￯\d])/g, '$1')
-        .replace(/(\d)[ \t]+(?=[　-鿿＀-￯])/g, '$1')
-        .trim();
-      $('geoText').value = text;
+      const ocr = await getEngine();
+      prog('文字の場所を探しています', 0);
+      const r = region();
+      const res = await ocr.read(r.img, { onProgress: prog });
+      showBoxes(res.items, r);
+      $('geoText').value = res.lines.join('\n');
       $('geoProg').hidden = true;
-      const r = renderClues();
-      pallasSay({ kind: 'geoClues', mood: r.clues.length ? 'happy' : 'think', n: r.clues.length, anchor: '#geoClues' });
+      const c = renderClues();
+      if (!res.items.length) toast('文字が見つかりませんでした。看板の部分を囲んで、もう一度試してください');
+      pallasSay({ kind: 'geoClues', mood: c.clues.length ? 'happy' : 'think', n: c.clues.length, anchor: '#geoClues' });
     } catch (e) {
       $('geoProg').hidden = true;
       toast('読み取りに失敗しました：' + (e?.message ?? e));
     } finally {
       btn.disabled = false;
+    }
+  });
+
+  $('geoPaste').addEventListener('click', async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (!t.trim()) return toast('クリップボードに文字がありません');
+      $('geoText').value = ($('geoText').value ? $('geoText').value + '\n' : '') + t.trim();
+      renderClues();
+    } catch {
+      toast('この端末ではクリップボードを読めません。文字欄に直接貼り付けてください');
     }
   });
 
@@ -181,10 +238,7 @@ export function initGeo() {
   $('geoCopy').addEventListener('click', async () => {
     if (!current) return;
     try {
-      const c = document.createElement('canvas');
-      c.width = current.bitmap.width;
-      c.height = current.bitmap.height;
-      c.getContext('2d').drawImage(current.bitmap, 0, 0);
+      const c = $('geoCanvas');
       const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
       toast('画像をコピーしました。検索サービスで貼り付けてください');

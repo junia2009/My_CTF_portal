@@ -560,6 +560,15 @@ await t('位置特定: OCR の空白・改行のゆれ', () => {
   assert.deepEqual(by('英字の名称'), ['MINATO COFFEE']);
   assert.ok(by('施設・地名').includes('横浜駅'));
 });
+await t('位置特定: OCR の 〒 の読み違い', () => {
+  const zip = (txt) => GEO.extractClues(txt).clues.filter((c) => c.type === '郵便番号').map((c) => c.value);
+  assert.deepEqual(zip('T220-0005 神奈川県横浜市'), ['〒220-0005']);
+  assert.deepEqual(zip('〶 150-0002'), ['〒150-0002']);
+  assert.deepEqual(zip('亍220-0005'), ['〒220-0005']);
+  assert.deepEqual(zip('〒1500002'), ['〒150-0002']);
+  assert.deepEqual(zip('AT220-0005'), []);
+  assert.deepEqual(zip('TEL 045-123-4567'), []);
+});
 await t('位置特定: 市外局番・座標・文字種', () => {
   assert.equal(GEO.phoneArea('06-6123-4567'), '大阪府 大阪市');
   assert.equal(GEO.phoneArea('052-123-4567'), '愛知県 名古屋市');
