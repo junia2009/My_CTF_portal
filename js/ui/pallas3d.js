@@ -79,6 +79,7 @@ export async function createDrone(container, { modelUrl, reducedMotion = false }
   const look = new THREE.Vector2(), lookTarget = new THREE.Vector2();
   const accent = new THREE.Color(0x36e6ff), warn = new THREE.Color(0xffc247);
   let spin = 0; // happy のときの回転
+  const motion = new THREE.Vector2(), motionTarget = new THREE.Vector2(); // 画面上の移動速度（px/秒）
   const baseRot = root.rotation.clone();
 
   function applyAccent(css) {
@@ -103,12 +104,16 @@ export async function createDrone(container, { modelUrl, reducedMotion = false }
 
     // 浮遊・揺れ
     root.position.y = Math.sin(t * 1.7) * 0.06 * M.bob;
-    root.rotation.z = baseRot.z + Math.sin(t * 1.1) * 0.05;
+    // 移動中は進む方向へ機体を傾ける（左右はバンク、上下はピッチ）
+    motion.lerp(motionTarget, 0.12);
+    const bank = THREE.MathUtils.clamp(-motion.x / 1400, -0.5, 0.5);
+    const pitch = THREE.MathUtils.clamp(motion.y / 1800, -0.35, 0.35);
+    root.rotation.z = baseRot.z + Math.sin(t * 1.1) * 0.05 + bank;
     if (mood === 'happy') spin += dt * 7;
     else spin *= 0.9;
     // 体ごと少しポインタの方を向く（顔だけを大きく回すと球体にめり込むため）
     root.rotation.y = baseRot.y + Math.sin(spin) * 0.6 + look.x * 0.45;
-    root.rotation.x = baseRot.x - look.y * 0.25;
+    root.rotation.x = baseRot.x - look.y * 0.25 + pitch;
     if (mood === 'alert') root.position.x = Math.sin(t * 40) * 0.015;
     else root.position.x = 0;
 
@@ -130,7 +135,8 @@ export async function createDrone(container, { modelUrl, reducedMotion = false }
       eyeMat.emissive.copy(mood === 'alert' ? warn : accent);
     }
     for (const m of glowMats) m.emissiveIntensity = baseGlowIntensity * (0.85 + 0.15 * Math.sin(t * 2.3));
-    if (thrusterGlow) thrusterGlow.scale.setScalar(0.9 + 0.12 * Math.sin(t * 23) + 0.05 * Math.sin(t * 7));
+    const boost = Math.min(motion.length() / 900, 0.8);
+    if (thrusterGlow) thrusterGlow.scale.setScalar(0.9 + boost + 0.12 * Math.sin(t * 23) + 0.05 * Math.sin(t * 7));
 
     renderer.render(scene, camera);
     if (running) raf = requestAnimationFrame(frame);
@@ -169,6 +175,9 @@ export async function createDrone(container, { modelUrl, reducedMotion = false }
     // x, y は -1〜1（画面上のポインタ位置をドローンから見た方向に正規化したもの）
     lookAt(x, y) {
       lookTarget.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y)));
+    },
+    setMotion(vx, vy) {
+      motionTarget.set(vx, vy);
     },
     setAccent(css) {
       applyAccent(css);

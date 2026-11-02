@@ -285,10 +285,10 @@ export function initRsa() {
           const f = text.match(flagRegex(getPrefixes()));
           if (f) rows.unshift(h('tr', { class: 'hl' }, h('th', {}, 'FLAG'), h('td', { class: 'copyable', onclick: () => copy(f[0]) }, h('b', { class: 'flag-hit' }, f[0]))));
           pallasSay(f
-            ? { mood: 'happy', flag: f[0], text: `復号成功！ フラグは「${f[0]}」だよ。` }
-            : { mood: 'talk', text: '復号できたよ。m（文字列）の行を確認してみて。' });
+            ? { kind: 'rsaFlag', mood: 'happy', flag: f[0], anchor: '#rsaOut' }
+            : { kind: 'rsaPlain', mood: 'talk', anchor: '#rsaOut' });
         } else {
-          pallasSay({ mood: 'think', text: 'この条件では解けなかった… 問題文に p や q、d のヒントが隠れていないか探してみよう。' });
+          pallasSay({ kind: 'rsaFail', mood: 'think', anchor: '#rsaRun' });
         }
         $('rsaOut').replaceChildren(...rows);
       } catch (e) {

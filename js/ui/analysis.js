@@ -47,9 +47,9 @@ export function initFile() {
     const trailing = F.findTrailingData(bytes);
     const crcBad = F.parsePng(bytes)?.chunks.some((c) => !c.crcOk);
     const findings = [trailing && '末尾の余分なデータ', embedded && `埋め込まれたファイルの署名 ${embedded} 件`, crcBad && 'PNG の CRC エラー'].filter(Boolean);
-    if (flags.length) pallasSay({ mood: 'happy', flag: flags[0].match, text: `ファイルの中にフラグらしき文字列を見つけたよ！「${flags[0].match}」` });
-    else if (findings.length) pallasSay({ mood: 'alert', text: `怪しいところを見つけたよ：${findings.join('、')}。下の結果を確認してみて。` });
-    else pallasSay({ mood: 'talk', text: '目立った異常は見つからなかったよ。文字列の一覧や、エントロピーの高い部分を見てみよう。' });
+    if (flags.length) pallasSay({ kind: 'fileFlag', mood: 'happy', flag: flags[0].match, anchor: '#fileAlerts' });
+    else if (findings.length) pallasSay({ kind: 'fileSuspicious', mood: 'alert', findings: findings.join('、'), anchor: '#fileAlerts' });
+    else pallasSay({ kind: 'fileClean', mood: 'think', anchor: '#fileSummary' });
   }
 
   async function summary() {
@@ -129,7 +129,7 @@ export function initFile() {
           if (!r) {
             $('pngInfo').append(h('div', { class: 'alert' }, '一致する幅・高さが見つかりませんでした（IHDR の他の値が改ざんされている可能性があります）'));
           } else {
-            pallasSay({ mood: 'happy', text: `復元できたよ！ 本当のサイズは ${r.width} × ${r.height}。修正した PNG を保存して開いてみて。` });
+            pallasSay({ kind: 'pngFixed', mood: 'happy', w: r.width, h: r.height, anchor: '#pngInfo' });
             $('pngInfo').append(h('div', { class: 'alert ok' },
               `CRC が一致する値: 幅 ${r.width} × 高さ ${r.height}`,
               h('button', { type: 'button', class: 'ghost small', onclick: () => download(r.fixed, name.replace(/\.png$/i, '') + '_fixed.png') }, '修正した PNG を保存'),

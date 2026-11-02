@@ -17,7 +17,7 @@ function initStatus() {
   window.addEventListener('offline', () => {
     upd();
     toast('OFFLINE — キャッシュから動作中');
-    pallasSay({ mood: 'alert', text: '通信が切れたみたい。でも大丈夫、このポータルはオフラインでも全部のツールが動くよ。' });
+    pallasSay({ kind: 'offline', mood: 'alert' });
   });
   upd();
 }

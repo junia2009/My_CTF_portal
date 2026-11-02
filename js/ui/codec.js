@@ -177,10 +177,9 @@ export function initCodec() {
     $('magicRun').disabled = false;
     if (!results.length) {
       out.replaceChildren(h('tr', {}, h('td', { class: 'hint' }, '当てはまる変換が見つかりませんでした')));
-      pallasSay({ mood: 'think', text: 'うーん、知っている形式じゃないみたい。XOR や古典暗号、ファイルとしての解析も疑ってみよう。' });
+      pallasSay({ kind: 'magicFail', mood: 'think', anchor: '#magicOut' });
       return;
     }
-    if (results[0].flag) pallasSay({ mood: 'happy', flag: results[0].flag, text: `フラグ発見！「${results[0].flag}」（${results[0].chain.join(' → ')}）。提出したら問題メモに記録しておこう。` });
     setTable(out, ['手順', '結果', ''], results.map((r) =>
       h('tr', { class: r.flag ? 'hl' : '' },
         h('td', { class: 'chain' }, ...r.chain.flatMap((c, i) => [i ? h('span', { class: 'arrow' }, '→') : '', h('span', { class: 'step' }, c)])),
@@ -193,6 +192,8 @@ export function initCodec() {
         ),
       ),
     ));
+    // 結果表を描いたあとに通知する（PALLAS が表の横へ飛べるように）
+    if (results[0].flag) pallasSay({ kind: 'magicFlag', mood: 'happy', flag: results[0].flag, chain: results[0].chain.join(' → '), anchor: '#magicOut' });
   });
 
   registerReceiver('codec', (p) => {
