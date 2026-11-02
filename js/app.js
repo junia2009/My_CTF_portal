@@ -5,6 +5,7 @@ import { initCodec } from './ui/codec.js';
 import { initClassic, initXor, initRsa } from './ui/crypto.js';
 import { initFile, initHash, initJwt, initFlag, initNet } from './ui/analysis.js';
 import { initPwa } from './ui/pwa.js';
+import { initGuide, initIdentify, initHelp } from './ui/beginner.js';
 
 const onShow = {};
 
@@ -23,6 +24,7 @@ initPwa();
 initTheme();
 initClock();
 initEyebrows();
+initHelp();
 initTabs();
 initCodec();
 initBase();
@@ -34,6 +36,8 @@ initHash();
 initJwt();
 initFlag();
 initNet();
+initIdentify();
+onShow.guide = initGuide();
 onShow.home = renderHome;
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();

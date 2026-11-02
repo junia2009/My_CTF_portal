@@ -57,6 +57,9 @@
   <div class="layout">
     <nav class="sidebar" id="nav">
       <a href="#home" data-route="home">ホーム</a>
+      <div class="nav-group">はじめに</div>
+      <a href="#guide" data-route="guide">はじめての CTF</a>
+      <a href="#identify" data-route="identify" class="nav-hot">迷ったら診断<span class="badge">NEW</span></a>
       <div class="nav-group">変換</div>
       <a href="#codec" data-route="codec">エンコード / デコード</a>
       <a href="#base" data-route="base">基数変換</a>
@@ -95,8 +98,65 @@
             <div class="stats" id="homeStats"></div>
           </div>
         </div>
+        <div class="starter">
+          <a class="starter-card" href="#identify">
+            <span class="starter-icon" aria-hidden="true">?</span>
+            <span class="starter-body">
+              <b>迷ったら診断</b>
+              <span>問題の文字列やファイルを入れるだけで、正体と使うべきツールを教えてくれます。</span>
+            </span>
+            <span class="starter-go" aria-hidden="true">›</span>
+          </a>
+          <a class="starter-card" href="#guide">
+            <span class="starter-icon" aria-hidden="true">i</span>
+            <span class="starter-body">
+              <b>はじめての CTF</b>
+              <span>CTF の進め方・ジャンル別の最初の一歩・用語集。初参加の方はまずここから。</span>
+            </span>
+            <span class="starter-go" aria-hidden="true">›</span>
+          </a>
+        </div>
         <h2>ジャンル別</h2>
         <div class="genre-grid" id="genreGrid"></div>
+      </section>
+
+      <!-- はじめての CTF -->
+      <section data-page="guide" hidden>
+        <h1>はじめての CTF</h1>
+        <p class="lead">CTF（Capture The Flag）は、セキュリティの知識を使って隠された「フラグ」を探し出す競技です。答えは <code class="inline">flag{...}</code> のような文字列で、見つけて提出すると得点になります。</p>
+        <h2>基本の進め方</h2>
+        <ol class="workflow" id="guideFlow"></ol>
+        <h2>ジャンル別の最初の一歩</h2>
+        <div class="row"><select id="guideGenre" aria-label="ジャンル"></select></div>
+        <div id="guideSteps"></div>
+        <h2>用語集</h2>
+        <input id="glossSearch" placeholder="用語を検索（例: ハッシュ、XOR）">
+        <dl class="glossary" id="glossList"></dl>
+        <h2>ルールとマナー</h2>
+        <ul class="manners" id="guideManners"></ul>
+      </section>
+
+      <!-- 迷ったら診断 -->
+      <section data-page="identify" hidden>
+        <h1>迷ったら診断</h1>
+        <p class="lead">問題に出てきた文字列を貼るか、ファイルを入れてください。正体を推測して、次にやることと使うツールを提案します。</p>
+        <div class="card">
+          <label for="idIn">文字列</label>
+          <textarea id="idIn" rows="5" placeholder="例: ZmxhZ3t0ZXN0fQ== / 5f4dcc3b5aa765d61d8327deb882cf99 / Uryyb jbeyq / n = ..., e = 3, c = ..."></textarea>
+          <div class="row">
+            <span class="hint">試しに:</span>
+            <button type="button" class="ghost small" data-try="ZmxhZ3t3M2xjMG0zfQ==">Base64</button>
+            <button type="button" class="ghost small" data-try="Gur synt vf ng gur raq bs gur ebnq">シーザー暗号</button>
+            <button type="button" class="ghost small" data-try="5f4dcc3b5aa765d61d8327deb882cf99">ハッシュ</button>
+            <button type="button" class="ghost small" data-try="01100110 01101100 01100001 01100111">2進数</button>
+            <button type="button" class="ghost small" data-try="..-. .-.. .- --.">モールス</button>
+          </div>
+        </div>
+        <label class="dropzone compact" id="idDrop" for="idFile">
+          <input type="file" id="idFile" hidden>
+          <span class="dz-main">ファイルの場合はここにドロップ（ファイル解析に送ります）</span>
+        </label>
+        <div id="idOut" class="id-results"></div>
       </section>
 
       <!-- エンコード / デコード -->
@@ -202,7 +262,7 @@
           <div data-panel="caesar">
             <div class="card">
               <h3>シーザー暗号（全シフト）</h3>
-              <p class="hint">英文らしさのスコアが高い上位3件を強調表示します。</p>
+              <p class="hint">いちばん英文らしい行（とフラグを含む行）を強調表示します。</p>
               <div class="table-wrap"><table class="list" id="caesarTable"></table></div>
             </div>
             <div class="card">

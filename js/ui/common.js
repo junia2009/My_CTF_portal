@@ -119,3 +119,22 @@ export function initTabs(root = document) {
 export function setTable(table, head, rows) {
   table.replaceChildren(h('tr', {}, ...head.map((x) => h('th', {}, x))), ...rows);
 }
+
+// ---------- ツール間のデータ受け渡し ----------
+// 各画面が registerReceiver で「受け取り口」を登録し、sendTo でページ移動と同時にデータを渡す
+const receivers = {};
+export const registerReceiver = (page, fn) => (receivers[page] = fn);
+export function sendTo(page, payload) {
+  if (location.hash.slice(1).split('/')[0] !== page) location.hash = '#' + page;
+  setTimeout(() => receivers[page]?.(payload), 0);
+}
+
+// 入力欄に値を入れて、入力イベントを発生させる（画面の自動更新を動かすため）
+export function fill(id, value) {
+  const el = $(id);
+  el.value = value;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+export const openTab = (name) => document.querySelector(`[data-tab="${name}"]`)?.click();

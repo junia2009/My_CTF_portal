@@ -1,7 +1,7 @@
 // ポータル全体の画面：テーマ / 時計 / 起動演出 / 見出し / ホーム / 基数変換 / 問題メモ / チートシート
 import * as C from '../lib/codecs.js';
 import { GENRES } from '../data/genres.js';
-import { $, h, store, toast, copy, kvRow, debounce } from './common.js';
+import { $, h, store, toast, copy, kvRow, debounce, registerReceiver, fill } from './common.js';
 
 // ---------- テーマ（カラー切替） ----------
 const THEMES = ['cyan', 'crimson', 'emerald'];
@@ -64,7 +64,7 @@ export function initBoot() {
 
 // ---------- 各ページ見出しの英字ラベル ----------
 const PAGE_CODES = {
-  home: 'COMMAND CENTER', codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', classic: 'CLASSIC CIPHER',
+  home: 'COMMAND CENTER', guide: 'BRIEFING', identify: 'TARGET SCANNER', codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', classic: 'CLASSIC CIPHER',
   xor: 'XOR ANALYZER', rsa: 'RSA BREAKER', file: 'FILE FORENSICS', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
   flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL',
 };
@@ -108,6 +108,7 @@ export function renderHome() {
         h('div', { class: 'links' },
           ...g.tools.map((t) => h('a', { href: `#${t}` }, TOOL_NAMES[t])),
           h('a', { href: `#cheatsheet/${g.id}` }, 'チートシート'),
+          h('a', { href: `#guide/${g.id}`, class: 'first-step' }, '最初の一歩'),
         ),
         h('div', { class: 'progress' }, `CLEARED ${gs} / ${gn.length}`),
         h('div', { class: 'bar' }, h('i', { style: `width:${gn.length ? (gs / gn.length) * 100 : 0}%` })),
@@ -130,6 +131,7 @@ export function initBase() {
     }
   };
   $('baseIn').addEventListener('input', debounce(upd));
+  registerReceiver('base', (p) => fill('baseIn', p.text));
   $('baseText').addEventListener('input', () => {
     $('baseTextOut').textContent = $('baseText').value ? C.textToInteger($('baseText').value) : '';
   });
@@ -179,6 +181,13 @@ export function initNotes() {
     toast('保存しました');
   });
   $('noteCancel').addEventListener('click', reset);
+  registerReceiver('notes', (p) => {
+    reset();
+    $('noteFlag').value = p.flag;
+    $('noteStatus').value = 'solved';
+    $('noteTitle').focus();
+    toast('フラグを入れました。問題名を入れて保存してください');
+  });
 
   function edit(n) {
     $('noteId').value = n.id;

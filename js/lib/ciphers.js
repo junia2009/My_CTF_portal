@@ -20,6 +20,14 @@ export function englishScore(s) {
   return score / s.length;
 }
 
+// 英語の文字の出方からのずれ（カイ二乗値 ÷ 文字数）。小さいほど英文らしい（目安: 英文 < 2）
+export function englishChi(text) {
+  const f = letterFrequency(text);
+  const n = f.reduce((a, x) => a + x.count, 0);
+  if (!n) return Infinity;
+  return f.reduce((a, x) => a + (x.count - (x.en / 100) * n) ** 2 / ((x.en / 100) * n), 0) / n;
+}
+
 export function caesarAll(s) {
   const rows = [];
   for (let k = 0; k < 26; k++) {

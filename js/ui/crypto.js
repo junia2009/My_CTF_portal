@@ -3,7 +3,7 @@ import * as C from '../lib/codecs.js';
 import * as X from '../lib/ciphers.js';
 import * as R from '../lib/rsa.js';
 import { flagRegex } from '../lib/magic.js';
-import { $, h, copy, kvRow, debounce, preview, readBytes, keyText, getPrefixes, setTable, fmtSize } from './common.js';
+import { $, h, copy, kvRow, debounce, preview, readBytes, keyText, getPrefixes, setTable, fmtSize, registerReceiver, fill, openTab } from './common.js';
 
 const copyCell = (text, shown = text) => h('td', { class: 'copyable', title: 'クリックでコピー', onclick: () => copy(text) }, shown);
 const isFlag = (s) => flagRegex(getPrefixes()).test(s);
@@ -14,8 +14,9 @@ export function initClassic() {
   let subMap = {};
 
   function caesar(s) {
-    const rows = X.caesarAll(s);
-    const top = [...rows].sort((a, b) => b.score - a.score).slice(0, 3).map((r) => r.shift);
+    const rows = X.caesarAll(s).map((r) => ({ ...r, chi: X.englishChi(r.text) }));
+    const best = rows.reduce((a, b) => (b.chi < a.chi ? b : a));
+    const top = best.chi < 3 ? [best.shift] : [];
     setTable($('caesarTable'), ['シフト', '結果（クリックでコピー）'], rows.map((r) =>
       h('tr', { class: s && (top.includes(r.shift) || isFlag(r.text)) ? 'hl' : '' },
         h('td', { class: 'num' }, `+${r.shift}${r.shift === 13 ? ' ROT13' : ''}`),
@@ -145,6 +146,10 @@ export function initClassic() {
     renderSub();
   }
   input.addEventListener('input', debounce(upd, 200));
+  registerReceiver('classic', (p) => {
+    fill('clIn', p.text);
+    if (p.tab) openTab(p.tab);
+  });
   upd();
 }
 
@@ -240,6 +245,11 @@ export function initXor() {
   $('xorKey').addEventListener('input', debounce(withKey, 150));
   $('xorKeyFmt').addEventListener('change', withKey);
   $('xorCrib').addEventListener('input', debounce(crib, 150));
+  registerReceiver('xor', (p) => {
+    $('xorInFmt').value = p.fmt || 'hex';
+    fill('xorIn', p.text);
+    if (p.tab) openTab(p.tab);
+  });
 }
 
 // ================= RSA =================
@@ -250,6 +260,10 @@ export function initRsa() {
     $('rsaLog').replaceChildren();
     $('rsaOut').replaceChildren();
     $('rsaErr').textContent = '';
+  });
+  registerReceiver('rsa', (p) => {
+    for (const [k, id] of Object.entries(ids)) $(id).value = p[k] ?? (k === 'e' ? '65537' : '');
+    if (p.run) $('rsaRun').click();
   });
   $('rsaRun').addEventListener('click', () => {
     $('rsaErr').textContent = '';

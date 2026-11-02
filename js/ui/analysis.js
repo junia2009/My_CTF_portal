@@ -6,7 +6,7 @@ import { decodeJwt } from '../lib/jwt.js';
 import { findFlags, DEFAULT_FLAG_PATTERN } from '../lib/flag.js';
 import { flagRegex } from '../lib/magic.js';
 import { cidrInfo, convertTimestamp } from '../lib/net.js';
-import { $, h, store, copy, toast, kvRow, debounce, download, fmtSize, hex, getPrefixes, setTable } from './common.js';
+import { $, h, store, copy, toast, kvRow, debounce, download, fmtSize, hex, getPrefixes, setTable, registerReceiver, fill } from './common.js';
 
 // ================= ファイル解析 =================
 export function initFile() {
@@ -192,6 +192,7 @@ export function initFile() {
   });
   $('strFilter').addEventListener('input', debounce(() => bytes && renderStrings(), 200));
   $('strFlagOnly').addEventListener('change', () => bytes && renderStrings());
+  registerReceiver('file', (f) => load(f));
 }
 
 // ================= ハッシュ =================
@@ -204,6 +205,10 @@ export function initHash() {
     $('hashOut').replaceChildren(...Object.entries(res).map(([k, v]) => kvRow(k, v)));
   }
   $('hashIn').addEventListener('input', debounce(upd));
+  registerReceiver('hash', (p) => {
+    if (p.text !== undefined) fill('hashIn', p.text);
+    if (p.id !== undefined) fill('hashId', p.id);
+  });
   $('hashId').addEventListener('input', () => {
     const v = $('hashId').value.trim();
     const hits = identifyHash(v);
@@ -218,6 +223,7 @@ export function initHash() {
 
 // ================= JWT =================
 export function initJwt() {
+  registerReceiver('jwt', (p) => fill('jwtIn', p.text));
   $('jwtIn').addEventListener('input', () => {
     $('jwtErr').textContent = '';
     $('jwtOut').replaceChildren();
@@ -262,6 +268,7 @@ export function initFlag() {
     }
   }
   for (const id of ['flagIn', 'flagPrefix', 'flagPattern']) $(id).addEventListener('input', debounce(upd, 200));
+  registerReceiver('flag', (p) => fill('flagIn', p.text));
 }
 
 // ================= ネットワーク・時刻 =================
@@ -310,6 +317,10 @@ export function initNet() {
     }
   };
   $('tsIn').addEventListener('input', debounce(ts, 150));
+  registerReceiver('net', (p) => {
+    if (p.cidr) fill('cidrIn', p.cidr);
+    if (p.ts) fill('tsIn', p.ts);
+  });
   $('tsNow').addEventListener('click', () => {
     $('tsIn').value = String(Math.floor(Date.now() / 1000));
     ts();

@@ -12,6 +12,7 @@ import { findFlags } from '../js/lib/flag.js';
 import * as F from '../js/lib/file.js';
 import * as R from '../js/lib/rsa.js';
 import { cidrInfo, convertTimestamp } from '../js/lib/net.js';
+import { identify, parseRsaParams } from '../js/lib/identify.js';
 
 let passed = 0;
 const t = async (name, fn) => {
@@ -288,6 +289,36 @@ await t('タイムスタンプ', () => {
   assert.equal(convertTimestamp('1700000000000')[0].utc, '2023-11-14T22:13:20.000Z');
   assert.equal(convertTimestamp('133444736000000000')[0].utc, '2023-11-14T22:13:20.000Z');
   assert.equal(convertTimestamp('2023-11-14T22:13:20Z')[0].unix, 1700000000);
+});
+
+// ---------- identify（迷ったら診断） ----------
+await t('診断: 形式の推定', () => {
+  const top = (s) => { const r = identify(s); return `${r[0].id}:${r[0].title}`; };
+  const cases = [
+    ['ZmxhZ3t0ZXN0X2Jhc2U2NH0=', 'enc:Base64'],
+    ['MZWGCZ33NU2GOMLDL53TA4TLON6Q====', 'enc:Base32'],
+    ['66 6c 61 67', 'enc:16進数（Hex）'],
+    ['01100110 01101100 01100001 01100111', 'enc:2進数'],
+    ['102 108 97 103 123 125', 'enc:10進数の文字コード'],
+    ['..-. .-.. .- --.', 'enc:モールス信号'],
+    ['hello%20world', 'enc:URL エンコード'],
+    ['eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiZ3Vlc3QifQ.abc', 'jwt:'],
+    ['192.168.1.10/24', 'ip:'],
+    ['1700000000', 'time:'],
+    ['the answer is flag{found_it}', 'flag:'],
+  ];
+  for (const [s, want] of cases) assert.ok(top(s).startsWith(want), `${s} → ${top(s)}`);
+  assert.equal(identify('5f4dcc3b5aa765d61d8327deb882cf99')[0].id, 'hash');
+  assert.equal(identify('Uryyb jbeyq guvf vf n frperg zrffntr sbe lbh')[0].id, 'caesar');
+  assert.equal(identify('Wkh dqvzhu lv kdoi zdb wkurxjk wkh pdc')[0].id, 'caesar');
+  assert.equal(identify('This is a secret message for you hello world')[0].id, 'plain');
+  assert.equal(identify('Lxfopv ef rnhr lxfopv ef rnhr gsbxs wd zuttfmwi')[0].id, 'classic');
+  assert.equal(identify('@@##!!')[0].id, 'unknown');
+});
+await t('診断: RSA の値を読み取る', () => {
+  const r = identify('Here are the params:\nn = 0x1234abcd\ne = 3\nc = 987654321\n');
+  assert.equal(r[0].id, 'rsa');
+  assert.deepEqual(parseRsaParams('N: 77, E=7, ct = 5'), { n: '77', e: '7', c: '5' });
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);

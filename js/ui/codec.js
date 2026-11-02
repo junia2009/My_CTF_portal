@@ -3,7 +3,7 @@ import { bytesToHex, bytesToText, isUtf8, printableRatio, b64Encode } from '../l
 import { OPS, getOp, runRecipe } from '../lib/recipe.js';
 import { magic } from '../lib/magic.js';
 import { identifyType, hexdump } from '../lib/file.js';
-import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readBytes, getPrefixes, setTable } from './common.js';
+import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readBytes, getPrefixes, setTable, registerReceiver } from './common.js';
 
 // Magic の手順名 → レシピの操作
 const MAGIC_OPS = {
@@ -191,6 +191,15 @@ export function initCodec() {
         ),
       ),
     ));
+  });
+
+  registerReceiver('codec', (p) => {
+    inFmt.value = 'text';
+    input.value = p.text;
+    recipe = [];
+    save();
+    update();
+    if (p.magic) $('magicRun').click();
   });
 
   update();
