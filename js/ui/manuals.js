@@ -134,7 +134,7 @@ export function initManuals() {
       case 'tip':
       case 'warn': return h('div', { class: `mn-callout ${b.type}` },
         h('span', { class: 'mn-callout-label' }, b.type === 'tip' ? 'TIP' : '注意'),
-        h('div', {}, b.title ? h('b', {}, b.title) : '', h('p', {}, b.text), b.link ? h('a', { class: 'btn ghost small', href: b.link.href }, b.link.label) : ''));
+        h('div', {}, b.title ? h('b', {}, b.title) : '', h('p', {}, b.text), b.link ? h('a', { class: 'btn ghost small', href: b.link.href, ...(/^https?:/.test(b.link.href) ? { target: '_blank', rel: 'noopener' } : {}) }, b.link.label, /^https?:/.test(b.link.href) ? ' ↗' : '') : ''));
       case 'code': return h('div', { class: 'mn-code' },
         h('div', { class: 'mn-code-head' }, h('span', {}, b.title ?? 'コード'), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.code) }, 'コピー')),
         h('pre', {}, b.code));
@@ -150,6 +150,7 @@ export function initManuals() {
         b.input ? h('div', { class: 'mn-input' }, h('code', {}, b.input), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.input) }, 'コピー')) : '',
         b.portal ? h('button', { type: 'button', class: 'ghost', onclick: () => openInPortal(b.portal) }, b.portal.label) : '',
         b.note ? h('span', { class: 'hint' }, b.note) : '');
+      case 'devlab': return devLab();
       case 'answer': return h('details', { class: 'mn-answer' }, h('summary', {}, '答えを見る（自分で解いてから！）'), h('p', {}, b.text));
       default: return '';
     }
@@ -164,6 +165,30 @@ export function initManuals() {
   async function openInPortal({ page, sample, payload }) {
     location.hash = '#' + page;
     await sendSample(page, sample ? SAMPLES[sample] : () => payload);
+  }
+
+  // 開発者ツールの練習：コメント・押せないボタン・Cookie の3つ（ポータルの中だけで完結）
+  function devLab() {
+    const dec = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
+    const COOKIE = 'ctfportal_lab_role';
+    if (!document.cookie.split('; ').some((c) => c.startsWith(COOKIE + '='))) document.cookie = `${COOKIE}=guest; path=/; SameSite=Lax; max-age=2592000`;
+    const out2 = h('output', { class: 'mn-lab-out' }, '');
+    const out3 = h('output', { class: 'mn-lab-out' }, '');
+    const btn = h('button', { type: 'button', class: 'small', disabled: '' }, 'フラグを見る');
+    btn.addEventListener('click', () => (out2.textContent = dec('ZmxhZ3tkMXM0YmwzZF9idXQ3MG59')));
+    const check = h('button', { type: 'button', class: 'ghost small' }, '権限を確認');
+    check.addEventListener('click', () => {
+      const role = document.cookie.split('; ').find((c) => c.startsWith(COOKIE + '='))?.split('=')[1] ?? '（なし）';
+      out3.textContent = role === 'admin' ? `ようこそ管理者さん：${dec('ZmxhZ3tjMDBrMTNfbTBuc3Qzcn0=')}` : `あなたの権限：${role}（admin ならフラグが見られます）`;
+    });
+    const box = h('div', { class: 'mn-lab', 'data-lab': 'devtools' },
+      h('div', { class: 'mn-lab-title' }, 'TRAINING TARGET'),
+      h('div', { class: 'mn-lab-row' }, h('b', {}, '①'), h('span', {}, 'この枠の HTML のどこかに、コメントが隠れています。')),
+      h('div', { class: 'mn-lab-row' }, h('b', {}, '②'), h('span', {}, 'このボタンは押せません……本当に？'), btn, out2),
+      h('div', { class: 'mn-lab-row' }, h('b', {}, '③'), h('span', {}, '管理者だけが見られる情報があります。'), check, out3),
+    );
+    box.insertBefore(document.createComment(` ${dec('ZmxhZ3toMWRkM25fMW5fYzBtbTNudH0=')} `), box.children[1]);
+    return box;
   }
 
   function renderGuide(m) {

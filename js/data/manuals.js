@@ -423,4 +423,284 @@ export const MANUALS = [
       },
     ],
   },
+  {
+    id: 'gdb',
+    name: 'gdb',
+    kana: 'ジーディービー',
+    tagline: 'プログラムを 1 命令ずつ動かしながら、メモリやレジスタの中身をのぞけるデバッガ。読むだけでは分からないときの切り札。',
+    genres: ['REVERSING'],
+    level: '中級',
+    prep: 'Linux なら 1 分（Windows は WSL を用意）',
+    site: 'https://www.sourceware.org/gdb/',
+    siteLabel: '公式サイト',
+    icon: 'binview',
+    chapters: [
+      {
+        id: 'about',
+        title: 'gdb とは',
+        blocks: [
+          { type: 'p', text: 'Linux の定番のデバッガです。プログラムを好きな場所で止めて（ブレークポイント）、そのときのレジスタやメモリの値を見たり、書き換えたりできます。Ghidra のように「読む」解析を静的解析、gdb のように「動かして確かめる」解析を動的解析と呼びます。' },
+          { type: 'list', title: 'こんなときに使う', items: [
+            '処理が複雑で、読むより動かして途中の値を見たほうが早い',
+            '比較する直前の値（正解の文字列など）を、その場で取り出したい',
+            '判定の結果をその場で書き換えて、先の処理を確かめたい',
+          ] },
+          { type: 'warn', text: '動かすのは、大会で配られた問題ファイルだけにしてください。中身の分からないプログラムは、使い捨ての仮想マシンなど、大事なデータのない環境で実行するのが安全です。' },
+        ],
+      },
+      {
+        id: 'install',
+        title: '準備',
+        blocks: [
+          { type: 'steps', items: [
+            { title: 'Linux を用意する', text: 'Linux（Ubuntu など）ならそのまま使えます。Windows は WSL（Windows 上で Linux を動かす機能）を入れて、その中で使うのが手軽です。Mac は制限が多いので、Linux の仮想マシンを使いましょう。' },
+            { title: 'gdb を入れる', text: 'Ubuntu なら「sudo apt install gdb」でインストールできます。' },
+            { title: '拡張を入れる（おすすめ）', text: 'pwndbg や GEF という拡張を入れると、止めるたびにレジスタ・スタック・前後の命令を色付きで自動表示してくれて、格段に見やすくなります。入れ方はそれぞれの GitHub の README に従ってください（どちらか 1 つで十分です）。' },
+          ] },
+          { type: 'code', title: 'インストールと起動の例（Ubuntu / WSL）', code: 'sudo apt install gdb\nchmod +x ./crackme      # 実行できるようにする\ngdb ./crackme' },
+          { type: 'tip', text: '最初に「set disassembly-flavor intel」と打つと、逆アセンブルが Ghidra やポータルと同じ Intel 記法になります。毎回打つのが面倒なら、ホームフォルダの .gdbinit というファイルに書いておきます。' },
+        ],
+      },
+      {
+        id: 'basic',
+        title: '基本の操作',
+        blocks: [
+          { type: 'keys', copy: true, items: [
+            ['run', '実行する（r と略せる）。入力をファイルから渡すなら run < input.txt'],
+            ['break main', 'main 関数の先頭で止める（b main）。アドレスなら break *0x401136'],
+            ['continue', '次のブレークポイントまで進める（c）'],
+            ['nexti', '1 命令進める。関数呼び出しは中に入らず飛ばす（ni）'],
+            ['stepi', '1 命令進める。関数呼び出しの中に入る（si）'],
+            ['finish', '今の関数が終わって、呼び出し元に戻るまで進める'],
+            ['info registers', 'レジスタの値を一覧（i r）。1 つなら p $rax'],
+            ['x/s $rdi', 'レジスタが指す先を文字列として表示'],
+            ['x/32xb $rsp', 'メモリを 16 進で 32 バイト表示（b=1 バイト、w=4、g=8 バイト単位）'],
+            ['disassemble main', '関数を逆アセンブルする'],
+            ['info functions', '関数の一覧（名前で絞るなら info functions check）'],
+            ['bt', '呼び出しの履歴（どの関数から呼ばれたか）'],
+            ['info breakpoints', 'ブレークポイントの一覧。消すなら delete 番号'],
+            ['set $rax = 1', 'レジスタの値を書き換える'],
+            ['quit', '終了する（q）'],
+          ] },
+          { type: 'tip', text: '何も入力せずに Enter を押すと、直前のコマンド（ni など）をもう一度実行できます。1 命令ずつ進めるときに便利です。' },
+        ],
+      },
+      {
+        id: 'flow',
+        title: 'CTF の定番の使い方',
+        blocks: [
+          { type: 'steps', items: [
+            { title: '比較の直前で止めて、正解をのぞく', text: '入力を strcmp や memcmp で正解と比べている問題なら、「break strcmp」で止めて「x/s $rdi」「x/s $rsi」と打つと、比べている 2 つの文字列（入力と正解）がそのまま見えます。x86-64 の Linux では、関数の 1 番目の引数が rdi、2 番目が rsi に入ります。' },
+            { title: '判定の結果を書き換えて先へ進む', text: '判定する関数（例：check）で止め、finish で戻ったところで「set $rax = 1」と打ってから continue すると、「正解」の側へ進みます。関数の戻り値は rax に入るためです。' },
+            { title: '埋め込まれたデータを取り出す', text: '関数名が残っていれば「x/27xb &enc」のように、配列を名前で指定して中身を表示できます。名前が無ければ、Ghidra などで調べたアドレスを使います。' },
+            { title: 'デバッガ対策を外す', text: 'ptrace でデバッガを検出して終了する問題では、「catch syscall ptrace」で ptrace の呼び出しで止め、戻ったところで rax を 0（成功）に書き換えると先へ進めます。' },
+          ] },
+          { type: 'tip', title: 'アドレスが Ghidra やポータルと違うとき', text: 'PIE（位置独立）の実行ファイルは、gdb の中では 0x555555554000 から読み込まれます（gdb は既定でアドレスのランダム化を止めているため、毎回同じ）。ポータルの 0x11e9 は 0x5555555551e9、Ghidra の 0x1011e9 も同じ場所です。動かす前に止めたいときは、starti で最初の命令で止めてからブレークポイントを置きます。' },
+        ],
+      },
+      {
+        id: 'trouble',
+        title: 'つまずきやすいところ',
+        blocks: [
+          { type: 'faq', items: [
+            ['「No symbol table is loaded」と出る', '関数名などの情報が消されている（strip 済み）だけで、問題なく使えます。名前の代わりにアドレスで break *0x… と指定します。'],
+            ['ブレークポイントを置いたのに止まらない', 'PIE の実行ファイルで、動かす前のアドレス（0x11e9 など）を指定していないか確認します。関数名で指定するか、starti で止めてから 0x5555… のアドレスで置き直しましょう。'],
+            ['入力を求められて先へ進まない', '画面で入力するか、run < input.txt のようにファイルから渡します。改行を含めないなら printf "答え" > input.txt で作ります。'],
+            ['表示が見づらい', 'pwndbg か GEF を入れましょう。止めるたびに必要な情報がまとめて表示されます。'],
+            ['Permission denied で実行できない', '実行の権限がありません。chmod +x ファイル名 で付けます。'],
+          ] },
+        ],
+      },
+      {
+        id: 'practice',
+        title: '練習：判定を書き換えて「正解」を出す',
+        blocks: [
+          { type: 'p', text: 'Ghidra のガイドと同じ練習用クラックミーを、今度は動かして解きます。' },
+          { type: 'practice', download: { label: '練習用クラックミーをダウンロード', sample: 'rev', filename: 'crackme' }, note: 'Linux（または WSL）で chmod +x crackme してから使います' },
+          { type: 'code', title: '入力するコマンド', code: 'gdb ./crackme\nset disassembly-flavor intel\nbreak check\nrun\n# PASSWORD> と出たら、適当な文字を入れて Enter\nfinish\nset $rax = 1\ncontinue\n# → Correct! That is the flag. と表示される\nx/27xb &enc\n# → 正解と比べている配列の中身' },
+          { type: 'answer', text: '「set $rax = 1」で check の結果を「正解」に書き換えると、どんな入力でも Correct! と表示されます。ただしこの問題ではフラグそのものは表示されないので、x/27xb &enc で取り出した配列を 0x37 で XOR して flag{r3v3rs1ng_w1th_p4ll4s} を得ます（ポータルの XOR ツールでも計算できます）。' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'devtools',
+    name: 'ブラウザの開発者ツール',
+    kana: 'DevTools',
+    tagline: 'Chrome / Edge / Firefox に最初から入っている調査道具。Web ページの隠れた HTML・通信・Cookie をその場で見て、書き換えられる。WEB 問題の第一歩。',
+    genres: ['WEB'],
+    level: '初級',
+    prep: '不要（ブラウザに入っている）',
+    site: 'https://developer.chrome.com/docs/devtools',
+    siteLabel: 'Chrome DevTools の公式ドキュメント',
+    icon: 'devtools',
+    chapters: [
+      {
+        id: 'about',
+        title: '開発者ツールとは',
+        blocks: [
+          { type: 'p', text: 'Web ページを作る人のための道具で、Chrome・Edge・Firefox などに最初から入っています。CTF の WEB 問題では、ページに隠されたヒント、サーバーとのやり取り、ログイン状態を表す Cookie などを調べるのに使います。' },
+          { type: 'steps', items: [
+            { title: '開く', text: 'F12 キー、または Ctrl + Shift + I（Mac は Cmd + Option + I）。ページの上で右クリック → 「検証」でも開けます。' },
+            { title: 'ソースを表示する', text: 'Ctrl + U（Mac は Cmd + Option + U）で、サーバーから届いたままの HTML を別のタブで表示します。コメントに書かれたヒントは、まずここで探します。' },
+          ] },
+          { type: 'warn', text: '調べたり書き換えたりしてよいのは、大会で指定されたサイトだけです。開発者ツールで変えられるのは自分のブラウザの中だけですが、それを使って他人のサイトに不正にアクセスするのは違法です。' },
+        ],
+      },
+      {
+        id: 'elements',
+        title: 'Elements：隠れた HTML を見る',
+        blocks: [
+          { type: 'p', text: 'ページの HTML を木の形で表示します。画面に見えていない要素や、コメントもここに出ます。' },
+          { type: 'list', items: [
+            '<!-- … --> のコメントに、開発者のメモやヒント（ときにはフラグ）が残っていることがある',
+            'display: none や hidden で隠された要素：スタイルのチェックを外すと表示される',
+            '押せないボタン（disabled）：属性をダブルクリックして消すと押せるようになる',
+            '<input type="hidden"> の値：フォームと一緒に送られる値（ユーザーの権限など）が書かれていることがある',
+          ] },
+          { type: 'tip', text: '左上の矢印のボタン（要素を選択）を押してからページをクリックすると、その部分の HTML へ一気に飛べます。Ctrl + F で HTML の中を検索することもできます。' },
+        ],
+      },
+      {
+        id: 'console',
+        title: 'Console：JavaScript を動かす',
+        blocks: [
+          { type: 'p', text: 'その場で JavaScript を実行できる欄です。ページの中の変数を見たり、関数を呼び出したりできます。' },
+          { type: 'keys', copy: true, items: [
+            ['document.cookie', 'このページの Cookie を表示'],
+            ['localStorage', 'ブラウザに保存されたデータを表示'],
+            ["atob('ZmxhZ3t...')", 'Base64 をデコード（エンコードは btoa）'],
+            ["document.querySelectorAll('[hidden]')", '隠された要素を一覧'],
+          ] },
+          { type: 'warn', text: '「ここにコードを貼って」と言われても、意味の分からないコードを貼り付けて実行しないでください。乗っ取りの手口として使われます。Chrome では、初めて貼り付けるときに確認の入力を求められます。' },
+        ],
+      },
+      {
+        id: 'sources',
+        title: 'Sources：JavaScript を読む',
+        blocks: [
+          { type: 'p', text: 'ページが読み込んだ JavaScript のファイルを一覧・表示します。ログインの判定や、フラグを組み立てる処理がブラウザ側に書かれていることがあります。' },
+          { type: 'list', items: [
+            '1 行に詰められた（圧縮された）コードは、下の { } ボタン（Pretty print）で読みやすく整形できる',
+            'Ctrl + Shift + F（Mac は Cmd + Option + F）で、全部のファイルから文字列を検索できる（flag・password・admin など）',
+            '行番号をクリックするとブレークポイントになり、その行で止めて変数の値を確かめられる',
+          ] },
+        ],
+      },
+      {
+        id: 'network',
+        title: 'Network：通信を見る',
+        blocks: [
+          { type: 'p', text: 'ページが裏で行っている通信（HTML・画像・API へのリクエストなど）の一覧です。開いた状態でページを再読み込みすると記録されます。' },
+          { type: 'list', items: [
+            '1 行をクリックすると、Headers（送った値・届いた値）、Payload（送ったデータ）、Response（届いた中身）が見られる',
+            'Preserve log にチェックを入れると、ページを移動しても記録が消えない（ログイン後にリダイレクトされる場合などに）',
+            'リクエストを右クリック → Copy → Copy as cURL で、同じリクエストをコマンドで送り直せる形にコピーできる',
+            'Firefox は、リクエストを右クリック → Edit and Resend で、値を変えて送り直せる',
+          ] },
+          { type: 'tip', text: 'レスポンスのヘッダに X-Flag のような独自の項目が付いていたり、画面には出ない JSON の中にヒントが入っていたりします。' },
+        ],
+      },
+      {
+        id: 'application',
+        title: 'Application：Cookie と保存データ',
+        blocks: [
+          { type: 'p', text: 'Chrome / Edge は Application タブ、Firefox は Storage タブで、Cookie・localStorage・sessionStorage を一覧・編集できます。' },
+          { type: 'list', items: [
+            'Cookie の値をダブルクリックして書き換えられる（例：role=user を role=admin に）。書き換えたらページを再読み込み',
+            'eyJ で始まる値は JWT。ポータルの JWT デコードで中身を確認できる',
+            'Base64 らしい値は、ポータルのエンコード / デコードで戻してみる',
+          ] },
+          { type: 'tip', text: 'サーバーが Cookie の値を信用しすぎていると、書き換えるだけで権限が変わってしまうことがあります。CONFIG / DEFENSE の問題では、逆に「こうならないための設定」を問われることもあります。', link: { label: 'JWT デコードを開く', href: '#jwt' } },
+        ],
+      },
+      {
+        id: 'practice',
+        title: '練習：このページで試してみる',
+        blocks: [
+          { type: 'p', text: '下の枠は、開発者ツールの練習用の小さな「問題」です。3 つのフラグを探してみましょう（このポータルの中だけで完結していて、外部には何も送りません）。' },
+          { type: 'devlab' },
+          { type: 'answer', text: '① Elements で枠の中の HTML を開くと、コメント <!-- flag{h1dd3n_1n_c0mm3nt} --> があります。② 「フラグを見る」ボタンの disabled 属性を消すと押せるようになり、flag{d1s4bl3d_but70n} が表示されます。③ Application（Firefox は Storage）の Cookie で ctfportal_lab_role の値を guest から admin に書き換えてから「権限を確認」を押すと、flag{c00k13_m0nst3r} が表示されます。' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'burp',
+    name: 'Burp Suite',
+    kana: 'バープスイート',
+    tagline: 'ブラウザとサーバーの間に入り、通信を止めて書き換えてから送れるツール。WEB 問題で「送る値を変えたらどうなるか」を試すための定番。',
+    genres: ['WEB'],
+    level: '中級',
+    prep: 'インストール 10 分（無料の Community Edition）',
+    site: 'https://portswigger.net/burp/communitydownload',
+    siteLabel: '公式のダウンロードページ（Community Edition）',
+    icon: 'proxy',
+    chapters: [
+      {
+        id: 'about',
+        title: 'Burp Suite とは',
+        blocks: [
+          { type: 'p', text: 'ブラウザとサーバーの間の「中継役（プロキシ）」として動き、ブラウザが送るリクエストをいったん止めて、中身を書き換えてからサーバーへ送れるツールです。無料の Community Edition で CTF には十分です。' },
+          { type: 'list', title: 'こんなときに使う', items: [
+            'フォームで選べない値（価格・ユーザー ID・権限など）を送ってみたい',
+            '同じリクエストを、値を少しずつ変えて何度も送りたい',
+            'ブラウザの画面では見えない通信の細部を確認したい',
+          ] },
+          { type: 'tip', text: 'まずはブラウザの開発者ツールで十分なことも多いです。値を書き換えて送り直す作業が増えてきたら Burp Suite の出番です。', link: { label: '開発者ツールのガイドへ', href: '#manuals/devtools' } },
+          { type: 'warn', text: '通信を書き換えて送ってよいのは、大会で指定されたサイトだけです。また、大量のリクエストを自動で送る機能（Intruder など）は、大会のルールで禁止されていることがよくあります。必ずルールを確認してください。' },
+        ],
+      },
+      {
+        id: 'install',
+        title: '準備と起動',
+        blocks: [
+          { type: 'steps', items: [
+            { title: 'ダウンロードしてインストール', text: '公式サイトから Burp Suite Community Edition の、自分の OS 用のインストーラーをダウンロードして実行します。動作に必要な Java も一緒に入ります。' },
+            { title: '起動する', text: '起動すると、プロジェクトの種類を聞かれます。Community Edition では「Temporary project」→「Use Burp defaults」→ Start Burp で始めます。' },
+            { title: '専用のブラウザを開く', text: 'Proxy タブ → Intercept の「Open browser」で、Burp につながった専用のブラウザ（Chromium）が開きます。ブラウザの設定や証明書の準備が要らないので、これを使うのがいちばん簡単です。' },
+          ] },
+          { type: 'tip', text: '普段のブラウザを使う場合は、プロキシの設定（127.0.0.1 の 8080 番）と、Burp の証明書の取り込みが必要です。慣れないうちは専用のブラウザを使いましょう。' },
+        ],
+      },
+      {
+        id: 'proxy',
+        title: 'Proxy：通信を止めて書き換える',
+        blocks: [
+          { type: 'steps', items: [
+            { title: '止める準備', text: 'Proxy → Intercept で「Intercept is on」にします。この状態で専用のブラウザから操作すると、送る前のリクエストが Burp で止まります。' },
+            { title: '書き換える', text: '止まったリクエストの中身（URL・ヘッダ・本文）を、その場で直接書き換えられます。例えば price=1000 を price=1 に、role=user を role=admin に。' },
+            { title: '送る・捨てる', text: '「Forward」で書き換えた内容をサーバーへ送ります。「Drop」でそのリクエストを捨てます。全部止まると不便なので、使わないときは Intercept を off にします。' },
+            { title: '履歴を見る', text: 'Proxy → HTTP history に、専用のブラウザが行った通信がすべて記録されます。止めていない通信も、あとから確認できます。' },
+          ] },
+        ],
+      },
+      {
+        id: 'repeater',
+        title: 'Repeater：何度も送り直す',
+        blocks: [
+          { type: 'p', text: 'CTF でいちばん使う機能です。1 つのリクエストを、値を変えながら何度でも手で送り直せます。' },
+          { type: 'steps', items: [
+            { title: 'Repeater に送る', text: 'HTTP history や Intercept のリクエストを右クリック → Send to Repeater（Ctrl + R）。' },
+            { title: '書き換えて送る', text: 'Repeater タブで左側のリクエストを書き換え、Send を押すと、右側にサーバーの応答が表示されます。' },
+            { title: '比べる', text: '値を変えて応答がどう変わるかを見ます（エラーメッセージの違い、表示されるデータの違いなど）。タブを複製すれば、複数の版を並べて試せます。' },
+          ] },
+          { type: 'tip', text: 'Decoder タブでは Base64 や URL エンコードの変換、Comparer タブでは 2 つの応答の違いを確認できます。ポータルのエンコード / デコードや差分比較でも同じことができます。' },
+        ],
+      },
+      {
+        id: 'trouble',
+        title: 'つまずきやすいところ',
+        blocks: [
+          { type: 'faq', items: [
+            ['ページが読み込まれず、くるくる回ったまま', 'Intercept が on で、リクエストが Burp で止まっています。Forward で送るか、Intercept を off にします。'],
+            ['HTTPS のサイトで「保護されていない通信」と出る', '普段のブラウザを使っていて、Burp の証明書が入っていません。Open browser で開く専用のブラウザを使うのが簡単です。'],
+            ['関係ないサイトの通信が大量に出る', 'Target → Scope に大会のサイトを登録し、HTTP history の絞り込みで「スコープ内だけ」を表示します。'],
+            ['Intruder が遅い', 'Community Edition では速度が制限されています。また、総当たりのような大量送信はルールで禁止されていることが多いので、まずルールを確認しましょう。'],
+          ] },
+          { type: 'tip', text: '練習には、Burp Suite の開発元が無料で公開している学習サイト「Web Security Academy」の演習（Lab）が使えます。自分専用の練習用サイトが用意されるので、安心して試せます。', link: { label: 'Web Security Academy を開く', href: 'https://portswigger.net/web-security' } },
+        ],
+      },
+    ],
+  },
 ];
