@@ -407,7 +407,7 @@ export function initPallas() {
   new MutationObserver(() => {
     const t = document.documentElement.dataset.theme;
     if (!booting && bubble.hidden && P.LINES.theme[t] && Math.random() < 0.6) say(P.LINES.theme[t], { autoClose: 2500 });
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-mode'] });
 
   // ================= 起動 =================
   if (state.hidden) {
@@ -452,7 +452,7 @@ export function initPallas() {
       stage.classList.add('ready');
       const accent = () => drone.setAccent(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#36e6ff');
       accent();
-      new MutationObserver(accent).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      new MutationObserver(accent).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-mode'] });
       window.addEventListener('pointermove', (ev) => {
         const s = size();
         drone.lookAt((ev.clientX - (pos.x + s / 2)) / 500, -(ev.clientY - (pos.y + s / 2)) / 500);
