@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTF Portal</title>
+  <meta name="description" content="CTF競技用のツールをまとめたポータル。ブラウザ内だけで動作します。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home">CTF<span>Portal</span></a>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="ライト / ダーク切替">ライト / ダーク</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="nav">
+      <a href="#home" data-route="home">ホーム</a>
+      <div class="nav-group">変換</div>
+      <a href="#codec" data-route="codec">エンコード / デコード</a>
+      <a href="#base" data-route="base">基数変換</a>
+      <div class="nav-group">暗号</div>
+      <a href="#classic" data-route="classic">古典暗号</a>
+      <a href="#xor" data-route="xor">XOR</a>
+      <div class="nav-group">ハッシュ・データ</div>
+      <a href="#hash" data-route="hash">ハッシュ</a>
+      <a href="#jwt" data-route="jwt">JWT デコード</a>
+      <a href="#flag" data-route="flag">フラグ検索</a>
+      <div class="nav-group">競技の補助</div>
+      <a href="#notes" data-route="notes">問題メモ・フラグ記録</a>
+      <a href="#cheatsheet" data-route="cheatsheet">チートシート</a>
+    </nav>
+
+    <main id="main">
+      <!-- ホーム -->
+      <section data-page="home">
+        <h1>CTF Portal</h1>
+        <p class="lead">競技でよく使う変換・解析ツールをまとめています。入力した内容はすべてブラウザ内で処理され、外部には送信されません。</p>
+        <div class="stats" id="homeStats"></div>
+        <h2>ジャンル別</h2>
+        <div class="genre-grid" id="genreGrid"></div>
+      </section>
+
+      <!-- エンコード / デコード -->
+      <section data-page="codec" hidden>
+        <h1>エンコード / デコード</h1>
+        <div class="card">
+          <label for="codecIn">入力</label>
+          <textarea id="codecIn" rows="5" placeholder="変換したい文字列"></textarea>
+          <h3>ワンクリック変換</h3>
+          <div class="btn-grid" id="codecQuick"></div>
+        </div>
+        <div class="card">
+          <h3>レシピ（変換を順番につなげる）</h3>
+          <div class="row">
+            <select id="recipeOp"></select>
+            <button type="button" id="recipeAdd">追加</button>
+            <button type="button" id="recipeClear" class="ghost">クリア</button>
+          </div>
+          <ol class="recipe" id="recipeList"></ol>
+          <p class="hint">レシピが空のときは、ワンクリック変換の結果が出力に表示されます。</p>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <label for="codecOut">出力</label>
+            <div class="row">
+              <button type="button" class="ghost" id="codecSwap">出力を入力へ</button>
+              <button type="button" class="ghost" data-copy="codecOut">コピー</button>
+            </div>
+          </div>
+          <textarea id="codecOut" rows="5" readonly></textarea>
+          <p class="error" id="codecErr"></p>
+        </div>
+      </section>
+
+      <!-- 基数変換 -->
+      <section data-page="base" hidden>
+        <h1>基数変換</h1>
+        <div class="card">
+          <label for="baseIn">整数（10進 / 0x16進 / 0b2進 / 0o8進）</label>
+          <input id="baseIn" placeholder="例: 0x666c6167">
+          <p class="error" id="baseErr"></p>
+          <table class="kv" id="baseOut"></table>
+        </div>
+        <div class="card">
+          <label for="baseText">文字列 → 整数（RSA の m などに）</label>
+          <input id="baseText" placeholder="例: flag">
+          <div class="mono-out" id="baseTextOut"></div>
+        </div>
+      </section>
+
+      <!-- 古典暗号 -->
+      <section data-page="classic" hidden>
+        <h1>古典暗号</h1>
+        <div class="card">
+          <label for="clIn">暗号文 / 平文</label>
+          <textarea id="clIn" rows="4" placeholder="例: Gur dhvpx oebja sbk"></textarea>
+        </div>
+        <div class="card">
+          <h3>シーザー暗号（全シフト）</h3>
+          <p class="hint">英文らしさのスコアが高い順に色が付きます。</p>
+          <div class="table-wrap"><table class="list" id="caesarTable"></table></div>
+        </div>
+        <div class="card">
+          <h3>ROT47 / Atbash</h3>
+          <table class="kv" id="clMisc"></table>
+        </div>
+        <div class="card">
+          <h3>Vigenère 暗号</h3>
+          <div class="row">
+            <input id="vigKey" placeholder="鍵（例: KEY）">
+            <button type="button" id="vigEnc">暗号化</button>
+            <button type="button" id="vigDec">復号</button>
+          </div>
+          <div class="mono-out" id="vigOut"></div>
+        </div>
+        <div class="card">
+          <h3>文字の出現頻度</h3>
+          <p class="hint">青: 入力の頻度 / 灰: 英語の一般的な頻度。分布の形が英語に似ていれば単一換字式の可能性があります。</p>
+          <div class="freq" id="freqChart"></div>
+        </div>
+      </section>
+
+      <!-- XOR -->
+      <section data-page="xor" hidden>
+        <h1>XOR</h1>
+        <div class="card">
+          <div class="row">
+            <label for="xorIn">データ</label>
+            <select id="xorInFmt">
+              <option value="hex">Hex</option>
+              <option value="text">テキスト</option>
+              <option value="b64">Base64</option>
+            </select>
+          </div>
+          <textarea id="xorIn" rows="4" placeholder="例: 3c363b3d21"></textarea>
+          <div class="row">
+            <label for="xorKey">鍵</label>
+            <select id="xorKeyFmt">
+              <option value="text">テキスト</option>
+              <option value="hex">Hex</option>
+            </select>
+            <input id="xorKey" placeholder="例: key">
+          </div>
+          <p class="error" id="xorErr"></p>
+          <table class="kv" id="xorOut"></table>
+        </div>
+        <div class="card">
+          <h3>1バイト鍵の総当たり（上位20件）</h3>
+          <div class="table-wrap"><table class="list" id="xorBrute"></table></div>
+        </div>
+      </section>
+
+      <!-- ハッシュ -->
+      <section data-page="hash" hidden>
+        <h1>ハッシュ</h1>
+        <div class="card">
+          <label for="hashIn">ハッシュ値を計算する文字列</label>
+          <textarea id="hashIn" rows="3"></textarea>
+          <table class="kv" id="hashOut"></table>
+        </div>
+        <div class="card">
+          <label for="hashId">ハッシュ形式の推定</label>
+          <input id="hashId" placeholder="ハッシュ値を貼り付け">
+          <div id="hashIdOut"></div>
+        </div>
+      </section>
+
+      <!-- JWT -->
+      <section data-page="jwt" hidden>
+        <h1>JWT デコード</h1>
+        <div class="card">
+          <label for="jwtIn">JWT</label>
+          <textarea id="jwtIn" rows="4" placeholder="eyJhbGciOi..."></textarea>
+          <p class="hint">中身を表示するだけで、署名の検証は行いません。</p>
+          <p class="error" id="jwtErr"></p>
+          <div id="jwtOut"></div>
+        </div>
+      </section>
+
+      <!-- フラグ検索 -->
+      <section data-page="flag" hidden>
+        <h1>フラグ検索</h1>
+        <div class="card">
+          <label for="flagIn">調べたいテキスト（ログ、デコード結果など）</label>
+          <textarea id="flagIn" rows="8"></textarea>
+          <div class="row">
+            <div class="grow">
+              <label for="flagPrefix">フラグの接頭辞（カンマ区切り）</label>
+              <input id="flagPrefix" value="flag,ctf">
+            </div>
+          </div>
+          <details>
+            <summary>正規表現を変更する</summary>
+            <input id="flagPattern">
+          </details>
+          <p class="hint">そのまま・Base64/32・Hex・2進/10進・URL・HTML・Unicode・ROT47・Atbash・反転・シーザー全シフトを試します。文字をずらす系の変換は、接頭辞が一致したものだけ表示します。</p>
+          <p class="error" id="flagErr"></p>
+          <div class="table-wrap"><table class="list" id="flagOut"></table></div>
+        </div>
+      </section>
+
+      <!-- 問題メモ -->
+      <section data-page="notes" hidden>
+        <h1>問題メモ・フラグ記録</h1>
+        <p class="hint">このブラウザ内にだけ保存されます。別の端末に移すときはエクスポートを使ってください。</p>
+        <div class="card">
+          <h3 id="noteFormTitle">問題を追加</h3>
+          <form id="noteForm">
+            <input type="hidden" id="noteId">
+            <div class="form-grid">
+              <div><label for="noteTitle">問題名</label><input id="noteTitle" required></div>
+              <div><label for="noteGenre">ジャンル</label><select id="noteGenre"></select></div>
+              <div><label for="notePoints">配点</label><input id="notePoints" type="number" min="0"></div>
+              <div><label for="noteStatus">状態</label>
+                <select id="noteStatus">
+                  <option value="todo">未着手</option>
+                  <option value="doing">挑戦中</option>
+                  <option value="solved">解決</option>
+                </select>
+              </div>
+            </div>
+            <label for="noteFlag">フラグ</label>
+            <input id="noteFlag" class="mono">
+            <label for="noteMemo">メモ</label>
+            <textarea id="noteMemo" rows="4"></textarea>
+            <div class="row">
+              <button type="submit">保存</button>
+              <button type="button" class="ghost" id="noteCancel">キャンセル</button>
+            </div>
+          </form>
+        </div>
+        <div class="row between">
+          <div class="row">
+            <select id="noteFilter"></select>
+            <select id="noteStatusFilter">
+              <option value="">すべての状態</option>
+              <option value="todo">未着手</option>
+              <option value="doing">挑戦中</option>
+              <option value="solved">解決</option>
+            </select>
+          </div>
+          <div class="row">
+            <button type="button" class="ghost" id="noteExport">エクスポート</button>
+            <label class="btn ghost" for="noteImport">インポート</label>
+            <input type="file" id="noteImport" accept="application/json" hidden>
+          </div>
+        </div>
+        <div id="noteList" class="note-list"></div>
+      </section>
+
+      <!-- チートシート -->
+      <section data-page="cheatsheet" hidden>
+        <h1>チートシート</h1>
+        <div class="row">
+          <select id="csGenre"></select>
+          <input id="csSearch" class="grow" placeholder="キーワードで絞り込み">
+        </div>
+        <p class="hint">コマンドをクリックするとコピーできます。対象への操作は大会ルールで許可された範囲で行ってください。</p>
+        <div id="csList"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
