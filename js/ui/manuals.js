@@ -12,50 +12,100 @@ const s = (tag, attrs = {}, ...kids) => {
   return e;
 };
 
-// Ghidra の CodeBrowser の配置を表した見取り図（実際の画面を簡略化したオリジナルの図）
-function codeBrowserDiagram() {
-  const W = 720, H = 400;
-  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, class: 'mn-diagram', role: 'img', 'aria-label': 'Ghidra の解析画面の配置図' });
-  const panel = (x, y, w, hh, no, title, lines, cls = '') => {
-    const g = s('g', { class: `mn-pane ${cls}` });
-    g.append(s('rect', { x, y, width: w, height: hh, rx: 3, class: 'mn-box' }));
-    g.append(s('rect', { x, y, width: w, height: 22, rx: 3, class: 'mn-bar' }));
-    const t = s('text', { x: x + 30, y: y + 15, class: 'mn-title' });
-    t.textContent = title;
-    g.append(t);
-    // 中身の行（文字の代わりに線で表す）
-    for (let i = 0; i < lines; i++) {
-      const len = (0.35 + ((i * 37) % 50) / 100) * (w - 24);
-      g.append(s('rect', { x: x + 12 + (i % 3 === 1 ? 14 : 0), y: y + 34 + i * 14, width: Math.max(24, len - (i % 3 === 1 ? 14 : 0)), height: 5, rx: 2, class: 'mn-line' }));
-    }
-    const badge = s('g', { class: 'mn-no' });
-    badge.append(s('circle', { cx: x + 15, cy: y + 11, r: 9 }));
-    const n = s('text', { x: x + 15, y: y + 15, 'text-anchor': 'middle' });
-    n.textContent = no;
-    badge.append(n);
-    g.append(badge);
-    return g;
-  };
+// 画面の見取り図（実際の画面を簡略化したオリジナルの図）。ツールごとに配置だけを変える
+function diagramFrame(W, H, label, menuText) {
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, class: 'mn-diagram', role: 'img', 'aria-label': label });
   svg.append(s('rect', { x: 0.5, y: 0.5, width: W - 1, height: H - 1, rx: 4, class: 'mn-frame' }));
-  // メニューとツールバー
-  const menu = s('text', { x: 14, y: 20, class: 'mn-menu' });
-  menu.textContent = 'File   Edit   Analysis   Graph   Navigation   Search   Select   Tools   Window   Help';
-  svg.append(menu, s('line', { x1: 0, y1: 30, x2: W, y2: 30, class: 'mn-sep' }));
-  svg.append(
-    panel(10, 40, 170, 92, '④', 'Program Trees', 4, 'dim'),
-    panel(10, 140, 170, 140, '①', 'Symbol Tree', 7),
-    panel(10, 288, 170, 102, '④', 'Data Type Manager', 5, 'dim'),
-    panel(190, 40, 270, 280, '②', 'Listing', 17),
-    panel(470, 40, 240, 280, '③', 'Decompile', 17, 'hot'),
-    panel(190, 328, 520, 62, '⑤', 'Console', 2, 'dim'),
-  );
-  // Listing と Decompile の連動を示す矢印
-  svg.append(s('path', { d: 'M 400 200 C 430 186, 470 186, 500 200', class: 'mn-link' }));
-  const sync = s('text', { x: 450, y: 180, 'text-anchor': 'middle', class: 'mn-note' });
-  sync.textContent = '連動';
-  svg.append(sync);
+  if (menuText) {
+    const menu = s('text', { x: 14, y: 20, class: 'mn-menu' });
+    menu.textContent = menuText;
+    svg.append(menu, s('line', { x1: 0, y1: 30, x2: W, y2: 30, class: 'mn-sep' }));
+  }
   return svg;
 }
+function pane(x, y, w, hh, no, title, lines, cls = '') {
+  const g = s('g', { class: `mn-pane ${cls}` });
+  g.append(s('rect', { x, y, width: w, height: hh, rx: 3, class: 'mn-box' }));
+  g.append(s('rect', { x, y, width: w, height: 22, rx: 3, class: 'mn-bar' }));
+  const t = s('text', { x: x + 30, y: y + 15, class: 'mn-title' });
+  t.textContent = title;
+  g.append(t);
+  // 中身の行（文字の代わりに線で表す）
+  for (let i = 0; i < lines && 34 + i * 14 < hh - 4; i++) {
+    const len = (0.35 + ((i * 37) % 50) / 100) * (w - 24);
+    g.append(s('rect', { x: x + 12 + (i % 3 === 1 ? 14 : 0), y: y + 34 + i * 14, width: Math.max(24, len - (i % 3 === 1 ? 14 : 0)), height: 5, rx: 2, class: 'mn-line' }));
+  }
+  const badge = s('g', { class: 'mn-no' });
+  badge.append(s('circle', { cx: x + 15, cy: y + 11, r: 9 }));
+  const n = s('text', { x: x + 15, y: y + 15, 'text-anchor': 'middle' });
+  n.textContent = no;
+  badge.append(n);
+  g.append(badge);
+  return g;
+}
+const note = (x, y, text, anchor = 'middle') => {
+  const t = s('text', { x, y, 'text-anchor': anchor, class: 'mn-note' });
+  t.textContent = text;
+  return t;
+};
+
+const DIAGRAMS = {
+  // Ghidra の解析画面（CodeBrowser）
+  ghidra() {
+    const svg = diagramFrame(720, 400, 'Ghidra の解析画面の配置図', 'File   Edit   Analysis   Graph   Navigation   Search   Select   Tools   Window   Help');
+    svg.append(
+      pane(10, 40, 170, 92, '④', 'Program Trees', 4, 'dim'),
+      pane(10, 140, 170, 140, '①', 'Symbol Tree', 7),
+      pane(10, 288, 170, 102, '④', 'Data Type Manager', 5, 'dim'),
+      pane(190, 40, 270, 280, '②', 'Listing', 17),
+      pane(470, 40, 240, 280, '③', 'Decompile', 17, 'hot'),
+      pane(190, 328, 520, 62, '⑤', 'Console', 2, 'dim'),
+      s('path', { d: 'M 400 200 C 430 186, 470 186, 500 200', class: 'mn-link' }),
+      note(450, 180, '連動'),
+    );
+    return svg;
+  },
+  // Wireshark のメイン画面
+  wireshark() {
+    const svg = diagramFrame(720, 420, 'Wireshark の画面の配置図', 'File   Edit   View   Go   Capture   Analyze   Statistics   Telephony   Wireless   Tools   Help');
+    // 表示フィルタの入力欄
+    const g = s('g', { class: 'mn-pane hot' });
+    g.append(s('rect', { x: 10, y: 40, width: 700, height: 28, rx: 3, class: 'mn-box' }));
+    const ft = s('text', { x: 40, y: 58, class: 'mn-filter' });
+    ft.textContent = 'http.request || frame contains "flag"';
+    const badge = s('g', { class: 'mn-no' });
+    badge.append(s('circle', { cx: 25, cy: 54, r: 9 }));
+    const n = s('text', { x: 25, y: 58, 'text-anchor': 'middle' });
+    n.textContent = '①';
+    badge.append(n);
+    g.append(ft, badge);
+    svg.append(g,
+      pane(10, 76, 700, 132, '②', 'Packet List（No. / Time / Source / Destination / Protocol / Info）', 7, 'hot'),
+      pane(10, 216, 700, 104, '③', 'Packet Details（Frame / Ethernet / IP / TCP / HTTP…）', 5),
+      pane(10, 328, 700, 66, '④', 'Packet Bytes（16 進ダンプ）', 2, 'dim'),
+    );
+    svg.append(s('line', { x1: 0, y1: 400, x2: 720, y2: 400, class: 'mn-sep' }), note(14, 414, '⑤ ステータスバー：表示中 / 全パケット数', 'start'));
+    return svg;
+  },
+  // CyberChef の画面
+  cyberchef() {
+    const svg = diagramFrame(720, 380, 'CyberChef の画面の配置図', 'Download CyberChef                                                          Options   About / Support');
+    svg.append(
+      pane(10, 40, 170, 330, '①', 'Operations', 18),
+      pane(190, 40, 190, 330, '②', 'Recipe', 6, 'hot'),
+      pane(390, 40, 320, 160, '③', 'Input', 8),
+      pane(390, 210, 320, 160, '④', 'Output', 8, 'hot'),
+    );
+    // 料理する（BAKE!）ボタン
+    const btn = s('g', { class: 'mn-bake' });
+    btn.append(s('rect', { x: 200, y: 328, width: 170, height: 32, rx: 3 }));
+    const bt = s('text', { x: 285, y: 349, 'text-anchor': 'middle' });
+    bt.textContent = 'BAKE!';
+    btn.append(bt);
+    svg.append(btn, s('path', { d: 'M 182 120 L 196 120', class: 'mn-link' }), note(285, 314, 'ドラッグで追加'));
+    return svg;
+  },
+};
 
 export function initManuals() {
   const root = $('manualsBody');
@@ -88,27 +138,32 @@ export function initManuals() {
       case 'code': return h('div', { class: 'mn-code' },
         h('div', { class: 'mn-code-head' }, h('span', {}, b.title ?? 'コード'), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.code) }, 'コピー')),
         h('pre', {}, b.code));
-      case 'keys': return h('table', { class: 'mn-keys' }, ...b.items.map(([k, d]) => h('tr', {}, h('th', {}, ...k.split(' + ').flatMap((x, i) => [i ? ' + ' : '', h('kbd', {}, x)])), h('td', {}, d))));
+      case 'keys': return h('table', { class: `mn-keys${b.copy ? ' copyable' : ''}` }, ...b.items.map(([k, d]) => h('tr', {},
+        // フィルタの表は、1つの式としてクリックでコピーできるようにする
+        h('th', {}, ...(b.copy ? [h('kbd', { title: 'クリックでコピー', onclick: () => copy(k) }, k)] : k.split(' + ').flatMap((x, i) => [i ? ' + ' : '', h('kbd', {}, x)]))),
+        h('td', {}, d))));
       case 'defs': return h('dl', { class: 'mn-defs' }, ...b.items.flatMap(([t, d]) => [h('dt', {}, t), h('dd', {}, d)]));
       case 'faq': return h('div', { class: 'mn-faq' }, ...b.items.map(([q, a]) => h('details', {}, h('summary', {}, q), h('p', {}, a))));
-      case 'diagram': return h('figure', { class: 'mn-figure' }, codeBrowserDiagram(), h('figcaption', {}, '解析画面（CodeBrowser）の配置。番号は下の説明に対応しています。'));
+      case 'diagram': return h('figure', { class: 'mn-figure' }, DIAGRAMS[b.name](), h('figcaption', {}, b.caption));
       case 'practice': return h('div', { class: 'mn-practice' },
-        h('button', { type: 'button', onclick: downloadCrackme }, '練習用クラックミーをダウンロード'),
-        h('button', { type: 'button', class: 'ghost', onclick: () => openInPortal() }, 'ポータルのバイナリ解析で答え合わせ'),
-        h('span', { class: 'hint' }, 'ファイル名：crackme（約 16KB、Linux x86-64）'));
+        b.download ? h('button', { type: 'button', onclick: () => downloadSample(b.download) }, b.download.label) : '',
+        b.input ? h('div', { class: 'mn-input' }, h('code', {}, b.input), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.input) }, 'コピー')) : '',
+        b.portal ? h('button', { type: 'button', class: 'ghost', onclick: () => openInPortal(b.portal) }, b.portal.label) : '',
+        b.note ? h('span', { class: 'hint' }, b.note) : '');
       case 'answer': return h('details', { class: 'mn-answer' }, h('summary', {}, '答えを見る（自分で解いてから！）'), h('p', {}, b.text));
       default: return '';
     }
   };
 
-  async function downloadCrackme() {
-    const f = await SAMPLES.rev();
-    download(new Uint8Array(await f.arrayBuffer()), 'crackme');
+  async function downloadSample({ sample, filename }) {
+    const f = await SAMPLES[sample]();
+    download(new Uint8Array(await f.arrayBuffer()), filename);
     toast('ダウンロードしました');
   }
-  async function openInPortal() {
-    location.hash = '#rev';
-    await sendSample('rev', SAMPLES.rev);
+  // ポータルのツールで答え合わせ（例のファイル、または指定した文字列を送る）
+  async function openInPortal({ page, sample, payload }) {
+    location.hash = '#' + page;
+    await sendSample(page, sample ? SAMPLES[sample] : () => payload);
   }
 
   function renderGuide(m) {
