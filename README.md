@@ -19,10 +19,14 @@
 
 ## GitHub Pages での公開
 
-1. このリポジトリの **Settings → Pages** を開く
-2. **Build and deployment** の Source を「Deploy from a branch」にする
-3. Branch に公開したいブランチ（例: `main`）とフォルダ `/ (root)` を選んで Save
-4. 数分後に `https://<ユーザー名>.github.io/My_CTF_portal/` で公開されます
+GitHub Actions（`.github/workflows/pages.yml`）で自動公開します。
+
+1. このリポジトリの **Settings → Pages** を開き、**Build and deployment** の Source を「**GitHub Actions**」にする（最初の1回だけ）
+2. `main` ブランチに push すると、テスト → 公開が自動で実行されます
+   - **Actions** タブの「Deploy to GitHub Pages」から「Run workflow」で手動実行もできます
+3. 公開先: `https://<ユーザー名>.github.io/My_CTF_portal/`
+
+テストが失敗した場合は公開されません。公開されるのは `index.html` / `css` / `js` だけで、テストや README は含まれません。
 
 ## ローカルで動かす
 
