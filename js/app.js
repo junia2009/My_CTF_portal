@@ -75,16 +75,75 @@ const TOOL_NAMES = {
   hash: 'ハッシュ', jwt: 'JWT', flag: 'フラグ検索',
 };
 
-// ---------- テーマ ----------
+// ---------- テーマ（カラー切替） ----------
+const THEMES = ['cyan', 'crimson', 'emerald'];
 function initTheme() {
-  const saved = store.get('ctfportal.theme', null);
-  if (saved) document.documentElement.dataset.theme = saved;
+  const apply = (t) => {
+    document.documentElement.dataset.theme = t;
+    $('themeName').textContent = t.toUpperCase();
+  };
+  let cur = store.get('ctfportal.theme', 'cyan');
+  if (!THEMES.includes(cur)) cur = 'cyan';
+  apply(cur);
   $('themeBtn').addEventListener('click', () => {
-    const cur = document.documentElement.dataset.theme
-      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    const next = cur === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    store.set('ctfportal.theme', next);
+    cur = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
+    apply(cur);
+    store.set('ctfportal.theme', cur);
+  });
+}
+
+// ---------- 時計 ----------
+function initClock() {
+  const tick = () => {
+    $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ---------- 起動演出（セッション中に1回だけ） ----------
+function initBoot() {
+  const boot = $('boot');
+  let seen = false;
+  try {
+    seen = sessionStorage.getItem('ctfportal.booted') === '1';
+    sessionStorage.setItem('ctfportal.booted', '1');
+  } catch { /* 保存できない環境では毎回表示 */ }
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (seen || reduce) {
+    boot.hidden = true;
+    return;
+  }
+  const lines = [
+    '> INITIALIZING CORE MODULES ........ OK',
+    '> LOADING DECODER MATRIX ........... OK',
+    '> CALIBRATING CIPHER ARRAY ......... OK',
+    '> HASH ENGINE ...................... ONLINE',
+    '> FLAG SCANNER ..................... ARMED',
+    '> ALL SYSTEMS NOMINAL. WELCOME, OPERATOR.',
+  ];
+  const log = $('bootLog');
+  const timers = [];
+  lines.forEach((l, i) => timers.push(setTimeout(() => (log.textContent += l + '\n'), 180 + i * 220)));
+  const finish = () => {
+    timers.forEach(clearTimeout);
+    boot.classList.add('done');
+    setTimeout(() => (boot.hidden = true), 700);
+  };
+  timers.push(setTimeout(finish, 180 + lines.length * 220 + 500));
+  boot.addEventListener('click', finish, { once: true });
+}
+
+// ---------- 各ページ見出しの英字ラベル ----------
+const PAGE_CODES = {
+  home: 'COMMAND CENTER', codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', classic: 'CLASSIC CIPHER',
+  xor: 'XOR ANALYZER', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR', flag: 'FLAG SCANNER',
+  notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL',
+};
+function initEyebrows() {
+  Object.entries(PAGE_CODES).forEach(([id, code], i) => {
+    const h1 = document.querySelector(`[data-page="${id}"] h1`);
+    h1?.before(h('div', { class: 'eyebrow' }, `MODULE ${String(i).padStart(2, '0')} // ${code}`));
   });
 }
 
@@ -105,22 +164,31 @@ function renderHome() {
   const solved = notes.filter((n) => n.status === 'solved');
   const points = solved.reduce((s, n) => s + (Number(n.points) || 0), 0);
   $('homeStats').replaceChildren(
-    h('div', { class: 'stat' }, h('b', {}, notes.length), h('span', {}, '登録した問題')),
-    h('div', { class: 'stat' }, h('b', {}, solved.length), h('span', {}, '解決済み')),
-    h('div', { class: 'stat' }, h('b', {}, points), h('span', {}, '獲得ポイント')),
+    h('div', { class: 'stat' }, h('b', {}, notes.length), h('span', {}, 'MISSIONS')),
+    h('div', { class: 'stat' }, h('b', {}, solved.length), h('span', {}, 'CLEARED')),
+    h('div', { class: 'stat' }, h('b', {}, points), h('span', {}, 'POINTS')),
   );
+  const rate = notes.length ? Math.round((solved.length / notes.length) * 100) : 0;
+  const circ = 2 * Math.PI * 74;
+  const prog = $('heroProg');
+  prog.style.strokeDasharray = `${circ}`;
+  prog.style.strokeDashoffset = `${circ}`;
+  requestAnimationFrame(() => requestAnimationFrame(() => (prog.style.strokeDashoffset = `${circ * (1 - rate / 100)}`)));
+  $('heroRate').textContent = `${rate}%`;
   $('genreGrid').replaceChildren(
-    ...GENRES.map((g) => {
+    ...GENRES.map((g, i) => {
       const gn = notes.filter((n) => n.genre === g.id);
       const gs = gn.filter((n) => n.status === 'solved').length;
       return h('div', { class: 'genre' },
+        h('div', { class: 'gnum', 'aria-hidden': 'true' }, String(i + 1).padStart(2, '0')),
         h('h3', {}, g.label),
         h('p', {}, g.desc),
         h('div', { class: 'links' },
           ...g.tools.map((t) => h('a', { href: `#${t}` }, TOOL_NAMES[t])),
           h('a', { href: `#cheatsheet/${g.id}` }, 'チートシート'),
         ),
-        h('div', { class: 'progress' }, `問題メモ: ${gs} / ${gn.length} 解決`),
+        h('div', { class: 'progress' }, `CLEARED ${gs} / ${gn.length}`),
+        h('div', { class: 'bar' }, h('i', { style: `width:${gn.length ? (gs / gn.length) * 100 : 0}%` })),
       );
     }),
   );
@@ -543,7 +611,10 @@ function initCheatsheet() {
 
 // ---------- 起動 ----------
 document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy($(b.dataset.copy).value)));
+initBoot();
 initTheme();
+initClock();
+initEyebrows();
 initCodec();
 initBase();
 initClassic();
