@@ -3,12 +3,9 @@ import { identify, LEVEL } from '../lib/identify.js';
 import { GENRES } from '../data/genres.js';
 import { WORKFLOW, GENRE_STEPS, GLOSSARY, MANNERS, PAGE_HELP } from '../data/help.js';
 import { SAMPLES } from '../data/samples.js';
+import { TOOL_LABEL } from '../data/tools.js';
 import { $, h, store, toast, debounce, getPrefixes, sendTo } from './common.js';
 
-const TOOL_LABEL = {
-  codec: 'エンコード / デコード', base: '基数変換', classic: '古典暗号', xor: 'XOR', rsa: 'RSA', file: 'ファイル解析',
-  hash: 'ハッシュ', jwt: 'JWT デコード', flag: 'フラグ検索', net: 'ネットワーク・時刻', notes: '問題メモ', cheatsheet: 'チートシート',
-};
 
 // ================= はじめての CTF =================
 export function initGuide() {
@@ -56,7 +53,7 @@ export function initGuide() {
 }
 
 // ================= 迷ったら診断 =================
-function toPayload(r) {
+export function toPayload(r) {
   switch (r.tool) {
     case 'codec': return { text: r.payload, magic: true };
     case 'classic': return { text: r.payload, tab: r.id === 'caesar' ? 'caesar' : 'freq' };

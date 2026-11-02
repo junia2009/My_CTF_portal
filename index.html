@@ -80,44 +80,77 @@
 
     <main id="main">
       <!-- ホーム -->
-      <section data-page="home">
-        <div class="hero">
-          <div class="hud">
-            <svg viewBox="0 0 200 200" aria-hidden="true">
-              <circle cx="100" cy="100" r="96" class="h-ticks"/>
-              <circle cx="100" cy="100" r="86" class="h-seg"/>
-              <circle cx="100" cy="100" r="74" class="h-track"/>
-              <circle cx="100" cy="100" r="74" class="h-prog" id="heroProg"/>
-              <circle cx="100" cy="100" r="62" class="h-inner"/>
+      <section data-page="home" class="home">
+        <div class="hero2">
+          <div class="hero2-main">
+            <div class="kicker"><span class="kicker-dot"></span>MISSION CONTROL</div>
+            <h1 class="hero2-title">CTF<span>//</span>PORTAL</h1>
+            <p class="hero2-sub">問題の文字列を貼るだけで、正体の推理から使うツールまで。すべてブラウザ内で完結し、オフラインでも動きます。</p>
+
+            <form class="cmd" id="cmdForm" autocomplete="off">
+              <span class="cmd-prompt" aria-hidden="true">&gt;_</span>
+              <input id="cmdIn" class="cmd-input" placeholder="文字列を貼り付け（Base64・ハッシュ・暗号文・n=, e=, c= …）" aria-label="解析する文字列" spellcheck="false">
+              <label class="cmd-file" for="cmdFile" title="ファイルを解析"><span class="sr-only">ファイルを解析</span></label>
+              <input type="file" id="cmdFile" hidden>
+              <button type="submit" class="cmd-go">解析</button>
+            </form>
+            <div class="cmd-try">
+              <span>例：</span>
+              <button type="button" data-cmd-try="ZmxhZ3t3M2xjMG0zfQ==">Base64</button>
+              <button type="button" data-cmd-try="Gur synt vf ng gur raq bs gur ebnq">シーザー暗号</button>
+              <button type="button" data-cmd-try="5f4dcc3b5aa765d61d8327deb882cf99">ハッシュ</button>
+              <button type="button" data-cmd-try="..-. .-.. .- --.">モールス</button>
+              <span class="cmd-or">またはファイルをこの画面にドロップ</span>
+            </div>
+            <div class="cmd-results" id="cmdOut"></div>
+          </div>
+
+          <div class="radar" aria-hidden="true">
+            <div class="radar-sweep"></div>
+            <svg viewBox="0 0 400 400">
+              <circle cx="200" cy="200" r="190" class="r-outer"/>
+              <circle cx="200" cy="200" r="150" class="r-mid"/>
+              <circle cx="200" cy="200" r="100" class="r-in"/>
+              <circle cx="200" cy="200" r="50" class="r-core"/>
+              <path d="M200 0V400M0 200H400" class="r-cross"/>
+              <circle cx="200" cy="200" r="172" class="r-ticks"/>
+              <circle cx="200" cy="200" r="125" class="r-seg"/>
+              <circle cx="268" cy="132" r="4" class="r-blip b1"/>
+              <circle cx="118" cy="250" r="3" class="r-blip b2"/>
+              <circle cx="240" cy="305" r="3.5" class="r-blip b3"/>
             </svg>
-            <div class="hud-core"><b id="heroRate">0%</b><span>CLEAR RATE</span></div>
-          </div>
-          <div class="hero-text">
-            <h1>CTF Portal</h1>
-            <p class="lead">競技でよく使う変換・解析ツールをまとめた作戦司令室。入力した内容はすべてブラウザ内で処理され、外部には送信されません。</p>
-            <div class="stats" id="homeStats"></div>
+            <div class="radar-label tl">SCAN</div>
+            <div class="radar-label br">READY</div>
           </div>
         </div>
-        <div class="starter">
-          <a class="starter-card" href="#identify">
-            <span class="starter-icon" aria-hidden="true">?</span>
-            <span class="starter-body">
-              <b>迷ったら診断</b>
-              <span>問題の文字列やファイルを入れるだけで、正体と使うべきツールを教えてくれます。</span>
-            </span>
-            <span class="starter-go" aria-hidden="true">›</span>
-          </a>
-          <a class="starter-card" href="#guide">
-            <span class="starter-icon" aria-hidden="true">i</span>
-            <span class="starter-body">
-              <b>はじめての CTF</b>
-              <span>CTF の進め方・ジャンル別の最初の一歩・用語集。初参加の方はまずここから。</span>
-            </span>
-            <span class="starter-go" aria-hidden="true">›</span>
-          </a>
+
+        <div class="home-sec">
+          <div class="sec-head"><span class="sec-no">01</span><h2>ツール</h2></div>
+          <div class="tool-groups" id="toolGrid"></div>
         </div>
-        <h2>ジャンル別</h2>
-        <div class="genre-grid" id="genreGrid"></div>
+
+        <div class="home-sec">
+          <div class="sec-head"><span class="sec-no">02</span><h2>ジャンル別ブリーフィング</h2></div>
+          <div class="genre-tabs" id="genreTabs" role="tablist"></div>
+          <div class="genre-panel" id="genrePanel"></div>
+        </div>
+
+        <div class="home-sec">
+          <div class="sec-head"><span class="sec-no">03</span><h2>はじめての方へ</h2></div>
+          <div class="starter">
+            <a class="starter-card" href="#guide">
+              <span class="starter-icon" aria-hidden="true">i</span>
+              <span class="starter-body"><b>はじめての CTF</b><span>進め方・ジャンル別の最初の一歩・用語集</span></span>
+              <span class="starter-go" aria-hidden="true">›</span>
+            </a>
+            <a class="starter-card" href="#identify">
+              <span class="starter-icon" aria-hidden="true">?</span>
+              <span class="starter-body"><b>迷ったら診断</b><span>結果をもっと詳しく見たいときはこちら</span></span>
+              <span class="starter-go" aria-hidden="true">›</span>
+            </a>
+          </div>
+        </div>
+        <div class="drop-veil" id="homeVeil" hidden><div>ドロップしてファイル解析</div></div>
       </section>
 
       <!-- はじめての CTF -->

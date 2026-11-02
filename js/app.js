@@ -1,6 +1,7 @@
 // 起動とページ切り替え
 import { $, copy, initTabs } from './ui/common.js';
-import { initTheme, initClock, initBoot, initEyebrows, renderHome, initBase, initNotes, initCheatsheet } from './ui/portal.js';
+import { initTheme, initClock, initBoot, initEyebrows, initBase, initNotes, initCheatsheet } from './ui/portal.js';
+import { initHome, decorateNav } from './ui/home.js';
 import { initCodec } from './ui/codec.js';
 import { initClassic, initXor, initRsa } from './ui/crypto.js';
 import { initFile, initHash, initJwt, initFlag, initNet } from './ui/analysis.js';
@@ -27,6 +28,8 @@ initPwa();
 initTheme();
 initClock();
 initEyebrows();
+decorateNav();
+initHome();
 initHelp();
 initTabs();
 initCodec();
@@ -41,7 +44,6 @@ initFlag();
 initNet();
 initIdentify();
 onShow.guide = initGuide();
-onShow.home = renderHome;
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();
 pallas = initPallas();

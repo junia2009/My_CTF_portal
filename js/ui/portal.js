@@ -71,50 +71,9 @@ const PAGE_CODES = {
 export function initEyebrows() {
   Object.entries(PAGE_CODES).forEach(([id, code], i) => {
     const h1 = document.querySelector(`[data-page="${id}"] h1`);
+    if (id === 'home') return;
     h1?.before(h('div', { class: 'eyebrow' }, `MODULE ${String(i).padStart(2, '0')} // ${code}`));
   });
-}
-
-const TOOL_NAMES = {
-  codec: 'エンコード/デコード', base: '基数変換', classic: '古典暗号', xor: 'XOR', rsa: 'RSA',
-  file: 'ファイル解析', hash: 'ハッシュ', jwt: 'JWT', flag: 'フラグ検索', net: 'ネットワーク・時刻',
-};
-
-// ---------- ホーム ----------
-export function renderHome() {
-  const notes = loadNotes();
-  const solved = notes.filter((n) => n.status === 'solved');
-  const points = solved.reduce((s, n) => s + (Number(n.points) || 0), 0);
-  $('homeStats').replaceChildren(
-    h('div', { class: 'stat' }, h('b', {}, notes.length), h('span', {}, 'MISSIONS')),
-    h('div', { class: 'stat' }, h('b', {}, solved.length), h('span', {}, 'CLEARED')),
-    h('div', { class: 'stat' }, h('b', {}, points), h('span', {}, 'POINTS')),
-  );
-  const rate = notes.length ? Math.round((solved.length / notes.length) * 100) : 0;
-  const circ = 2 * Math.PI * 74;
-  const prog = $('heroProg');
-  prog.style.strokeDasharray = `${circ}`;
-  prog.style.strokeDashoffset = `${circ}`;
-  requestAnimationFrame(() => requestAnimationFrame(() => (prog.style.strokeDashoffset = `${circ * (1 - rate / 100)}`)));
-  $('heroRate').textContent = `${rate}%`;
-  $('genreGrid').replaceChildren(
-    ...GENRES.map((g, i) => {
-      const gn = notes.filter((n) => n.genre === g.id);
-      const gs = gn.filter((n) => n.status === 'solved').length;
-      return h('div', { class: 'genre' },
-        h('div', { class: 'gnum', 'aria-hidden': 'true' }, String(i + 1).padStart(2, '0')),
-        h('h3', {}, g.label),
-        h('p', {}, g.desc),
-        h('div', { class: 'links' },
-          ...g.tools.map((t) => h('a', { href: `#${t}` }, TOOL_NAMES[t])),
-          h('a', { href: `#cheatsheet/${g.id}` }, 'チートシート'),
-          h('a', { href: `#guide/${g.id}`, class: 'first-step' }, '最初の一歩'),
-        ),
-        h('div', { class: 'progress' }, `CLEARED ${gs} / ${gn.length}`),
-        h('div', { class: 'bar' }, h('i', { style: `width:${gn.length ? (gs / gn.length) * 100 : 0}%` })),
-      );
-    }),
-  );
 }
 
 // ---------- 基数変換 ----------
