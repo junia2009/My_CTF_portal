@@ -741,7 +741,7 @@ tr.p-icmp td:nth-child(5), tr.p-arp td:nth-child(5) { color: var(--warn); }
 
 /* ---------- 差分 ---------- */
 .diff-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
-.diff-out { font-family: var(--mono); font-size: .85rem; margin-top: .6rem; max-height: 600px; overflow: auto; background: var(--field); border: 1px solid var(--line); }
+.diff-out { font-family: var(--mono); font-size: .85rem; margin-top: .6rem; max-height: 80vh; overflow: auto; background: var(--field); border: 1px solid var(--line); }
 .diff-out:empty { display: none; }
 .dl { display: flex; white-space: pre-wrap; word-break: break-all; padding: 0 .6rem; }
 .dl .dm { width: 1.4rem; flex-shrink: 0; color: var(--muted); }
@@ -775,6 +775,29 @@ tr.diff-add td:first-child { color: var(--accent); } tr.diff-del td:first-child 
 .hx-line.a .d { background: rgba(255, 107, 122, .28); color: #ffd0d5; }
 .hx-line.b .d { background: rgba(var(--accent-rgb), .3); color: var(--text); }
 .hx-asc { color: var(--muted); }
+.diff-out > .alert { margin: .5rem .7rem; display: block; }
+.diff-out .alert ul, .sh-notes { margin: .3rem 0 0; padding-left: 1.2rem; }
+.sh-notes { margin: .2rem .7rem .4rem 1.9rem; font-size: .88rem; }
+.sh-only { display: flex; flex-wrap: wrap; gap: .2rem .9rem; margin-top: .4rem; font-family: var(--mono); font-size: .82rem; }
+.sh-only b { color: var(--accent); margin-right: .2rem; }
+.sh-f { font-size: .76rem; color: var(--muted); }
+.sh-list td { vertical-align: top; }
+.sh-list tr.sh-mod td:nth-child(2) { color: var(--warn); } .sh-list tr.sh-add td:nth-child(2) { color: var(--accent); }
+.sh-list tr.sh-del td:nth-child(2) { color: var(--error); } .sh-list tr.sh-formula td:nth-child(2) { color: #c9a2ff; }
+.sh-grid-wrap { overflow: auto; max-height: 60vh; }
+.sh-grid { border-collapse: collapse; font-family: var(--mono); font-size: .8rem; }
+.sh-grid th, .sh-grid td { border: 1px solid rgba(var(--accent-rgb), .18); padding: .2rem .45rem; white-space: nowrap; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
+.sh-grid th { color: var(--muted); background: rgba(var(--accent-rgb), .06); font-weight: 500; position: sticky; top: 0; }
+.sh-grid tr th:first-child { position: sticky; left: 0; }
+.sh-grid th.sh-hidden { color: var(--warn); text-decoration: underline dotted; }
+.sh-grid td.sh-mod, .sh-legend .sh-mod { background: rgba(255, 194, 71, .2); }
+.sh-grid td.sh-add, .sh-legend .sh-add { background: rgba(var(--accent-rgb), .22); }
+.sh-grid td.sh-del, .sh-legend .sh-del { background: rgba(255, 107, 122, .2); }
+.sh-grid td.sh-formula, .sh-legend .sh-formula { background: rgba(201, 162, 255, .2); }
+.sh-grid s { color: var(--muted); }
+.sh-legend { margin: .6rem .7rem .3rem; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.sh-legend span { padding: 0 .4rem; color: var(--text); }
+.sh-rows .sh-rn { width: 2.6rem; flex-shrink: 0; color: var(--muted); text-align: right; margin-right: .6rem; }
 .hx-gap { color: var(--muted); padding: .1rem 0 .1rem 6.2rem; }
 
 /* ---------- 正規表現 ---------- */

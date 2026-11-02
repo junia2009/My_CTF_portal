@@ -27,6 +27,7 @@ import * as GEO from '../js/lib/geo.js';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import * as BF from '../js/lib/binfmt.js';
+import * as SH from '../js/lib/sheet.js';
 import { Program, makeDisassembler } from '../js/lib/rev.js';
 import { decompile } from '../js/lib/decomp.js';
 
@@ -652,6 +653,57 @@ await t('バイナリ解析: PE（32 / 64ビット）のインポート', async 
     assert.ok(code.includes('if (IsDebuggerPresent() != 0) {'), code);
     assert.ok(code.includes('MessageBoxA(0, "flag{pe_imports}", "PALLAS", 0);'), code);
   }
+});
+
+
+// ---------- 表計算ファイルの比較 ----------
+const book = (n) => SH.readBook(n, fixture(n));
+const changesOf = (r) => r.pairs[0].changes.map((c) => `${c.ref}:${c.kind}:${c.a}>${c.b}`);
+await t('表: xlsx を読む（共有文字列・数式・日付・非表示・コメント）', async () => {
+  const b = await book('book_b_lo.xlsx');
+  const s = b.sheets[0];
+  assert.deepEqual(b.sheets.map((x) => `${x.name}:${x.state}`), ['売上:visible', 'memo:visible', 'secret:hidden']);
+  assert.equal(s.cells.get('A4').v, '名古屋駅前');
+  assert.equal(s.cells.get('B1').v, '4月'); // 書式つき（リッチテキスト）の文字列
+  assert.equal(s.cells.get('D2').v, '320');
+  assert.equal(s.cells.get('D2').f, '=SUM(B2:C2)');
+  assert.equal(s.cells.get('F1').v, '2026/11/02 09:30:00');
+  assert.ok(s.hiddenRows.has(2));
+  assert.equal(s.comments.get('B3'), 'ここを見て');
+});
+await t('表: xls（BIFF8）を読む', async () => {
+  const b = await book('book_b.xls');
+  const s = b.sheets[0];
+  assert.equal(b.format, 'xls');
+  assert.deepEqual(b.sheets.map((x) => x.state), ['visible', 'visible', 'hidden']);
+  assert.equal(s.cells.get('A4').v, '名古屋駅前');
+  assert.equal(s.cells.get('B2').v, '120');
+  assert.equal(s.cells.get('D2').v, '320');
+  assert.equal(s.cells.get('F1').v, '2026/11/02 09:30:00');
+  assert.equal(s.cells.get('E5').v, 'flag{d1ff_th3_sh33t}');
+  assert.ok(s.hiddenRows.has(2));
+  // 共有文字列が CONTINUE レコードにまたがる大きなファイル
+  const big = (await book('big.xls')).sheets[0];
+  assert.equal(big.cells.get('A1000').v, '項目0999_データ_abc');
+  assert.equal(big.cells.get('A1001').v, 'item-1000-ascii-text');
+  assert.equal(big.cells.get('A1500').v, '項目1499_データ_abc');
+  assert.equal(big.cells.get('B1500').v, 'flag{c0nt1nu3_r3c0rd}');
+  assert.equal(big.cells.size, 1501);
+});
+await t('表: CSV（UTF-8 / Shift_JIS）と、形式をまたいだ比較', async () => {
+  const sj = await book('book_b_sjis.csv');
+  assert.match(sj.info, /Shift_JIS/);
+  assert.equal(sj.sheets[0].cells.get('A4').v, '名古屋駅前');
+  assert.deepEqual(SH.parseCsv('a,"b,c","d""e"\n1,2,3').rows, [['a', 'b,c', 'd"e'], ['1', '2', '3']]);
+  // xlsx 同士：値・文字・削除・追加・数式の変更、B だけにある非表示シート
+  const r = SH.compareBooks(await book('book_a.xlsx'), await book('book_b.xlsx'));
+  assert.deepEqual(changesOf(r), ['B2:mod:100>120', 'F2:del:0.1>', 'D3:formula:>', 'A4:mod:名古屋>名古屋駅前', 'E5:add:>flag{d1ff_th3_sh33t}']);
+  assert.deepEqual(r.onlyB.map((x) => x.name), ['secret']);
+  assert.deepEqual(r.pairs[0].hiddenRows.added, [2]);
+  // xls と xlsx、CSV と xls（日付の表記ゆれは同じとみなす）
+  assert.deepEqual(changesOf(SH.compareBooks(await book('book_a.xls'), await book('book_b_lo.xlsx'))), ['B2:mod:100>120', 'D2:mod:300>320', 'F2:del:0.1>', 'A4:mod:名古屋>名古屋駅前', 'E5:add:>flag{d1ff_th3_sh33t}']);
+  assert.deepEqual(changesOf(SH.compareBooks(await book('book_a.csv'), await book('book_a.xls'))), []);
+  assert.ok(SH.hiddenStuff(await book('book_b.xls')).some((x) => x.includes('secret')));
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);
