@@ -17,6 +17,14 @@ export function initPallas() {
   let tourStep = -1;
   let closeTimer = 0, typeTimer = 0;
   let booting = true;
+  // ページ案内は「ブラウザを開くたびに各ページ1回」。案内済みのページはセッションの間だけ覚えておく
+  const SEEN_KEY = 'ctfportal.pallasSeen';
+  const seen = new Set((() => { try { return JSON.parse(sessionStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; } })());
+  const markSeen = (p) => {
+    seen.add(p);
+    try { sessionStorage.setItem(SEEN_KEY, JSON.stringify([...seen])); } catch { /* 保存できなくても動作は続ける */ }
+  };
+  const shouldExplain = (p) => state.auto && !seen.has(p) && !!P.PAGE_LINES[p];
   let magicFails = 0;
 
   // ---------- DOM ----------
@@ -285,6 +293,10 @@ export function initPallas() {
     clearTimeout(closeTimer);
     finishTyping();
     bubble.hidden = true;
+    if (!state.intro && !booting) {
+      state.intro = true;
+      save();
+    }
     if (tourStep >= 0) endTour();
     nextRoam = performance.now() + rand(6000, 12000);
   }
@@ -367,10 +379,9 @@ export function initPallas() {
   function onRoute(p) {
     page = p;
     if (booting || tourStep >= 0 || !state.intro) return;
-    if (state.auto && !state.seen.includes(p) && P.PAGE_LINES[p]) {
-      state.seen.push(p);
-      save();
-      setTimeout(() => say(P.PAGE_LINES[p], { autoClose: 7000 }), 400);
+    if (shouldExplain(p)) {
+      markSeen(p);
+      setTimeout(() => page === p && say(P.PAGE_LINES[p], { autoClose: 7000 }), 400);
     } else if (!bubble.hidden) {
       close();
     }
@@ -423,9 +434,8 @@ export function initPallas() {
           { label: 'あとで', run: () => { state.intro = true; save(); say(P.LINES.later, { autoClose: 3500 }); } },
         ],
       });
-    } else if (state.auto && !state.seen.includes(page) && P.PAGE_LINES[page]) {
-      state.seen.push(page);
-      save();
+    } else if (shouldExplain(page)) {
+      markSeen(page);
       say(P.PAGE_LINES[page], { autoClose: 7000 });
     } else {
       say(P.pick(hour < 5 ? P.GREETING_NIGHT : P.GREETING_AGAIN), { autoClose: 4000 });
