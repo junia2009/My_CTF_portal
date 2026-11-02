@@ -179,6 +179,10 @@ export function initNotes() {
     reset();
     render();
     toast('保存しました');
+    if (item.status === 'solved') {
+      const n = notes.filter((x) => x.status === 'solved').length;
+      window.dispatchEvent(new CustomEvent('pallas', { detail: { mood: 'happy', text: `ナイス！「${item.title}」クリア。これで ${n} 問解決だよ。この調子！` } }));
+    }
   });
   $('noteCancel').addEventListener('click', reset);
   registerReceiver('notes', (p) => {

@@ -138,3 +138,6 @@ export function fill(id, value) {
 }
 
 export const openTab = (name) => document.querySelector(`[data-tab="${name}"]`)?.click();
+
+// 案内役 PALLAS に話しかけてもらう（mood: talk / happy / think / alert、flag を渡すと「問題メモに記録」ボタンが出る）
+export const pallasSay = (detail) => window.dispatchEvent(new CustomEvent('pallas', { detail }));

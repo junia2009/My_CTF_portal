@@ -3,7 +3,7 @@ import * as C from '../lib/codecs.js';
 import * as X from '../lib/ciphers.js';
 import * as R from '../lib/rsa.js';
 import { flagRegex } from '../lib/magic.js';
-import { $, h, copy, kvRow, debounce, preview, readBytes, keyText, getPrefixes, setTable, fmtSize, registerReceiver, fill, openTab } from './common.js';
+import { $, h, copy, kvRow, debounce, preview, readBytes, keyText, getPrefixes, setTable, fmtSize, registerReceiver, fill, openTab, pallasSay } from './common.js';
 
 const copyCell = (text, shown = text) => h('td', { class: 'copyable', title: 'クリックでコピー', onclick: () => copy(text) }, shown);
 const isFlag = (s) => flagRegex(getPrefixes()).test(s);
@@ -284,6 +284,11 @@ export function initRsa() {
           rows.push(kvRow('m（10進）', r.m.toString()), kvRow('m（16進）', '0x' + r.m.toString(16)), kvRow('m（文字列）', text));
           const f = text.match(flagRegex(getPrefixes()));
           if (f) rows.unshift(h('tr', { class: 'hl' }, h('th', {}, 'FLAG'), h('td', { class: 'copyable', onclick: () => copy(f[0]) }, h('b', { class: 'flag-hit' }, f[0]))));
+          pallasSay(f
+            ? { mood: 'happy', flag: f[0], text: `復号成功！ フラグは「${f[0]}」だよ。` }
+            : { mood: 'talk', text: '復号できたよ。m（文字列）の行を確認してみて。' });
+        } else {
+          pallasSay({ mood: 'think', text: 'この条件では解けなかった… 問題文に p や q、d のヒントが隠れていないか探してみよう。' });
         }
         $('rsaOut').replaceChildren(...rows);
       } catch (e) {

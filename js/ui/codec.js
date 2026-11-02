@@ -3,7 +3,7 @@ import { bytesToHex, bytesToText, isUtf8, printableRatio, b64Encode } from '../l
 import { OPS, getOp, runRecipe } from '../lib/recipe.js';
 import { magic } from '../lib/magic.js';
 import { identifyType, hexdump } from '../lib/file.js';
-import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readBytes, getPrefixes, setTable, registerReceiver } from './common.js';
+import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readBytes, getPrefixes, setTable, registerReceiver, pallasSay } from './common.js';
 
 // Magic の手順名 → レシピの操作
 const MAGIC_OPS = {
@@ -177,8 +177,10 @@ export function initCodec() {
     $('magicRun').disabled = false;
     if (!results.length) {
       out.replaceChildren(h('tr', {}, h('td', { class: 'hint' }, '当てはまる変換が見つかりませんでした')));
+      pallasSay({ mood: 'think', text: 'うーん、知っている形式じゃないみたい。XOR や古典暗号、ファイルとしての解析も疑ってみよう。' });
       return;
     }
+    if (results[0].flag) pallasSay({ mood: 'happy', flag: results[0].flag, text: `フラグ発見！「${results[0].flag}」（${results[0].chain.join(' → ')}）。提出したら問題メモに記録しておこう。` });
     setTable(out, ['手順', '結果', ''], results.map((r) =>
       h('tr', { class: r.flag ? 'hl' : '' },
         h('td', { class: 'chain' }, ...r.chain.flatMap((c, i) => [i ? h('span', { class: 'arrow' }, '→') : '', h('span', { class: 'step' }, c)])),

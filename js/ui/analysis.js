@@ -6,7 +6,7 @@ import { decodeJwt } from '../lib/jwt.js';
 import { findFlags, DEFAULT_FLAG_PATTERN } from '../lib/flag.js';
 import { flagRegex } from '../lib/magic.js';
 import { cidrInfo, convertTimestamp } from '../lib/net.js';
-import { $, h, store, copy, toast, kvRow, debounce, download, fmtSize, hex, getPrefixes, setTable, registerReceiver, fill } from './common.js';
+import { $, h, store, copy, toast, kvRow, debounce, download, fmtSize, hex, getPrefixes, setTable, registerReceiver, fill, pallasSay } from './common.js';
 
 // ================= ファイル解析 =================
 export function initFile() {
@@ -39,9 +39,17 @@ export function initFile() {
     png();
     strings = F.extractStrings(bytes, Number($('strMin').value) || 5, 20000);
     renderStrings();
-    flagsFromStrings();
+    const flags = flagsFromStrings();
     dumpOff = 0;
     renderDump();
+    // 見つけたものを PALLAS に報告してもらう
+    const embedded = F.scanSignatures(bytes).filter((s) => s.offset > 0).length;
+    const trailing = F.findTrailingData(bytes);
+    const crcBad = F.parsePng(bytes)?.chunks.some((c) => !c.crcOk);
+    const findings = [trailing && '末尾の余分なデータ', embedded && `埋め込まれたファイルの署名 ${embedded} 件`, crcBad && 'PNG の CRC エラー'].filter(Boolean);
+    if (flags.length) pallasSay({ mood: 'happy', flag: flags[0].match, text: `ファイルの中にフラグらしき文字列を見つけたよ！「${flags[0].match}」` });
+    else if (findings.length) pallasSay({ mood: 'alert', text: `怪しいところを見つけたよ：${findings.join('、')}。下の結果を確認してみて。` });
+    else pallasSay({ mood: 'talk', text: '目立った異常は見つからなかったよ。文字列の一覧や、エントロピーの高い部分を見てみよう。' });
   }
 
   async function summary() {
@@ -121,6 +129,7 @@ export function initFile() {
           if (!r) {
             $('pngInfo').append(h('div', { class: 'alert' }, '一致する幅・高さが見つかりませんでした（IHDR の他の値が改ざんされている可能性があります）'));
           } else {
+            pallasSay({ mood: 'happy', text: `復元できたよ！ 本当のサイズは ${r.width} × ${r.height}。修正した PNG を保存して開いてみて。` });
             $('pngInfo').append(h('div', { class: 'alert ok' },
               `CRC が一致する値: 幅 ${r.width} × 高さ ${r.height}`,
               h('button', { type: 'button', class: 'ghost small', onclick: () => download(r.fixed, name.replace(/\.png$/i, '') + '_fixed.png') }, '修正した PNG を保存'),
@@ -166,6 +175,7 @@ export function initFile() {
       $('fileAlerts').prepend(h('div', { class: 'alert ok' }, 'フラグらしき文字列: ',
         ...hits.slice(0, 10).map((x) => h('b', { class: 'flag-hit copyable', title: x.source, onclick: () => copy(x.match) }, x.match))));
     }
+    return hits;
   }
 
   function renderDump() {

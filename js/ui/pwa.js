@@ -1,5 +1,5 @@
 // PWA：Service Worker の登録、更新の通知、インストールボタン、オンライン状態の表示
-import { $, toast } from './common.js';
+import { $, toast, pallasSay } from './common.js';
 
 export function initPwa() {
   initStatus();
@@ -17,6 +17,7 @@ function initStatus() {
   window.addEventListener('offline', () => {
     upd();
     toast('OFFLINE — キャッシュから動作中');
+    pallasSay({ mood: 'alert', text: '通信が切れたみたい。でも大丈夫、このポータルはオフラインでも全部のツールが動くよ。' });
   });
   upd();
 }

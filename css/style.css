@@ -563,6 +563,54 @@ code.inline { font-family: var(--mono); color: var(--accent); background: var(--
 .id-card p { margin: .35rem 0; font-size: .95rem; }
 .id-card button { margin-top: .4rem; }
 
+/* ---------- 案内役 PALLAS ---------- */
+.pallas { position: fixed; right: 18px; bottom: 14px; z-index: 65; display: flex; flex-direction: column; align-items: flex-end; gap: .4rem; pointer-events: none; }
+.pallas > * { pointer-events: auto; }
+.pallas-drone {
+  --c: 0px; width: 148px; height: 148px; padding: 0; background: none !important; border: none; cursor: pointer;
+  filter: drop-shadow(0 0 14px rgba(var(--accent-rgb), .35)); transition: transform .2s;
+}
+.pallas-drone:hover { transform: translateY(-3px); filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), .6)); }
+.pallas-drone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pd-stage { position: relative; width: 100%; height: 100%; }
+.pd-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+.pd-fallback { position: absolute; inset: 18%; width: 64%; height: 64%; border-radius: 50%; animation: pallas-float 3.2s ease-in-out infinite; }
+.pd-stage.ready .pd-fallback { display: none; }
+@keyframes pallas-float { 50% { transform: translateY(-6px); } }
+
+.pallas-bubble {
+  position: relative; width: min(360px, calc(100vw - 36px)); padding: .85rem 1rem .7rem; margin-right: 6px;
+  background: rgba(6, 14, 26, .96); border: 1px solid var(--accent); box-shadow: var(--glow), 0 12px 40px rgba(0, 0, 0, .5);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  animation: pallas-pop .25s cubic-bezier(.2, .9, .3, 1.2);
+}
+@keyframes pallas-pop { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+.pb-head { display: flex; align-items: baseline; gap: .55rem; margin-bottom: .35rem; }
+.pb-name { font-family: var(--display); font-weight: 900; letter-spacing: .2em; color: var(--accent); text-shadow: var(--glow); font-size: .85rem; }
+.pb-role { font-size: .72rem; color: var(--muted); letter-spacing: .06em; }
+.pb-close { --c: 0px; margin-left: auto; background: none !important; color: var(--muted); padding: 0 .3rem; font-size: 1.1rem; line-height: 1; }
+.pb-close:hover { color: var(--text); filter: none; }
+.pb-text { margin: 0 0 .65rem; font-size: .98rem; line-height: 1.65; white-space: pre-line; min-height: 1.6em; cursor: default; }
+.pb-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+.pb-actions:empty { display: none; }
+.pb-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .65rem; padding-top: .5rem; border-top: 1px dashed var(--line); }
+.pb-foot label.check { font-size: .75rem; color: var(--muted); font-weight: 500; letter-spacing: 0; margin: 0; }
+.pb-link { --c: 0px; background: none !important; color: var(--muted); font-size: .75rem; padding: 0; font-weight: 600; text-decoration: underline; }
+.pb-link:hover { color: var(--accent); filter: none; }
+
+.pallas-mini {
+  --c: 7px; gap: .45rem; font-family: var(--display); font-size: .62rem; letter-spacing: .2em; color: var(--accent);
+  background: rgba(4, 9, 17, .92) !important; border: 1px solid var(--line-strong); padding: .45rem .8rem;
+}
+.pallas-mini .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: var(--glow); }
+.pallas-mini.ping .dot { animation: blink .4s ease-in-out 6; }
+
+.pallas-focus { position: relative; z-index: 2; outline: 2px solid var(--accent) !important; outline-offset: 4px; box-shadow: 0 0 0 6px rgba(var(--accent-rgb), .15), 0 0 30px rgba(var(--accent-rgb), .45) !important; animation: pallas-focus 1.4s ease-in-out infinite; }
+@keyframes pallas-focus { 50% { outline-color: rgba(var(--accent-rgb), .35); } }
+
+/* ドローンが最後の内容を隠さないよう、ページ下に余白を取る */
+main { padding-bottom: 170px; }
+
 /* ---------- PWA ---------- */
 .sys.offline { color: var(--warn); }
 .sys.offline .dot { background: var(--warn); box-shadow: 0 0 10px rgba(255, 194, 71, .8); }
@@ -616,6 +664,12 @@ code.inline { font-family: var(--mono); color: var(--accent); background: var(--
   .tabs button { white-space: nowrap; padding: .5rem .75rem; }
   td.chain { white-space: normal; }
   .hexdump { font-size: .66rem; }
+  .pallas { right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .pallas-drone { width: 86px; height: 86px; }
+  .pallas-bubble { margin-right: 0; }
+  main { padding-bottom: 130px; }
+  /* 通知類はドローンと重ならないよう上に出す */
+  .toast, .update-bar { bottom: calc(104px + env(safe-area-inset-bottom)); }
 }
 
 /* ---------- 動きを減らす設定 ---------- */
