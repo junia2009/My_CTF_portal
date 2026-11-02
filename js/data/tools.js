@@ -28,6 +28,7 @@ export const ICONS = {
   regex: 'M17 3v8M13.5 5l7 4M20.5 5l-7 4M5 19h.01M4 21h3v-3H4z',
   pinject: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6zM9 12l2 2 4-4',
   rev: 'M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16',
+  manuals: 'M5 4h10l4 4v12H5zM15 4v4h4M8 11h8M8 14.5h8M8 18h5',
   geo: 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 1 0 0-5',
   arrow: 'M5 12h14M13 6l6 6-6 6',
   upload: 'M12 16V4M7 9l5-5 5 5M4 16v4h16v-4',
@@ -70,6 +71,7 @@ export const TOOLS = [
   { id: 'net', group: '解析', name: 'ネットワーク・時刻', desc: 'CIDR 計算と UNIX 時間の変換' },
   { id: 'notes', group: '補助', name: '問題メモ', desc: '試したこととフラグを記録' },
   { id: 'cheatsheet', group: '補助', name: 'チートシート', desc: 'ジャンル別の定番コマンド集' },
+  { id: 'manuals', group: '補助', name: 'ツールの使い方', desc: 'Ghidra など外部ツールの使い方ガイド' },
   { id: 'diff', group: '補助', name: '差分比較', desc: '2つのテキスト・データの違い' },
   { id: 'regex', group: '補助', name: '正規表現テスター', desc: 'パターンを試してマッチを確認' },
 ];
