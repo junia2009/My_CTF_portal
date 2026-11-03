@@ -14,9 +14,9 @@ export function initClassic() {
   let subMap = {};
 
   function caesar(s) {
-    const rows = X.caesarAll(s).map((r) => ({ ...r, chi: X.englishChi(r.text) }));
-    const best = rows.reduce((a, b) => (b.chi < a.chi ? b : a));
-    const top = best.chi < 3 ? [best.shift] : [];
+    const rows = X.caesarAll(s).map((r) => ({ ...r, ...X.englishRank(r.text) }));
+    const best = rows.reduce((a, b) => (b.rank < a.rank ? b : a));
+    const top = best.chi < 3 || best.cover >= 0.5 ? [best.shift] : [];
     setTable($('caesarTable'), ['シフト', '結果（クリックでコピー）'], rows.map((r) =>
       h('tr', { class: s && (top.includes(r.shift) || isFlag(r.text)) ? 'hl' : '' },
         h('td', { class: 'num' }, `+${r.shift}${r.shift === 13 ? ' ROT13' : ''}`),

@@ -120,6 +120,15 @@ await t('Magic: モールス', async () => {
 
 // ---------- ciphers ----------
 const PLAIN = 'It was the best of times it was the worst of times it was the age of wisdom it was the age of foolishness it was the epoch of belief it was the epoch of incredulity it was the season of light';
+await t('シーザー：短い文でも英単語として読める行を選ぶ', () => {
+  const best = (t) => X.caesarAll(t).map((r) => ({ ...r, ...X.englishRank(r.text) })).reduce((a, b) => (b.rank < a.rank ? b : a)).shift;
+  assert.equal(best('synt{uryyb arj jbeyq}'), 13); // flag{hello new world}（カイ二乗だけだと +2 が選ばれていた）
+  assert.equal(best(C.caesar('flag{caesar_is_fun}', 3)), 23);
+  assert.equal(best(C.caesar('helloworld', 5)), 21);
+  assert.equal(best(C.caesar('the quick brown fox jumps over the lazy dog', 7)), 19);
+  assert.ok(X.wordCoverage('flag{hello new world}') === 1 && X.wordCoverage('uapv{wtaad ctl ldgas}') < 0.3);
+  assert.equal(identify('synt{uryyb arj jbeyq}')[0]?.id === 'caesar' || identify('synt{uryyb arj jbeyq}').some((r) => r.id === 'caesar'), true);
+});
 await t('シーザー総当たり', () => {
   const rows = X.caesarAll(C.caesar('the quick brown fox jumps over the lazy dog', 7));
   assert.equal(rows.reduce((a, b) => (b.score > a.score ? b : a)).shift, 19);
