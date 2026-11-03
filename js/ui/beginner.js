@@ -1,7 +1,6 @@
 // 初心者向けの画面：はじめての CTF / 迷ったら診断 / 各ツールの「使い方」パネル
 import { identify, LEVEL } from '../lib/identify.js';
 import { GENRES } from '../data/genres.js';
-import { illustration } from './illust.js';
 import { WORKFLOW, GENRE_STEPS, GLOSSARY, MANNERS, PAGE_HELP } from '../data/help.js';
 import { SAMPLES } from '../data/samples.js';
 import { TOOL_LABEL } from '../data/tools.js';
@@ -116,7 +115,6 @@ export function initHelp() {
       h('summary', {}, '使い方・こんなときに使う'),
       h('div', { class: 'help-body' },
         h('p', { class: 'help-when' }, h('span', { class: 'lbl' }, 'こんなとき'), help.when),
-        illustration(page) ? h('figure', { class: 'help-illust' }, illustration(page)) : '',
         h('ol', { class: 'steps' }, ...help.steps.map((s) => h('li', {}, s))),
         sample
           ? h('div', { class: 'row' },

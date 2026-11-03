@@ -1255,12 +1255,44 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 [data-mode="light"] .mn-input { background: #fff; }
 
 /* ---------- 使い方パネルの図解 ---------- */
-.help-illust { margin: .5rem 0 .8rem; max-width: 760px; }
+.mn-illust { margin: 0 0 1.1rem; }
 @media (max-width: 760px) {
-  /* スマホでは文字が小さくなりすぎないよう、図は横にスクロールして見る */
-  .help-illust { overflow-x: auto; margin-right: -.9rem; padding-bottom: .3rem; -webkit-overflow-scrolling: touch; }
-  .help-illust .illust { width: 600px; max-width: none; }
+  /* スマホでは文字が小さくなりすぎないよう、挿絵は横にスクロールして見る */
+  .mn-illust { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .3rem; }
+  .mn-illust .illust { width: 620px; max-width: none; }
 }
+.illust .il-caption { fill: var(--text); font-weight: 600; }
+.illust .il-panel.last { stroke: var(--accent); fill: rgba(var(--accent-rgb), .07); }
+.illust .il-num { fill: var(--accent); }
+.illust .il-num-t { fill: var(--on-accent); font-weight: 700; font-family: var(--display); }
+.illust .il-label.strong { fill: var(--text); font-weight: 700; }
+.illust .il-field { fill: var(--field); stroke: var(--line); }
+.illust .il-line { fill: rgba(127, 151, 178, .35); }
+.illust .il-bar-acc { fill: var(--accent); }
+.illust .il-stroke { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.illust .il-stroke.acc { stroke: var(--accent); }
+.illust .il-doc { fill: var(--panel-solid); stroke: var(--line-strong); stroke-width: 1.5; stroke-linejoin: round; }
+.illust .il-doc-fold { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.illust .il-led { fill: var(--accent); }
+.illust .il-led-hi { fill: var(--warn); }
+.illust .il-pole { stroke: var(--muted); stroke-width: 3; stroke-linecap: round; }
+.illust .il-flag { fill: var(--accent); }
+.illust .il-warn { fill: rgba(255, 194, 71, .15); stroke: var(--warn); stroke-width: 2.5; stroke-linejoin: round; }
+.illust .il-warn-t { fill: var(--warn); font-weight: 900; }
+.illust .il-ring-acc { fill: rgba(var(--accent-rgb), .1); stroke: var(--accent); stroke-width: 2.5; }
+.illust .il-check { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.illust .il-funnel { fill: rgba(var(--accent-rgb), .15); stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.illust .il-bubble.c { fill: rgba(255, 107, 122, .18); stroke: #ff8a96; }
+.illust .il-bubble.s { fill: rgba(91, 155, 255, .18); stroke: #7fb8ff; }
+.illust .il-edge { stroke: var(--line-strong); stroke-width: 1.5; }
+.illust .il-edge.t { stroke: #3ef0a0; } .illust .il-edge.f { stroke: #ff6b7a; }
+.illust .il-bp { fill: #ff4d5e; }
+.illust .il-cookie { fill: rgba(214, 160, 90, .35); stroke: #d6a05a; stroke-width: 2; }
+.illust .il-chip-dot { fill: #8a5a2b; }
+.illust .il-pause { fill: var(--warn); }
+.illust .il-key { fill: var(--panel-solid); stroke: var(--line-strong); stroke-width: 1.5; }
+.illust .il-key-edge { fill: var(--line-strong); }
+.illust .il-key-t { font-family: var(--mono); font-weight: 700; fill: var(--text); }
 .illust { display: block; width: 100%; height: auto; font-family: var(--ui); }
 .illust .il-frame { fill: rgba(var(--accent-rgb), .03); stroke: var(--line); }
 .illust .il-title { fill: var(--text); font-weight: 700; letter-spacing: .04em; }
@@ -1554,3 +1586,12 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 [data-mode="light"] .illust .il-box.dark { fill: #0b1828; }
 [data-mode="light"] .illust .il-bar.hi { fill: #e39a0c; }
 [data-mode="light"] .illust .il-pix { fill: rgba(17, 66, 105, .12); }
+
+[data-mode="light"] .illust .il-panel.last { stroke: var(--neon); fill: rgba(var(--neon-rgb), .07); }
+[data-mode="light"] .illust .il-doc, [data-mode="light"] .illust .il-key { fill: #fff; }
+[data-mode="light"] .illust .il-line { fill: rgba(17, 66, 105, .18); }
+[data-mode="light"] .illust .il-warn { fill: #fff6e2; stroke: #e39a0c; }
+[data-mode="light"] .illust .il-warn-t, [data-mode="light"] .illust .il-pause, [data-mode="light"] .illust .il-led-hi { fill: #e39a0c; }
+[data-mode="light"] .illust .il-bubble.c { stroke: #e07a5f; } [data-mode="light"] .illust .il-bubble.s { stroke: #5b8fd6; }
+[data-mode="light"] .illust .il-edge.t { stroke: #12924a; } [data-mode="light"] .illust .il-edge.f { stroke: #c8223a; }
+[data-mode="light"] .illust .il-num { fill: var(--accent); }
