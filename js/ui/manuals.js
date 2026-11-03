@@ -2,6 +2,8 @@
 import { MANUALS } from '../data/manuals.js';
 import { SAMPLES } from '../data/samples.js';
 import { icon } from '../data/tools.js';
+import { MANUAL_ILLUST } from '../data/manual-illust.js';
+import { sceneIllustration } from './illust.js';
 import { $, h, copy, download, sendSample, toast } from './common.js';
 
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -198,6 +200,8 @@ export function initManuals() {
         h('span', {}, String(i + 1).padStart(2, '0')), c.title)));
     const chapters = m.chapters.map((c, i) => h('section', { class: 'card mn-chapter', id: `mn-${c.id}` },
       h('h2', { class: 'mn-h' }, h('span', { class: 'mn-h-no' }, String(i + 1).padStart(2, '0')), c.title),
+      // 章の挿絵（1 枚絵）。画面の配置図がある章は、そちらを優先して挿絵は付けない
+      MANUAL_ILLUST[`${m.id}/${c.id}`] ? h('figure', { class: 'mn-illust' }, sceneIllustration(MANUAL_ILLUST[`${m.id}/${c.id}`])) : '',
       ...c.blocks.map(block)));
     root.replaceChildren(
       h('a', { class: 'mn-back', href: '#manuals' }, '‹ ガイドの一覧'),
