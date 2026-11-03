@@ -1,6 +1,6 @@
 // 「迷ったら診断」：貼り付けられた文字列の正体を推測し、次にやることとツールを提案する
 import { identifyHash } from './hash.js';
-import { caesarAll, englishChi as chi } from './ciphers.js';
+import { caesarAll, englishRank } from './ciphers.js';
 import { flagRegex } from './magic.js';
 import { parseIPv4 } from './net.js';
 import { analyze as analyzeInjection } from './pinject.js';
@@ -156,15 +156,15 @@ export function identify(input, prefixes) {
   const letters = text.replace(/[^a-z]/gi, '').length;
   const words = text.split(/\s+/).filter(Boolean).length;
   if (!flag && letters >= 12 && words >= 2 && letters / compact.length > 0.75 && !res.some((r) => r.level === HIGH || r.id === 'enc')) {
-    const rows = caesarAll(text).map((r) => ({ ...r, chi: chi(r.text) }));
-    const best = rows.reduce((a, b) => (b.chi < a.chi ? b : a));
-    if (best.shift === 0 && best.chi < 2) {
+    const rows = caesarAll(text).map((r) => ({ ...r, ...englishRank(r.text) }));
+    const best = rows.reduce((a, b) => (b.rank < a.rank ? b : a));
+    if (best.shift === 0 && (best.chi < 2 || best.cover >= 0.6)) {
       add({
         id: 'plain', level: LOW, title: '普通の英文のようです', tool: 'flag', payload: text,
         reason: '英語の文字の出方とよく似ています。暗号化されていない可能性があります。',
         next: '文中にヒントやフラグが隠れていないか、フラグ検索や頭文字・大文字の並びを確認しましょう。',
       });
-    } else if (best.shift !== 0 && best.chi < 2.5 && rows[0].chi > best.chi * 2) {
+    } else if (best.shift !== 0 && ((best.chi < 2.5 && rows[0].chi > best.chi * 2) || (best.cover >= 0.6 && rows[0].cover < 0.3))) {
       add({
         id: 'caesar', level: HIGH, title: `シーザー暗号（${best.shift} 文字ずらし${best.shift === 13 ? '＝ROT13' : ''}）`, tool: 'classic', payload: text,
         reason: `アルファベットを ${best.shift} 文字ずらすと英文らしくなります: 「${best.text.slice(0, 40)}${best.text.length > 40 ? '…' : ''}」`,

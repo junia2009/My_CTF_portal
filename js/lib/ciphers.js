@@ -28,6 +28,45 @@ export function englishChi(text) {
   return f.reduce((a, x) => a + (x.count - (x.en / 100) * n) ** 2 / ((x.en / 100) * n), 0) / n;
 }
 
+// よく使う英単語（短い文の英文らしさを判定するため。CTF でよく出る語も含む）
+const COMMON_WORDS = new Set(["able", "about", "admin", "after", "again", "all", "also", "always", "an", "and", "answer", "any", "are", "as", "ask", "at", "attack", "back", "bad", "be", "because", "been", "begin", "believe", "between", "big", "bring", "brown", "but", "by", "caesar", "call", "can", "case", "challenge", "child", "cipher", "city", "code", "come", "company", "congratulations", "correct", "could", "country", "crypto", "ctf", "dawn", "day", "decode", "did", "do", "dog", "each", "early", "easy", "encode", "even", "every", "eye", "fact", "father", "feel", "few", "find", "first", "flag", "for", "fox", "from", "fun", "get", "give", "go", "good", "government", "great", "group", "had", "hand", "happen", "hard", "has", "have", "he", "hear", "hello", "help", "her", "here", "hidden", "high", "him", "his", "hold", "home", "house", "how", "if", "important", "in", "into", "is", "it", "its", "jumps", "just", "keep", "key", "know", "large", "last", "lazy", "leave", "left", "let", "life", "like", "little", "live", "login", "long", "look", "made", "make", "man", "many", "me", "mean", "meet", "message", "more", "most", "mother", "move", "my", "need", "never", "new", "next", "nice", "night", "no", "not", "now", "number", "of", "old", "on", "one", "only", "or", "other", "our", "out", "over", "own", "part", "pass", "password", "people", "place", "plain", "plaintext", "play", "point", "problem", "public", "put", "question", "quick", "read", "right", "room", "root", "rot", "run", "said", "same", "say", "school", "secret", "see", "seem", "set", "she", "shift", "should", "show", "simple", "small", "so", "solve", "solved", "some", "start", "still", "student", "such", "system", "take", "tell", "text", "than", "that", "the", "their", "them", "then", "there", "these", "they", "thing", "think", "this", "those", "through", "time", "to", "today", "try", "turn", "two", "under", "up", "us", "use", "user", "very", "want", "was", "water", "way", "we", "week", "welcome", "well", "were", "what", "when", "where", "which", "while", "who", "why", "will", "with", "woman", "word", "work", "world", "would", "write", "wrong", "year", "you", "young", "your"]);
+const MAX_WORD = Math.max(...[...COMMON_WORDS].map((w) => w.length));
+
+// 英単語として読める文字の割合（0〜1）。区切りのない "helloworld" も、辞書の単語を左から当てはめて数える
+export function wordCoverage(text) {
+  const tokens = text.toLowerCase().match(/[a-z]+/g) ?? [];
+  let total = 0, hit = 0;
+  for (const t of tokens) {
+    total += t.length;
+    if (COMMON_WORDS.has(t) && (t.length >= 2 || t === 'a' || t === 'i')) {
+      hit += t.length;
+      continue;
+    }
+    for (let i = 0; i < t.length;) {
+      let len = 0;
+      for (let L = Math.min(MAX_WORD, t.length - i); L >= 3; L--) {
+        if (COMMON_WORDS.has(t.slice(i, i + L))) {
+          len = L;
+          break;
+        }
+      }
+      if (len) {
+        hit += len;
+        i += len;
+      } else i++;
+    }
+  }
+  return total ? hit / total : 0;
+}
+
+// 英文らしさの総合判定：文字の出方（カイ二乗）と、英単語として読めるか。rank が小さいほど英文らしい
+// 短い文はカイ二乗だけだと外れやすい（例：「uapv{wtaad ctl ldgas}」が「flag{hello new world}」より英語らしく見える）ので、単語で補う
+export function englishRank(text) {
+  const chi = englishChi(text);
+  const cover = wordCoverage(text);
+  return { chi, cover, rank: Math.min(chi, 10) - cover * 4 };
+}
+
 export function caesarAll(s) {
   const rows = [];
   for (let k = 0; k < 26; k++) {
