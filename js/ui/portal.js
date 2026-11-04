@@ -83,15 +83,24 @@ export function initBoot() {
 
 // ---------- 各ページ見出しの英字ラベル ----------
 const PAGE_CODES = {
-  home: 'COMMAND CENTER', guide: 'BRIEFING', identify: 'TARGET SCANNER', codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', classic: 'CLASSIC CIPHER',
-  xor: 'XOR ANALYZER', rsa: 'RSA BREAKER', file: 'FILE FORENSICS', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
-  flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL', manuals: 'TOOL MANUALS', dict: 'REFERENCE', learn: 'KNOWLEDGE BASE',
+  home: 'COMMAND CENTER', guide: 'BRIEFING', identify: 'TARGET SCANNER', learn: 'KNOWLEDGE BASE',
+  codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', binview: 'BINARY VIEWER', mojibake: 'CHARSET REPAIR',
+  classic: 'CLASSIC CIPHER', xor: 'XOR ANALYZER', rsa: 'RSA BREAKER', math: 'NUMBER THEORY',
+  rev: 'REVERSE ENGINEERING', file: 'FILE FORENSICS', image: 'IMAGE FORENSICS', geo: 'GEO LOCATOR', audio: 'AUDIO ANALYZER',
+  pcap: 'PACKET ANALYZER', logs: 'LOG ANALYZER', pinject: 'PROMPT GUARD', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
+  flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL', manuals: 'TOOL MANUALS',
+  dict: 'REFERENCE', diff: 'DIFF ENGINE', regex: 'PATTERN LAB',
 };
+// 番号はサイドメニューの並び順で振る（ページを足しても通し番号がずれない）
 export function initEyebrows() {
-  Object.entries(PAGE_CODES).forEach(([id, code], i) => {
+  const order = [...document.querySelectorAll('#nav a[data-route]')].map((a) => a.dataset.route).filter((id) => id !== 'home');
+  // メニューに無いページも、後ろに続けて番号を振る
+  for (const sec of document.querySelectorAll('[data-page]')) if (sec.dataset.page !== 'home' && !order.includes(sec.dataset.page)) order.push(sec.dataset.page);
+  order.forEach((id, i) => {
     const h1 = document.querySelector(`[data-page="${id}"] h1`);
-    if (id === 'home') return;
-    h1?.before(h('div', { class: 'eyebrow' }, `MODULE ${String(i).padStart(2, '0')} // ${code}`));
+    if (!h1) return;
+    h1.parentElement.querySelector(':scope > .eyebrow')?.remove();
+    h1.before(h('div', { class: 'eyebrow' }, `MODULE ${String(i + 1).padStart(2, '0')} // ${PAGE_CODES[id] ?? id.toUpperCase()}`));
   });
 }
 
