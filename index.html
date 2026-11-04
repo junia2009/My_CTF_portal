@@ -219,6 +219,7 @@
       <!-- エンコード / デコード -->
       <section data-page="codec" hidden>
         <h1>エンコード / デコード</h1>
+        <p class="lead">変換を順番につなげて、読めないデータを元に戻します（CyberChef と同じ考え方）。各段階の結果がその場で見え、次に試す変換を自動で提案します。</p>
         <div class="card">
           <div class="row between">
             <label for="codecIn">入力</label>
@@ -238,33 +239,40 @@
 
         <div class="card magic-card">
           <div class="row between">
-            <h3>自動解析（Magic）</h3>
+            <h3>全自動で試す（Magic）</h3>
             <button type="button" id="magicRun">解析する</button>
           </div>
-          <p class="hint">Base64 / Base32 / Base58 / Base85 / Hex / 2進・10進 / URL / HTML / Unicode / モールス / gzip・zlib を重ねて試し、読める結果やフラグが出たものを上位に表示します。最後にシーザー全シフト・ROT47・反転でフラグが出るかも確認します。</p>
+          <p class="hint">Base64 / Base32 / Base58 / Base85 / Hex / 2進・10進 / URL / HTML / Unicode / モールス / gzip・zlib を重ねて試し、読める結果やフラグが出たものを上位に表示します。「適用」で下のレシピに手順が入ります。</p>
           <div class="table-wrap"><table class="list" id="magicOut"></table></div>
         </div>
 
-        <div class="card">
-          <h3>ワンクリック変換</h3>
-          <p class="hint">押すと、その変換をレシピの最後に追加します。</p>
-          <div id="codecQuick"></div>
-        </div>
-
-        <div class="card">
-          <h3>レシピ（変換を順番につなげる）</h3>
-          <div class="row">
-            <select id="recipeOp"></select>
-            <input id="recipeArg" class="mono" hidden>
-            <button type="button" id="recipeAdd">追加</button>
-            <button type="button" id="recipeClear" class="ghost">クリア</button>
+        <div class="cc-work">
+          <aside class="card cc-palette" aria-label="変換の一覧">
+            <h3>変換を探す</h3>
+            <input id="ccSearch" placeholder="名前で検索（base64・xor・aes・抜き出す…）" aria-label="変換を検索">
+            <div id="ccCats"></div>
+          </aside>
+          <div class="cc-main">
+            <div class="card">
+              <div class="row between">
+                <h3>レシピ（上から順に実行）</h3>
+                <div class="row">
+                  <button type="button" class="ghost small" id="ccSaveRecipe">保存</button>
+                  <button type="button" class="ghost small" id="ccCopyRecipe" title="レシピを文字にしてコピー（チームで共有）">共有用にコピー</button>
+                  <button type="button" class="ghost small" id="ccLoadRecipe" title="共有されたレシピを貼り付けて読み込む">貼り付けて読み込む</button>
+                  <button type="button" class="ghost small" id="recipeClear">クリア</button>
+                </div>
+              </div>
+              <div class="cc-presets" id="ccPresets"></div>
+              <div class="cc-flow" id="ccFlow"></div>
+              <div class="cc-next" id="ccNext"></div>
+            </div>
           </div>
-          <ol class="recipe" id="recipeList"></ol>
         </div>
 
         <div class="card">
           <div class="row between">
-            <label for="codecOut">出力</label>
+            <label for="codecOut">出力（最後の段階の結果）</label>
             <div class="row">
               <select id="codecOutFmt" aria-label="出力の表示形式">
                 <option value="auto">自動</option>
@@ -280,6 +288,7 @@
           </div>
           <textarea id="codecOut" rows="7" readonly></textarea>
           <div class="meta-line" id="codecOutInfo"></div>
+          <div class="cc-img" id="codecImg" hidden></div>
           <p class="error" id="codecErr"></p>
         </div>
       </section>

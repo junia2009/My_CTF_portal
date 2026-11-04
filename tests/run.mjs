@@ -4,7 +4,9 @@ import { createHash, generatePrimeSync } from 'node:crypto';
 import { gzipSync, deflateSync } from 'node:zlib';
 import * as C from '../js/lib/codecs.js';
 import * as X from '../js/lib/ciphers.js';
-import { runRecipe } from '../js/lib/recipe.js';
+import { runRecipe, suggestNext, OPS, searchOps } from '../js/lib/recipe.js';
+import { blockCrypt, rc4, aesGcm } from '../js/lib/blockcipher.js';
+import { createCipheriv, createHmac, randomBytes } from 'node:crypto';
 import { magic } from '../js/lib/magic.js';
 import { md5, crc32, computeHashes, identifyHash } from '../js/lib/hash.js';
 import { decodeJwt } from '../js/lib/jwt.js';
@@ -713,6 +715,55 @@ await t('表: CSV（UTF-8 / Shift_JIS）と、形式をまたいだ比較', asyn
   assert.deepEqual(changesOf(SH.compareBooks(await book('book_a.xls'), await book('book_b_lo.xlsx'))), ['B2:mod:100>120', 'D2:mod:300>320', 'F2:del:0.1>', 'A4:mod:名古屋>名古屋駅前', 'E5:add:>flag{d1ff_th3_sh33t}']);
   assert.deepEqual(changesOf(SH.compareBooks(await book('book_a.csv'), await book('book_a.xls'))), []);
   assert.ok(SH.hiddenStuff(await book('book_b.xls')).some((x) => x.includes('secret')));
+});
+
+
+// ---------- ブロック暗号・レシピの追加操作 ----------
+await t('AES / DES / 3DES / RC4：既知の値と OpenSSL に一致', async () => {
+  const hx = (x) => Uint8Array.from(Buffer.from(x, 'hex'));
+  const H = (b) => Buffer.from(b).toString('hex');
+  assert.equal(H(blockCrypt({ algo: 'aes', key: hx('000102030405060708090a0b0c0d0e0f'), mode: 'ecb', padding: 'none', decrypt: false }, hx('00112233445566778899aabbccddeeff'))), '69c4e0d86a7b0430d8cdb78070b4c55a');
+  assert.equal(H(blockCrypt({ algo: 'des', key: hx('133457799BBCDFF1'), mode: 'ecb', padding: 'none', decrypt: false }, hx('0123456789ABCDEF'))), '85e813540f0ab405');
+  assert.equal(H(rc4(Buffer.from('Key'), Buffer.from('Plaintext'))), 'bbf316e8d940af0ad3');
+  const pt = Buffer.from('flag{block_cipher_modes!}..and_more');
+  for (const [algo, kl, name, n, modes] of [['aes', 16, 'aes-128', 16, ['ecb', 'cbc', 'ctr', 'cfb', 'ofb']], ['aes', 32, 'aes-256', 16, ['cbc', 'ctr']], ['3des', 24, 'des-ede3', 8, ['cbc', 'ecb']]]) {
+    for (const mode of modes) {
+      const key = randomBytes(kl), iv = randomBytes(n);
+      const c = createCipheriv(algo === '3des' && mode === 'ecb' ? 'des-ede3' : `${name}-${mode}`, key, mode === 'ecb' ? null : iv);
+      const ct = Buffer.concat([c.update(pt), c.final()]);
+      assert.ok(Buffer.from(blockCrypt({ algo, key, iv, mode }, ct)).equals(pt), `${name}-${mode} 復号`);
+      assert.ok(Buffer.from(blockCrypt({ algo, key, iv, mode, decrypt: false }, pt)).equals(ct), `${name}-${mode} 暗号化`);
+    }
+  }
+  const key = randomBytes(16), iv = randomBytes(12);
+  const g = createCipheriv('aes-128-gcm', key, iv);
+  const gc = Buffer.concat([g.update(pt), g.final(), g.getAuthTag()]);
+  assert.ok(Buffer.from(await aesGcm({ key, iv }, gc)).equals(pt));
+  assert.throws(() => blockCrypt({ algo: 'aes', key: randomBytes(16), iv: randomBytes(16) }, randomBytes(32)), /パディング/);
+  assert.throws(() => blockCrypt({ algo: 'aes', key: randomBytes(10), iv: randomBytes(16) }, randomBytes(32)), /16・24・32/);
+});
+await t('レシピ：追加の形式・暗号・抽出', async () => {
+  const T = (r) => { assert.equal(r.error, null); return C.fromBytes(r.output); };
+  const s0 = 'flag{Round_Trip_日本語}';
+  for (const [e, d] of [['b62e', 'b62d'], ['b91e', 'b91d'], ['octe', 'octd'], ['esce', 'escd'], ['qpe', 'qpd'], ['bige', 'bigd']]) assert.equal(T(await runRecipe(s0, [e, d])), s0, `${e}→${d}`);
+  assert.equal(T(await runRecipe('Hello, World!', ['b91e'])), '>OwJh>}AQ;r@@Y?F');
+  const key = randomBytes(16), iv = randomBytes(16);
+  const c = createCipheriv('aes-128-cbc', key, iv);
+  const ct = Buffer.concat([c.update('flag{aes_recipe}'), c.final()]).toString('base64');
+  assert.equal(T(await runRecipe(ct, ['b64d', { id: 'aes', args: { mode: 'cbc', key: key.toString('hex'), iv: iv.toString('hex') } }])), 'flag{aes_recipe}');
+  assert.equal(T(await runRecipe('Uryyb Jbeyq', ['caesarbrute'])).split('\n')[0], '+13: Hello World');
+  assert.equal(T(await runRecipe('Zm9v\nYmFy', [{ id: 'eachline', args: { op: 'b64d' } }])), 'foo\nbar');
+  assert.equal(T(await runRecipe('abc', [{ id: 'hmac', args: { alg: 'MD5', key: 'key' } }])), createHmac('md5', 'key').update('abc').digest('hex'));
+  assert.equal(T(await runRecipe('see https://a.example/x and 10.0.0.1, me@ex.com', ['urls'])), 'https://a.example/x');
+  assert.equal(T(await runRecipe('8 5 12 12 15', ['a1z26d'])), 'HELLO');
+  assert.equal(T(await runRecipe('xx flag{in_text} yy', ['flags'])).split(' ')[0], 'flag{in_text}');
+  assert.ok(OPS.length >= 80 && searchOps('aes').some((o) => o.id === 'aes') && searchOps('文字コード').some((o) => o.id === 'decd'));
+  const sug = (x) => suggestNext(C.toBytes(x)).map((r) => r.id);
+  assert.deepEqual(sug('SGVsbG8gd29ybGQ='), ['b64d']);
+  assert.deepEqual(sug('01001000 01101001'), ['bind']);
+  assert.ok(sug('synt{uryyb}').includes('caesarbrute'));
+  assert.ok(sug('eyJhbGciOiJub25lIn0.eyJ1IjoxfQ.').includes('jwt'));
+  assert.ok(suggestNext(randomBytes(64)).some((r) => r.id === 'xorbrute'));
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);
