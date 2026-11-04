@@ -2,6 +2,7 @@
 import { LEARN as NET } from '../data/learn.js';
 import { CRYPTO_TEXTS } from '../data/learn-crypto.js';
 import { WEB_TEXTS } from '../data/learn-web.js';
+import { WEBVULN_TEXTS } from '../data/learn-webvuln.js';
 import { PROXY_TEXTS } from '../data/learn-proxy.js';
 import { DFIR_TEXTS } from '../data/learn-dfir.js';
 import { icon } from '../data/tools.js';
@@ -13,7 +14,7 @@ import { PROXY_FIGURES, PROXY_WIDGETS } from './proxyfig.js';
 import { DFIR_FIGURES, DFIR_WIDGETS } from './forensicfig.js';
 import { $, h, store } from './common.js';
 
-const LEARN = [...NET, ...CRYPTO_TEXTS, ...WEB_TEXTS, ...DFIR_TEXTS, ...PROXY_TEXTS];
+const LEARN = [...NET, ...CRYPTO_TEXTS, ...WEB_TEXTS, ...WEBVULN_TEXTS, ...DFIR_TEXTS, ...PROXY_TEXTS];
 
 const READ_KEY = 'ctfportal.learnRead';
 registerFigures({ ...NET_FIGURES, ...CRYPTO_FIGURES, ...WEB_FIGURES, ...PROXY_FIGURES, ...DFIR_FIGURES });

@@ -6,6 +6,24 @@ const doc = (x, y, w, hh, label, cls = 'nf-box', tcls = 'nf-t mono') => [R(x, y,
 const lines = (x, y, arr, cls = 'nf-t mono small', dy = 16) => arr.map((t, i) => T(x, y + i * dy, t, cls, 'start'));
 
 export const WEB_FIGURES = {
+  // 脆弱性診断の考え方：安全な目印を入れて、応答の変化を見る
+  diagnose() {
+    const kids = [
+      ...doc(20, 40, 150, 46, '① 目印の入力', 'nf-box l-app', 'nf-t small strong'),
+      T(95, 104, '普段と違う形の、害の', 'nf-t small'), T(95, 120, 'ない値を 1 つ入れる', 'nf-t small'),
+      A('M174 63 H250'),
+      ...doc(250, 40, 180, 46, '② 応答の変化を見る', 'nf-box l-net', 'nf-t small strong'),
+      T(340, 104, 'エラー・表示・時間・', 'nf-t small'), T(340, 120, 'ヘッダーの違い', 'nf-t small'),
+      A('M434 63 H510'),
+      ...doc(510, 30, 190, 30, '③ 変化あり → 疑い', 'nf-box', 'nf-t small strong'),
+      ...doc(510, 68, 190, 30, '③ 変化なし → 低い', 'nf-box', 'nf-t small'),
+      R(20, 150, 680, 86, 'nf-box shield', 8),
+      T(360, 174, '確認するのは「弱点があるか（Yes / No）」まで。それ以上は踏み込まない', 'nf-t small strong acc'),
+      T(360, 196, '見つけたら、攻撃を広げず、直し方（各章の「対策」）に進む', 'nf-t small'),
+      T(360, 216, '許可された対象だけ・1 回の目印で判断・サービスを止めない', 'nf-t small'),
+    ];
+    return frame(720, 248, '脆弱性診断の基本の考え方', ...kids);
+  },
   // URL を入れてから表示されるまで
   flow() {
     const steps = [
