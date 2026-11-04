@@ -11,7 +11,7 @@ import { vigenere, affineDecrypt, railFenceEncrypt, railFenceDecrypt, caesarAll,
 import { md5, crc32 } from './hash.js';
 import { decodeJwt } from './jwt.js';
 import { findFlags, DEFAULT_PREFIXES } from './flag.js';
-import { entropy, scanSignatures } from './file.js';
+import { entropy, scanSignatures, identifyType } from './file.js';
 
 // ---------- 共通の部品 ----------
 const asText = (f) => (b, a) => toBytes(f(bytesToText(b), a));
@@ -625,6 +625,20 @@ export function suggestNext(b) {
   const isBin = /^[01]{8}(?:\s*[01]{8})*$/.test(s);
   if (b[0] === 0x1f && b[1] === 0x8b) add('gunzip', '先頭が 1f 8b（gzip の印）');
   if (b[0] === 0x78 && [0x01, 0x5e, 0x9c, 0xda].includes(b[1])) add('inflate', '先頭が 78（zlib の印）');
+  // 画像や zip などのファイルそのものなら、文字としての候補は出さない（保存して専用のツールで調べる）
+  const ftype = identifyType(b);
+  if (ftype && !['gz'].includes(ftype.ext)) {
+    if (ftype.ext === 'zip' || ftype.ext === 'gz') add('files', 'ファイルの中に別のファイルが無いか探す');
+    return out;
+  }
+  // 読めない文字が多いデータに、文字の形の判定は当てない
+  if (printableRatio(b.subarray(0, 4096)) < 0.75) {
+    add('xorbrute', '読めないバイナリ（1 バイト XOR かも）');
+    if (b.length >= 16 && b.length % 16 === 0 && entropy(b) > Math.min(6, Math.log2(b.length) - 0.5)) add('aes', `${b.length} バイト＝16 の倍数で乱雑（AES かも・鍵が必要）`);
+    add('stats', 'まずデータの性質を確認');
+    add('files', '中に別のファイルが無いか探す');
+    return out;
+  }
   if (/^eyJ[\w-]+\.[\w-]+\.?[\w-]*$/.test(compact)) add('jwt', 'eyJ で始まる（JWT）');
   if (isBin) add('bind', '0 と 1 の 8 桁ずつ（2進）');
   else if (/^(?:0x)?(?:[0-9a-f]{2}[\s:,]*){2,}$/i.test(s) || /^(?:\\x[0-9a-f]{2})+$/i.test(compact)) add('hexd', '0〜9 と a〜f だけ（16進）');

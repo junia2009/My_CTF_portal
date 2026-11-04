@@ -764,6 +764,7 @@ await t('レシピ：追加の形式・暗号・抽出', async () => {
   assert.ok(sug('synt{uryyb}').includes('caesarbrute'));
   assert.ok(sug('eyJhbGciOiJub25lIn0.eyJ1IjoxfQ.').includes('jwt'));
   assert.ok(suggestNext(randomBytes(64)).some((r) => r.id === 'xorbrute'));
+  assert.ok(!suggestNext(Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x25, 0x41, 0x42, 0, 0, 0])).some((r) => r.id === 'urld'));
 });
 
 console.log(`${passed} 件成功${process.exitCode ? '（失敗あり）' : ''}`);

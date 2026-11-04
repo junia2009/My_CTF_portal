@@ -631,6 +631,9 @@ td.actions { display: flex; gap: .35rem; justify-content: flex-end; width: auto;
 .cc-reason { font-size: .76rem; color: var(--muted); }
 .cc-peek { font-family: var(--mono); font-size: .74rem; color: var(--text); word-break: break-all; opacity: .85; }
 .cc-peek.need { color: var(--warn); font-family: var(--ui); }
+.cc-file { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; margin-top: .5rem; padding: .5rem .7rem; border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); background: rgba(var(--accent-rgb), .07); font-size: .85rem; font-weight: 700; }
+.cc-file span { margin-right: auto; color: var(--accent); }
+[data-mode="light"] .cc-file { background: #effaff; border-left-color: var(--neon); }
 .cc-img { margin-top: .6rem; padding: .6rem; background: repeating-conic-gradient(#111a24 0 25%, #0b131c 0 50%) 0 0 / 16px 16px; border: 1px solid var(--line); text-align: center; }
 .cc-img img { max-width: 100%; max-height: 360px; image-rendering: pixelated; }
 @media (max-width: 900px) {
