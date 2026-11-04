@@ -98,6 +98,8 @@
       <a href="#notes" data-route="notes">問題メモ・フラグ記録</a>
       <a href="#cheatsheet" data-route="cheatsheet">チートシート</a>
       <a href="#manuals" data-route="manuals">ツールの使い方</a>
+      <div class="nav-group">業務で使う</div>
+      <a href="#dict" data-route="dict">逆引き辞典</a>
       <a href="#diff" data-route="diff">差分比較</a>
       <a href="#regex" data-route="regex">正規表現テスター</a>
     </nav>
@@ -1215,6 +1217,18 @@
       </section>
 
       <!-- チートシート -->
+      <section data-page="dict" hidden>
+        <h1>逆引き辞典</h1>
+        <p class="lead">「やりたいこと」から SQL・Python・Linux コマンドの書き方を引けます。日本語でも英語でも検索でき、コードはそのままコピーできます。</p>
+        <div class="dc-bar">
+          <div class="dc-tabs" id="dcTabs" role="tablist"></div>
+          <input id="dcSearch" class="dc-search" placeholder="やりたいことで検索（例：重複 / 上位10件 / 置換 / ポート / csv）" aria-label="逆引き辞典を検索">
+        </div>
+        <div class="dc-cats" id="dcCats"></div>
+        <p class="hint dc-info" id="dcInfo"></p>
+        <div class="dc-list" id="dcList"></div>
+      </section>
+
       <section data-page="manuals" hidden>
         <h1>ツールの使い方</h1>
         <div id="manualsBody"></div>
