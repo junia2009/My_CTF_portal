@@ -3,6 +3,7 @@ import { DICTS } from '../data/dict.js';
 import { COMMANDS } from '../data/commands.js';
 import { $, h, store, copy, debounce } from './common.js';
 import { gitMap } from './gitmap.js';
+import { dockerMap } from './dockermap.js';
 
 const FAV_KEY = 'ctfportal.dictFav';
 const LANGS = [['sql', 'SQL'], ['python', 'Python'], ['linux', 'Linux コマンド'], ['git', 'Git'], ['docker', 'Docker']];
@@ -38,6 +39,7 @@ export function initDict() {
     }, name, h('small', {}, mode === 'cmd' ? COMMANDS[id].length : DICTS.find((d) => d.id === id).entries.length))),
     mode === 'task' ? h('button', { type: 'button', class: `dc-fav-tab${favOnly ? ' active' : ''}`, onclick: () => { favOnly = !favOnly; render(); } }, '★ よく使う', h('small', {}, fav.size)) : '');
     $('dcGitMap').hidden = lang !== 'git' || favOnly;
+    $('dcDockerMap').hidden = lang !== 'docker' || favOnly;
     $('dcModeCmd').classList.toggle('active', mode === 'cmd');
     $('dcModeTask').classList.toggle('active', mode === 'task');
     $('dcCmdView').hidden = mode !== 'cmd';
@@ -215,6 +217,22 @@ export function initDict() {
   const mapBox = $('dcGitMap');
   mapBox.open = store.get('ctfportal.gitMapOpen', true);
   mapBox.addEventListener('toggle', () => store.set('ctfportal.gitMapOpen', mapBox.open));
+
+  // Docker の全体マップ（Docker のタブの一番上）
+  const dm = dockerMap((name) => {
+    mode = 'cmd';
+    store.set('ctfportal.dictMode', mode);
+    lang = 'docker';
+    cmdCat.docker = null;
+    $('dcCmdSearch').value = '';
+    selected.docker = name;
+    render();
+    $('dcDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, (name) => !!findCmd('docker', name));
+  $('dcDockerMapBody').append(dm.svg);
+  const dmapBox = $('dcDockerMap');
+  dmapBox.open = store.get('ctfportal.dockerMapOpen', true);
+  dmapBox.addEventListener('toggle', () => store.set('ctfportal.dockerMapOpen', dmapBox.open));
 
   render();
   // #dict/sql のように開いたら、その言語を表示する
