@@ -5,7 +5,7 @@ import { $, h, store, copy, debounce } from './common.js';
 import { gitMap } from './gitmap.js';
 
 const FAV_KEY = 'ctfportal.dictFav';
-const LANGS = [['sql', 'SQL'], ['python', 'Python'], ['linux', 'Linux コマンド'], ['git', 'Git']];
+const LANGS = [['sql', 'SQL'], ['python', 'Python'], ['linux', 'Linux コマンド'], ['git', 'Git'], ['docker', 'Docker']];
 const keyOf = (d, x) => `${d.id}:${x.t}`;
 
 // コードの表示：コメント（# / --）を薄く表示する
@@ -24,9 +24,9 @@ const codeBox = (code, lang) => h('div', { class: 'dc-code-wrap' }, codeView(cod
 export function initDict() {
   let lang = 'sql';
   let mode = store.get('ctfportal.dictMode', 'cmd');
-  const selected = { sql: 'SELECT', python: 'print', linux: 'ls', git: 'git status' };
+  const selected = { sql: 'SELECT', python: 'print', linux: 'ls', git: 'git status', docker: 'docker run' };
   let cat = null, favOnly = false;
-  const cmdCat = { sql: null, python: null, linux: null, git: null }; // コマンドで引く：セクションの絞り込み
+  const cmdCat = { sql: null, python: null, linux: null, git: null, docker: null }; // コマンドで引く：セクションの絞り込み
   const fav = new Set(store.get(FAV_KEY, []));
   const saveFav = () => store.set(FAV_KEY, [...fav]);
 
@@ -98,7 +98,7 @@ export function initDict() {
   // そのコマンドを使っている「やりたいこと」の項目（逆引きとのつながり）
   function relatedTasks(x) {
     const d = DICTS.find((t) => t.id === lang);
-    const word = (lang === 'git' ? x.name.split(' / ')[0] : x.name.split(/[\s/]/)[0]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const word = (lang === 'git' || lang === 'docker' ? x.name.split(' / ')[0] : x.name.split(/[\s/]/)[0]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = lang === 'python' ? new RegExp(`\\b${word}\\b`) : lang === 'sql' ? new RegExp(`\\b${word}\\b`, 'i') : new RegExp(`(^|[|;&\\s])${word}(\\s|$)`, 'm');
     return d.entries.filter((t) => re.test(t.code)).slice(0, 6);
   }
@@ -119,7 +119,7 @@ export function initDict() {
       h('div', { class: 'dc-d-sec' }, '書式'),
       codeBox(x.syn, lang),
       h('p', { class: 'dc-d-desc' }, x.desc),
-      x.opts.length ? [h('div', { class: 'dc-d-sec' }, lang === 'linux' || lang === 'git' ? 'よく使うオプション' : lang === 'sql' ? '書き方・種類' : '主な使い方'),
+      x.opts.length ? [h('div', { class: 'dc-d-sec' }, lang === 'linux' || lang === 'git' || lang === 'docker' ? 'よく使うオプション' : lang === 'sql' ? '書き方・種類' : '主な使い方'),
         h('table', { class: 'dc-opts' }, ...x.opts.map(([o, m]) => h('tr', {}, h('th', { title: 'クリックでコピー', onclick: () => copy(o) }, h('code', {}, o)), h('td', {}, m))))] : '',
       x.ex.length ? [h('div', { class: 'dc-d-sec' }, '例'), ...x.ex.map(([code, d]) => h('div', { class: 'dc-ex' }, codeBox(code, lang), d ? h('p', {}, d) : ''))] : '',
       x.warn ? h('div', { class: 'mn-callout warn' }, h('span', { class: 'mn-callout-label' }, '注意'), h('p', {}, x.warn)) : '',

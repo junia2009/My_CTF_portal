@@ -5,6 +5,7 @@ const c = (name, cat, sum, syn, desc, opts = [], ex = [], warn = '', rel = []) =
 
 import { MORE } from './commands-more.js';
 import { GIT_COMMANDS } from './commands-git.js';
+import { DOCKER_COMMANDS } from './commands-docker.js';
 
 export const COMMANDS = {
   // ======================= Linux =======================
@@ -171,3 +172,4 @@ for (const [lang, list] of Object.entries(MORE)) {
 }
 
 COMMANDS.git = GIT_COMMANDS;
+COMMANDS.docker = DOCKER_COMMANDS;

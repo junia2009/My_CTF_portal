@@ -4,6 +4,7 @@
 
 import { MORE } from './dict-more.js';
 import { GIT_DICT } from './dict-git.js';
+import { DOCKER_DICT } from './dict-docker.js';
 
 const e = (cat, t, code, d, kw = '', notes = null) => ({ cat, t, code, d, kw, notes });
 
@@ -237,3 +238,4 @@ for (const d of DICTS) {
 }
 
 DICTS.push(GIT_DICT);
+DICTS.push(DOCKER_DICT);
