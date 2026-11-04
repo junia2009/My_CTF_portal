@@ -307,15 +307,26 @@ export function initManuals() {
   function renderIndex() {
     root.replaceChildren(
       h('p', { class: 'lead' }, '大会でよく使う外部ツールの、インストールから CTF での使い方までをまとめたガイドです。ポータルのツールと組み合わせて使いましょう。'),
-      h('div', { class: 'mn-index' }, ...MANUALS.map((m) => h('a', { class: 'mn-card', href: `#manuals/${m.id}` },
-        h('span', { class: 'mn-card-icon' }, icon(m.icon)),
-        h('span', { class: 'mn-card-body' },
-          h('b', {}, m.name, m.kana ? h('small', {}, `（${m.kana}）`) : ''),
-          h('span', {}, m.tagline),
-          h('span', { class: 'mn-card-meta' }, ...m.genres.map((g) => h('span', { class: 'tag' }, g)), h('span', { class: 'hint' }, `${m.chapters.length} 章・${m.level}`)),
-        ),
-        h('span', { class: 'mn-card-go' }, '›'),
-      ))),
+      h('div', { class: 'mn-index' }, ...MANUALS.map((m) => {
+        const more = h('button', { type: 'button', class: 'lr-more', 'aria-label': '説明を開く', 'aria-expanded': 'false' }, '⌄');
+        const card = h('article', { class: 'mn-card lr-card' },
+          h('a', { class: 'lr-stretch', href: `#manuals/${m.id}`, 'aria-label': `${m.name} を開く` }),
+          h('span', { class: 'mn-card-icon' }, icon(m.icon)),
+          h('div', { class: 'mn-card-body' },
+            h('b', {}, m.name, m.kana ? h('small', {}, `（${m.kana}）`) : ''),
+            h('p', { class: 'lr-tagline' }, m.tagline),
+            h('span', { class: 'mn-card-meta' }, ...m.genres.map((g) => h('span', { class: 'tag' }, g)), h('span', { class: 'hint' }, `${m.chapters.length} 章・${m.level}`)),
+          ),
+          more,
+          h('span', { class: 'mn-card-go' }, '›'),
+        );
+        more.addEventListener('click', () => {
+          const open = card.classList.toggle('open');
+          more.setAttribute('aria-expanded', String(open));
+          more.setAttribute('aria-label', open ? '説明を閉じる' : '説明を開く');
+        });
+        return card;
+      })),
       h('p', { class: 'hint mn-more' }, 'ガイドは順次追加していきます。'),
     );
   }

@@ -41,17 +41,27 @@ export function initLearn() {
           h('div', { class: 'mn-index' }, ...list.map((t, i) => {
             const done = t.chapters.filter((c) => read.has(`${t.id}/${c.id}`)).length;
             const pct = Math.round((done / t.chapters.length) * 100);
-            return h('a', { class: 'mn-card', href: `#learn/${t.id}` },
+            // スマホでは説明を折りたたむ：⌄ で開閉（カード全体のタップは本を開く）
+            const more = h('button', { type: 'button', class: 'lr-more', 'aria-label': '説明を開く', 'aria-expanded': 'false' }, '⌄');
+            const card = h('article', { class: 'mn-card lr-card' },
+              h('a', { class: 'lr-stretch', href: `#learn/${t.id}`, 'aria-label': `${t.name} を開く` }),
               h('span', { class: 'mn-card-icon' }, icon(t.icon)),
-              h('span', { class: 'mn-card-body' },
+              h('div', { class: 'mn-card-body' },
                 h('b', {}, h('span', { class: 'lr-vol' }, `第 ${i + 1} 冊`), t.name),
-                h('span', {}, t.tagline),
+                h('p', { class: 'lr-tagline' }, t.tagline),
                 h('span', { class: 'mn-card-meta' }, ...t.genres.map((g) => h('span', { class: 'tag' }, g)), h('span', { class: 'hint' }, `${t.chapters.length} 章・${t.level}`)),
                 h('span', { class: 'lr-progress', title: `${done} / ${t.chapters.length} 章を読んだ` },
                   h('span', { class: 'lr-bar' }, h('span', { style: `width:${pct}%` })), h('small', {}, done ? `${done} / ${t.chapters.length} 章` : '未読')),
               ),
+              more,
               h('span', { class: 'mn-card-go' }, '›'),
             );
+            more.addEventListener('click', () => {
+              const open = card.classList.toggle('open');
+              more.setAttribute('aria-expanded', String(open));
+              more.setAttribute('aria-label', open ? '説明を閉じる' : '説明を開く');
+            });
+            return card;
           })),
         ];
       }),

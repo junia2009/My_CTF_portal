@@ -1457,12 +1457,29 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
   .mn-card-icon { width: 42px; height: 42px; }
   .mn-card-icon .ico { width: 22px; height: 22px; }
   .mn-card-body b { font-size: 1.02rem; }
-  .mn-card-body > span { font-size: .85rem; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .mn-card-body > span { font-size: .85rem; }
   .mn-card-go { font-size: 1.4rem; align-self: center; }
   .mn-hero { gap: .8rem; padding: 1rem; }
   .mn-hero-icon { width: 44px; height: 44px; }
   .mn-hero-icon .ico { width: 24px; height: 24px; }
   .mn-hero-name { font-size: 1.3rem; }
+}
+/* 学ぶの一覧カード：スマホは「タイトル＋章数・進捗」だけ出し、⌄ で説明を開閉する */
+.lr-card { position: relative; }
+.lr-stretch { position: absolute; inset: 0; z-index: 0; border: 0; }
+.lr-card > .mn-card-icon, .lr-card > .mn-card-body, .lr-card > .mn-card-go { position: relative; z-index: 1; pointer-events: none; }
+.lr-tagline { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.7; }
+.lr-more { display: none; position: absolute; top: .5rem; right: .5rem; z-index: 2; pointer-events: auto;
+  width: 2rem; height: 2rem; place-items: center; border: 1px solid var(--line-strong); border-radius: 5px;
+  background: rgba(var(--accent-rgb), .08); color: var(--accent); font-size: 1rem; line-height: 1; cursor: pointer; transition: transform .2s, border-color .2s; }
+.lr-more:hover { border-color: var(--accent); filter: none; }
+.lr-card.open .lr-more { transform: rotate(180deg); }
+@media (max-width: 760px) {
+  .lr-tagline { display: none; }
+  .lr-card.open .lr-tagline { display: block; margin-top: .5rem; }
+  .lr-more { display: grid; }
+  .lr-card > .mn-card-go { display: none; }
+  .lr-card .mn-card-body { padding-right: 2rem; }
 }
 .illust .il-caption { fill: var(--text); font-weight: 600; }
 .illust .il-panel.last { stroke: var(--accent); fill: rgba(var(--accent-rgb), .07); }
