@@ -85,7 +85,7 @@ export function initBoot() {
 const PAGE_CODES = {
   home: 'COMMAND CENTER', guide: 'BRIEFING', identify: 'TARGET SCANNER', codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', classic: 'CLASSIC CIPHER',
   xor: 'XOR ANALYZER', rsa: 'RSA BREAKER', file: 'FILE FORENSICS', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
-  flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL', manuals: 'TOOL MANUALS', dict: 'REFERENCE',
+  flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL', manuals: 'TOOL MANUALS', dict: 'REFERENCE', learn: 'KNOWLEDGE BASE',
 };
 export function initEyebrows() {
   Object.entries(PAGE_CODES).forEach(([id, code], i) => {

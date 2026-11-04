@@ -4,7 +4,13 @@ import { SAMPLES } from '../data/samples.js';
 import { icon } from '../data/tools.js';
 import { MANUAL_ILLUST } from '../data/manual-illust.js';
 import { sceneIllustration } from './illust.js';
-import { $, h, copy, download, sendSample, toast } from './common.js';
+import { $, h, copy, download, sendSample, toast, store } from './common.js';
+
+// 学ぶページなどから図・部品を足せるようにする
+const FIGURES = {};
+const WIDGETS = {};
+export const registerFigures = (o) => Object.assign(FIGURES, o);
+export const registerWidgets = (o) => Object.assign(WIDGETS, o);
 
 const svgNS = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs = {}, ...kids) => {
@@ -109,6 +115,152 @@ const DIAGRAMS = {
   },
 };
 
+// 確認問題：選ぶと正解・不正解と解説を表示
+function quiz(b) {
+  const res = h('div', { class: 'mn-quiz-res', hidden: '' });
+  const btns = b.choices.map((c, i) => h('button', { type: 'button', class: 'mn-quiz-c', onclick: () => {
+    btns.forEach((x, j) => {
+      x.disabled = true;
+      x.classList.toggle('ok', j === b.answer);
+      x.classList.toggle('ng', j === i && i !== b.answer);
+    });
+    res.hidden = false;
+    res.replaceChildren(h('b', { class: i === b.answer ? 'ok' : 'ng' }, i === b.answer ? '正解！' : '残念……'), h('p', {}, b.explain));
+  } }, h('span', {}, 'ABCD'[i]), c));
+  return h('div', { class: 'mn-quiz' }, h('div', { class: 'mn-quiz-q' }, h('span', { class: 'mn-quiz-tag' }, 'Q'), b.q), h('div', { class: 'mn-quiz-cs' }, ...btns), res);
+}
+
+export const block = (b) => {
+  switch (b.type) {
+    case 'p': return h('p', { class: 'mn-p' }, b.text);
+    case 'list': return h('div', { class: 'mn-list' }, b.title ? h('div', { class: 'mn-sub' }, b.title) : '', h('ul', {}, ...b.items.map((x) => h('li', {}, x))));
+    case 'steps': return h('ol', { class: 'mn-steps' }, ...b.items.map((x) => h('li', {}, h('b', {}, x.title), h('p', {}, x.text))));
+    case 'tip':
+    case 'warn': return h('div', { class: `mn-callout ${b.type}` },
+      h('span', { class: 'mn-callout-label' }, b.type === 'tip' ? 'TIP' : '注意'),
+      h('div', {}, b.title ? h('b', {}, b.title) : '', h('p', {}, b.text), b.link ? h('a', { class: 'btn ghost small', href: b.link.href, ...(/^https?:/.test(b.link.href) ? { target: '_blank', rel: 'noopener' } : {}) }, b.link.label, /^https?:/.test(b.link.href) ? ' ↗' : '') : ''));
+    case 'code': return h('div', { class: 'mn-code' },
+      h('div', { class: 'mn-code-head' }, h('span', {}, b.title ?? 'コード'), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.code) }, 'コピー')),
+      h('pre', {}, b.code));
+    case 'keys': return h('table', { class: `mn-keys${b.copy ? ' copyable' : ''}` }, ...b.items.map(([k, d]) => h('tr', {},
+      // フィルタの表は、1つの式としてクリックでコピーできるようにする
+      h('th', {}, ...(b.copy ? [h('kbd', { title: 'クリックでコピー', onclick: () => copy(k) }, k)] : k.split(' + ').flatMap((x, i) => [i ? ' + ' : '', h('kbd', {}, x)]))),
+      h('td', {}, d))));
+    case 'defs': return h('dl', { class: 'mn-defs' }, ...b.items.flatMap(([t, d]) => [h('dt', {}, t), h('dd', {}, d)]));
+    case 'faq': return h('div', { class: 'mn-faq' }, ...b.items.map(([q, a]) => h('details', {}, h('summary', {}, q), h('p', {}, a))));
+    case 'diagram': return h('figure', { class: 'mn-figure' }, DIAGRAMS[b.name](), h('figcaption', {}, b.caption));
+    case 'practice': return h('div', { class: 'mn-practice' },
+      b.download ? h('button', { type: 'button', onclick: () => downloadSample(b.download) }, b.download.label) : '',
+      b.input ? h('div', { class: 'mn-input' }, h('code', {}, b.input), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.input) }, 'コピー')) : '',
+      b.portal ? h('button', { type: 'button', class: 'ghost', onclick: () => openInPortal(b.portal) }, b.portal.label) : '',
+      b.note ? h('span', { class: 'hint' }, b.note) : '');
+    case 'devlab': return devLab();
+    case 'table': return h('div', { class: 'mn-table-wrap' }, h('table', { class: 'mn-table' },
+      b.head ? h('thead', {}, h('tr', {}, ...b.head.map((x) => h('th', {}, x)))) : '',
+      h('tbody', {}, ...b.rows.map((r) => h('tr', {}, ...r.map((x, i) => h(i === 0 && b.rowHead !== false ? 'th' : 'td', {}, x)))))));
+    case 'quiz': return quiz(b);
+    case 'scene': return h('figure', { class: 'mn-illust' }, sceneIllustration(b.spec));
+    case 'figure': return h('figure', { class: 'mn-figure' }, FIGURES[b.name](), b.caption ? h('figcaption', {}, b.caption) : '');
+    case 'widget': return WIDGETS[b.name](b);
+    case 'answer': return h('details', { class: 'mn-answer' }, h('summary', {}, '答えを見る（自分で解いてから！）'), h('p', {}, b.text));
+    default: return '';
+  }
+};
+
+async function downloadSample({ sample, filename }) {
+  const f = await SAMPLES[sample]();
+  download(new Uint8Array(await f.arrayBuffer()), filename);
+  toast('ダウンロードしました');
+}
+// ポータルのツールで答え合わせ（例のファイル、または指定した文字列を送る）
+async function openInPortal({ page, sample, payload }) {
+  location.hash = '#' + page;
+  await sendSample(page, sample ? SAMPLES[sample] : () => payload);
+}
+
+// 開発者ツールの練習：コメント・押せないボタン・Cookie の3つ（ポータルの中だけで完結）
+function devLab() {
+  const dec = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
+  const COOKIE = 'ctfportal_lab_role';
+  if (!document.cookie.split('; ').some((c) => c.startsWith(COOKIE + '='))) document.cookie = `${COOKIE}=guest; path=/; SameSite=Lax; max-age=2592000`;
+  const out2 = h('output', { class: 'mn-lab-out' }, '');
+  const out3 = h('output', { class: 'mn-lab-out' }, '');
+  const btn = h('button', { type: 'button', class: 'small', disabled: '' }, 'フラグを見る');
+  btn.addEventListener('click', () => (out2.textContent = dec('ZmxhZ3tkMXM0YmwzZF9idXQ3MG59')));
+  const check = h('button', { type: 'button', class: 'ghost small' }, '権限を確認');
+  check.addEventListener('click', () => {
+    const role = document.cookie.split('; ').find((c) => c.startsWith(COOKIE + '='))?.split('=')[1] ?? '（なし）';
+    out3.textContent = role === 'admin' ? `ようこそ管理者さん：${dec('ZmxhZ3tjMDBrMTNfbTBuc3Qzcn0=')}` : `あなたの権限：${role}（admin ならフラグが見られます）`;
+  });
+  const box = h('div', { class: 'mn-lab', 'data-lab': 'devtools' },
+    h('div', { class: 'mn-lab-title' }, 'TRAINING TARGET'),
+    h('div', { class: 'mn-lab-row' }, h('b', {}, '①'), h('span', {}, 'この枠の HTML のどこかに、コメントが隠れています。')),
+    h('div', { class: 'mn-lab-row' }, h('b', {}, '②'), h('span', {}, 'このボタンは押せません……本当に？'), btn, out2),
+    h('div', { class: 'mn-lab-row' }, h('b', {}, '③'), h('span', {}, '管理者だけが見られる情報があります。'), check, out3),
+  );
+  box.insertBefore(document.createComment(` ${dec('ZmxhZ3toMWRkM25fMW5fYzBtbTNudH0=')} `), box.children[1]);
+  return box;
+}
+
+export function renderGuide(root, m, { back = '#manuals', backLabel = 'ガイドの一覧', illust = MANUAL_ILLUST, readKey = null } = {}) {
+  const read = new Set(readKey ? store.get(readKey, []) : []);
+  const toc = h('nav', { class: 'mn-toc', 'aria-label': '目次' },
+    h('div', { class: 'mn-toc-title' }, 'CONTENTS'),
+    ...m.chapters.map((c, i) => h('button', { type: 'button', 'data-ch': c.id, onclick: () => document.getElementById(`mn-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+      h('span', {}, read.has(`${m.id}/${c.id}`) ? '✓' : String(i + 1).padStart(2, '0')), c.title)));
+  const chapters = m.chapters.map((c, i) => h('section', { class: 'card mn-chapter', id: `mn-${c.id}` },
+    h('h2', { class: 'mn-h' }, h('span', { class: 'mn-h-no' }, String(i + 1).padStart(2, '0')), c.title),
+    // 章の挿絵（1 枚絵）。画面の配置図がある章は、そちらを優先して挿絵は付けない
+    illust[`${m.id}/${c.id}`] ? h('figure', { class: 'mn-illust' }, sceneIllustration(illust[`${m.id}/${c.id}`])) : '',
+    ...c.blocks.map(block),
+    readKey ? readButton(c) : ''));
+  root.replaceChildren(
+    h('a', { class: 'mn-back', href: back }, `‹ ${backLabel}`),
+    h('header', { class: 'mn-hero' },
+      h('span', { class: 'mn-hero-icon' }, icon(m.icon)),
+      h('div', {},
+        h('div', { class: 'mn-hero-name' }, m.name, m.kana ? h('small', {}, m.kana) : ''),
+        h('p', {}, m.tagline),
+        h('div', { class: 'mn-meta' },
+          m.genres ? h('span', {}, h('i', {}, 'ジャンル'), m.genres.join(' / ')) : '',
+          m.level ? h('span', {}, h('i', {}, 'むずかしさ'), m.level) : '',
+          m.prep ? h('span', {}, h('i', {}, m.prepLabel ?? '準備'), m.prep) : '',
+          m.site ? h('a', { href: m.site, target: '_blank', rel: 'noopener' }, m.siteLabel, ' ↗') : '',
+        ),
+      ),
+    ),
+    h('div', { class: 'mn-layout' }, toc, h('div', { class: 'mn-chapters' }, ...chapters)),
+  );
+  // 読んでいる章を目次で光らせる
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      toc.querySelectorAll('button').forEach((b) => b.classList.toggle('active', `mn-${b.dataset.ch}` === e.target.id));
+    }
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  chapters.forEach((c) => io.observe(c));
+
+  // 章の「読んだ」印（目次に ✓ が付き、一覧に進み具合が出る）
+  function readButton(c) {
+    const key = `${m.id}/${c.id}`;
+    const btn = h('button', { type: 'button', class: 'ghost small mn-read' });
+    const paint = () => {
+      btn.textContent = read.has(key) ? '✓ 読んだ（取り消す）' : 'この章を読んだ';
+      btn.classList.toggle('on', read.has(key));
+      const tb = toc.querySelector(`[data-ch="${c.id}"] span`);
+      if (tb) tb.textContent = read.has(key) ? '✓' : String(m.chapters.indexOf(c) + 1).padStart(2, '0');
+    };
+    btn.addEventListener('click', () => {
+      if (read.has(key)) read.delete(key);
+      else read.add(key);
+      store.set(readKey, [...read]);
+      paint();
+    });
+    paint();
+    return h('div', { class: 'mn-read-row' }, btn);
+  }
+}
+
 export function initManuals() {
   const root = $('manualsBody');
 
@@ -128,111 +280,9 @@ export function initManuals() {
     );
   }
 
-  const block = (b) => {
-    switch (b.type) {
-      case 'p': return h('p', { class: 'mn-p' }, b.text);
-      case 'list': return h('div', { class: 'mn-list' }, b.title ? h('div', { class: 'mn-sub' }, b.title) : '', h('ul', {}, ...b.items.map((x) => h('li', {}, x))));
-      case 'steps': return h('ol', { class: 'mn-steps' }, ...b.items.map((x) => h('li', {}, h('b', {}, x.title), h('p', {}, x.text))));
-      case 'tip':
-      case 'warn': return h('div', { class: `mn-callout ${b.type}` },
-        h('span', { class: 'mn-callout-label' }, b.type === 'tip' ? 'TIP' : '注意'),
-        h('div', {}, b.title ? h('b', {}, b.title) : '', h('p', {}, b.text), b.link ? h('a', { class: 'btn ghost small', href: b.link.href, ...(/^https?:/.test(b.link.href) ? { target: '_blank', rel: 'noopener' } : {}) }, b.link.label, /^https?:/.test(b.link.href) ? ' ↗' : '') : ''));
-      case 'code': return h('div', { class: 'mn-code' },
-        h('div', { class: 'mn-code-head' }, h('span', {}, b.title ?? 'コード'), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.code) }, 'コピー')),
-        h('pre', {}, b.code));
-      case 'keys': return h('table', { class: `mn-keys${b.copy ? ' copyable' : ''}` }, ...b.items.map(([k, d]) => h('tr', {},
-        // フィルタの表は、1つの式としてクリックでコピーできるようにする
-        h('th', {}, ...(b.copy ? [h('kbd', { title: 'クリックでコピー', onclick: () => copy(k) }, k)] : k.split(' + ').flatMap((x, i) => [i ? ' + ' : '', h('kbd', {}, x)]))),
-        h('td', {}, d))));
-      case 'defs': return h('dl', { class: 'mn-defs' }, ...b.items.flatMap(([t, d]) => [h('dt', {}, t), h('dd', {}, d)]));
-      case 'faq': return h('div', { class: 'mn-faq' }, ...b.items.map(([q, a]) => h('details', {}, h('summary', {}, q), h('p', {}, a))));
-      case 'diagram': return h('figure', { class: 'mn-figure' }, DIAGRAMS[b.name](), h('figcaption', {}, b.caption));
-      case 'practice': return h('div', { class: 'mn-practice' },
-        b.download ? h('button', { type: 'button', onclick: () => downloadSample(b.download) }, b.download.label) : '',
-        b.input ? h('div', { class: 'mn-input' }, h('code', {}, b.input), h('button', { type: 'button', class: 'ghost small', onclick: () => copy(b.input) }, 'コピー')) : '',
-        b.portal ? h('button', { type: 'button', class: 'ghost', onclick: () => openInPortal(b.portal) }, b.portal.label) : '',
-        b.note ? h('span', { class: 'hint' }, b.note) : '');
-      case 'devlab': return devLab();
-      case 'answer': return h('details', { class: 'mn-answer' }, h('summary', {}, '答えを見る（自分で解いてから！）'), h('p', {}, b.text));
-      default: return '';
-    }
-  };
-
-  async function downloadSample({ sample, filename }) {
-    const f = await SAMPLES[sample]();
-    download(new Uint8Array(await f.arrayBuffer()), filename);
-    toast('ダウンロードしました');
-  }
-  // ポータルのツールで答え合わせ（例のファイル、または指定した文字列を送る）
-  async function openInPortal({ page, sample, payload }) {
-    location.hash = '#' + page;
-    await sendSample(page, sample ? SAMPLES[sample] : () => payload);
-  }
-
-  // 開発者ツールの練習：コメント・押せないボタン・Cookie の3つ（ポータルの中だけで完結）
-  function devLab() {
-    const dec = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
-    const COOKIE = 'ctfportal_lab_role';
-    if (!document.cookie.split('; ').some((c) => c.startsWith(COOKIE + '='))) document.cookie = `${COOKIE}=guest; path=/; SameSite=Lax; max-age=2592000`;
-    const out2 = h('output', { class: 'mn-lab-out' }, '');
-    const out3 = h('output', { class: 'mn-lab-out' }, '');
-    const btn = h('button', { type: 'button', class: 'small', disabled: '' }, 'フラグを見る');
-    btn.addEventListener('click', () => (out2.textContent = dec('ZmxhZ3tkMXM0YmwzZF9idXQ3MG59')));
-    const check = h('button', { type: 'button', class: 'ghost small' }, '権限を確認');
-    check.addEventListener('click', () => {
-      const role = document.cookie.split('; ').find((c) => c.startsWith(COOKIE + '='))?.split('=')[1] ?? '（なし）';
-      out3.textContent = role === 'admin' ? `ようこそ管理者さん：${dec('ZmxhZ3tjMDBrMTNfbTBuc3Qzcn0=')}` : `あなたの権限：${role}（admin ならフラグが見られます）`;
-    });
-    const box = h('div', { class: 'mn-lab', 'data-lab': 'devtools' },
-      h('div', { class: 'mn-lab-title' }, 'TRAINING TARGET'),
-      h('div', { class: 'mn-lab-row' }, h('b', {}, '①'), h('span', {}, 'この枠の HTML のどこかに、コメントが隠れています。')),
-      h('div', { class: 'mn-lab-row' }, h('b', {}, '②'), h('span', {}, 'このボタンは押せません……本当に？'), btn, out2),
-      h('div', { class: 'mn-lab-row' }, h('b', {}, '③'), h('span', {}, '管理者だけが見られる情報があります。'), check, out3),
-    );
-    box.insertBefore(document.createComment(` ${dec('ZmxhZ3toMWRkM25fMW5fYzBtbTNudH0=')} `), box.children[1]);
-    return box;
-  }
-
-  function renderGuide(m) {
-    const toc = h('nav', { class: 'mn-toc', 'aria-label': '目次' },
-      h('div', { class: 'mn-toc-title' }, 'CONTENTS'),
-      ...m.chapters.map((c, i) => h('button', { type: 'button', 'data-ch': c.id, onclick: () => document.getElementById(`mn-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
-        h('span', {}, String(i + 1).padStart(2, '0')), c.title)));
-    const chapters = m.chapters.map((c, i) => h('section', { class: 'card mn-chapter', id: `mn-${c.id}` },
-      h('h2', { class: 'mn-h' }, h('span', { class: 'mn-h-no' }, String(i + 1).padStart(2, '0')), c.title),
-      // 章の挿絵（1 枚絵）。画面の配置図がある章は、そちらを優先して挿絵は付けない
-      MANUAL_ILLUST[`${m.id}/${c.id}`] ? h('figure', { class: 'mn-illust' }, sceneIllustration(MANUAL_ILLUST[`${m.id}/${c.id}`])) : '',
-      ...c.blocks.map(block)));
-    root.replaceChildren(
-      h('a', { class: 'mn-back', href: '#manuals' }, '‹ ガイドの一覧'),
-      h('header', { class: 'mn-hero' },
-        h('span', { class: 'mn-hero-icon' }, icon(m.icon)),
-        h('div', {},
-          h('div', { class: 'mn-hero-name' }, m.name, m.kana ? h('small', {}, m.kana) : ''),
-          h('p', {}, m.tagline),
-          h('div', { class: 'mn-meta' },
-            h('span', {}, h('i', {}, 'ジャンル'), m.genres.join(' / ')),
-            h('span', {}, h('i', {}, 'むずかしさ'), m.level),
-            h('span', {}, h('i', {}, '準備'), m.prep),
-            h('a', { href: m.site, target: '_blank', rel: 'noopener' }, m.siteLabel, ' ↗'),
-          ),
-        ),
-      ),
-      h('div', { class: 'mn-layout' }, toc, h('div', { class: 'mn-chapters' }, ...chapters)),
-    );
-    // 読んでいる章を目次で光らせる
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        toc.querySelectorAll('button').forEach((b) => b.classList.toggle('active', `mn-${b.dataset.ch}` === e.target.id));
-      }
-    }, { rootMargin: '-30% 0px -60% 0px' });
-    chapters.forEach((c) => io.observe(c));
-  }
-
   return (arg) => {
     const m = MANUALS.find((x) => x.id === arg);
-    if (m) renderGuide(m);
+    if (m) renderGuide(root, m);
     else renderIndex();
   };
 }

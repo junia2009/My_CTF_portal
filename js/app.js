@@ -15,6 +15,7 @@ import { initPinject } from './ui/pinject.js';
 import { initGeo } from './ui/geo.js';
 import { initRev } from './ui/rev.js';
 import { initManuals } from './ui/manuals.js';
+import { initLearn } from './ui/learn.js';
 import { initDict } from './ui/dict.js';
 
 const onShow = {};
@@ -67,6 +68,7 @@ onShow.guide = initGuide();
 onShow.notes = initNotes();
 onShow.cheatsheet = initCheatsheet();
 onShow.manuals = initManuals();
+onShow.learn = initLearn();
 onShow.dict = initDict();
 pallas = initPallas();
 window.addEventListener('hashchange', route);
