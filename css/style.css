@@ -1431,6 +1431,7 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .nf-calc-f { display: flex; flex-direction: column; gap: .2rem; font-size: .75rem; color: var(--muted); }
 .nf-calc-f input { max-width: 120px !important; font-family: var(--mono); }
 .nf-calc-big { display: block; font-family: var(--mono); font-size: 1.15rem; color: var(--accent); padding: .5rem 0; word-break: break-all; }
+.nf-danger { color: #ff6b7a; font-weight: 700; }
 .nf-calc-title { font-family: var(--display); font-size: .7rem; letter-spacing: .16em; color: var(--accent); }
 .nf-calc input { font-family: var(--mono); font-size: 1rem; max-width: 320px; margin: .3rem 0 .5rem; }
 .nf-calc .mn-table { font-size: .84rem; }
