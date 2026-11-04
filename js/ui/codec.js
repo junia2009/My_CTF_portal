@@ -3,7 +3,7 @@ import { bytesToHex, bytesToText, isUtf8, printableRatio, b64Encode } from '../l
 import { OPS, CATS, getOp, runRecipe, defaultArgs, searchOps, suggestNext, describeValue } from '../lib/recipe.js';
 import { magic } from '../lib/magic.js';
 import { identifyType, hexdump } from '../lib/file.js';
-import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readBytes, getPrefixes, setTable, registerReceiver, pallasSay } from './common.js';
+import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readBytes, getPrefixes, setTable, registerReceiver, pallasSay, openFileSmart } from './common.js';
 
 // Magic の手順名 → レシピの操作
 const MAGIC_OPS = {
@@ -31,6 +31,24 @@ const PRESETS = [
 const FMT = [['auto', '自動'], ['text', '文字'], ['hex', '16進'], ['b64', 'Base64']];
 
 const looksText = (b) => isUtf8(b) && printableRatio(b) > 0.9;
+// 中身から拡張子を決める（分からなければ、文字なら .txt、それ以外は .bin）
+const extOf = (b) => identifyType(b)?.ext.split('/')[0] ?? (looksText(b) ? 'txt' : 'bin');
+const fileOf = (b, base = 'output') => new File([b], `${base}.${extOf(b)}`);
+function saveAs(b, base) {
+  const name = `${base}.${extOf(b)}`;
+  download(b, name);
+  toast(`${name} を保存しました`);
+}
+// ファイルの形式なら「保存」と「専用のツールで開く」を出す
+function fileActions(b, base) {
+  const type = identifyType(b);
+  if (!type) return '';
+  return h('div', { class: 'cc-file' },
+    h('span', {}, `${type.name}のファイルです`),
+    h('button', { type: 'button', class: 'small', onclick: () => saveAs(b, base) }, `保存（.${extOf(b)}）`),
+    h('button', { type: 'button', class: 'ghost small', onclick: async () => toast(`${{ image: '画像解析', audio: '音声解析', pcap: 'pcap 解析', rev: 'バイナリ解析', file: 'ファイル解析' }[await openFileSmart(fileOf(b, base))]}で開きました`) }, '詳しく調べる'),
+  );
+}
 function previewBlock(b) {
   if (!b.length) return h('div', { class: 'cc-empty' }, '（空）');
   if (looksText(b)) {
@@ -216,7 +234,7 @@ export function initCodec() {
       if (!st) body.replaceChildren(h('p', { class: 'hint' }, '（前の段階で失敗したため、実行していません）'));
       else if (!st.ok) body.replaceChildren(h('div', { class: 'cc-error' }, h('b', {}, 'うまくいきませんでした'), h('p', {}, st.error)));
       else if (st.off) body.replaceChildren(h('p', { class: 'hint' }, '一時停止中（この段階は飛ばしています）'));
-      else body.replaceChildren(previewBlock(st.out), badges(st.out));
+      else body.replaceChildren(previewBlock(st.out), badges(st.out), fileActions(st.out, `step${i + 1}`));
       // 鍵・IV の読み方の説明
       card.querySelectorAll('.cc-how').forEach((el) => {
         const k = el.dataset.how;
@@ -293,6 +311,8 @@ export function initCodec() {
       : fmt === 'b64' ? b64Encode(b)
       : hexdump(b, 0, 64 * 1024) + (b.length > 64 * 1024 ? '\n…（先頭 64KB のみ表示。全体は「保存」で取得できます）' : '');
     const type = identifyType(b);
+    $('codecSave').textContent = b.length ? `ファイルとして保存（.${extOf(b)}）` : 'ファイルとして保存';
+    $('codecFileBox').replaceChildren(fileActions(b, 'output'));
     $('codecOutInfo').replaceChildren(
       h('span', {}, fmtSize(b.length)),
       h('span', {}, isUtf8(b) ? 'UTF-8 テキスト' : 'バイナリ'),
@@ -324,7 +344,7 @@ export function initCodec() {
     save();
     buildSteps();
   });
-  $('codecSave').addEventListener('click', () => download(outBytes, 'output.bin'));
+  $('codecSave').addEventListener('click', () => (outBytes.length ? saveAs(outBytes, 'output') : toast('出力が空です')));
   $('codecFile').addEventListener('change', async (e) => {
     const f = e.target.files[0];
     e.target.value = '';
