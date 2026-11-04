@@ -51,6 +51,13 @@ export function initDict() {
     const list = COMMANDS[lang].filter(match);
     const cats = [...new Set(COMMANDS[lang].map((x) => x.cat))];
     const groups = cats.map((c) => [c, list.filter((x) => x.cat === c)]).filter(([, l]) => l.length);
+    // スマホ用：同じ一覧を標準の選択メニューにも入れる（ページの中に別のスクロール箱を作らない）
+    const pick = $('dcPick');
+    pick.replaceChildren(...(groups.length
+      ? groups.map(([c, l]) => h('optgroup', { label: c }, ...l.map((x) => h('option', { value: x.name }, `${x.name} — ${x.sum}`))))
+      : [h('option', { value: '' }, '見つかりませんでした')]));
+    if (list.some((x) => x.name === selected[lang])) pick.value = selected[lang];
+    else pick.selectedIndex = -1;
     $('dcIndex').replaceChildren(...(groups.length ? groups.flatMap(([c, l]) => [
       h('div', { class: 'dc-index-cat' }, c),
       ...l.map((x) => h('button', { type: 'button', class: `dc-index-item${x.name === selected[lang] ? ' active' : ''}`, onclick: () => { selected[lang] = x.name; renderIndex(); renderDetail(true); } },
@@ -96,8 +103,13 @@ export function initDict() {
       rel.length ? [h('div', { class: 'dc-d-sec' }, '関連'), h('div', { class: 'dc-rel' }, ...rel)] : '',
       tasks.length ? [h('div', { class: 'dc-d-sec' }, 'これを使う「やりたいこと」'), h('div', { class: 'dc-rel' }, ...tasks.map((t) => h('button', { type: 'button', class: 'chip', onclick: () => { mode = 'task'; store.set('ctfportal.dictMode', mode); $('dcSearch').value = t.t; render(); } }, t.t)))] : '',
     ].flat().filter(Boolean));
-    if (scroll && innerWidth <= 900) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+  $('dcPick').addEventListener('change', (e) => {
+    if (!e.target.value) return;
+    selected[lang] = e.target.value;
+    renderIndex();
+    renderDetail();
+  });
   $('dcCmdSearch').addEventListener('input', debounce(() => {
     renderIndex();
     // 絞り込みで 1 件になったら、それを表示する
