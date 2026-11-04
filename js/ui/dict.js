@@ -215,7 +215,7 @@ export function initDict() {
   }, (name) => !!findCmd('git', name));
   $('dcGitMapBody').append(gm.svg);
   const mapBox = $('dcGitMap');
-  mapBox.open = store.get('ctfportal.gitMapOpen', true);
+  mapBox.open = store.get('ctfportal.gitMapOpen', !window.matchMedia('(max-width: 760px)').matches);
   mapBox.addEventListener('toggle', () => store.set('ctfportal.gitMapOpen', mapBox.open));
 
   // Docker の全体マップ（Docker のタブの一番上）
@@ -231,7 +231,7 @@ export function initDict() {
   }, (name) => !!findCmd('docker', name));
   $('dcDockerMapBody').append(dm.svg);
   const dmapBox = $('dcDockerMap');
-  dmapBox.open = store.get('ctfportal.dockerMapOpen', true);
+  dmapBox.open = store.get('ctfportal.dockerMapOpen', !window.matchMedia('(max-width: 760px)').matches);
   dmapBox.addEventListener('toggle', () => store.set('ctfportal.dockerMapOpen', dmapBox.open));
 
   render();

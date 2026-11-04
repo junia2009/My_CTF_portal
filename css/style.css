@@ -1443,15 +1443,26 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .nf-calc input { font-family: var(--mono); font-size: 1rem; max-width: 320px; margin: .3rem 0 .5rem; }
 .nf-calc .mn-table { font-size: .84rem; }
 @media (max-width: 900px) {
-  .mn-figure:has(.netfig) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .mn-figure .netfig { width: 640px; max-width: none; }
+  /* 図は画面幅に収める（横スクロールで切れないように）。viewBox があるので比率を保って縮む */
+  .mn-figure .netfig { width: 100%; max-width: 100%; }
   .mn-table tbody th { white-space: normal; }
 }
 .mn-illust { margin: 0 0 1.1rem; }
 @media (max-width: 760px) {
-  /* スマホでは文字が小さくなりすぎないよう、挿絵は横にスクロールして見る */
-  .mn-illust { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .3rem; }
-  .mn-illust .illust { width: 620px; max-width: none; }
+  /* 挿絵も画面幅に収める */
+  .mn-illust .illust { width: 100%; max-width: 100%; }
+  /* スマホでは一覧カードを詰める（縦長になりすぎないよう、説明は 3 行で省略） */
+  .mn-index { gap: .6rem; }
+  .mn-card { gap: .8rem; padding: .85rem .9rem; align-items: flex-start; }
+  .mn-card-icon { width: 42px; height: 42px; }
+  .mn-card-icon .ico { width: 22px; height: 22px; }
+  .mn-card-body b { font-size: 1.02rem; }
+  .mn-card-body > span { font-size: .85rem; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .mn-card-go { font-size: 1.4rem; align-self: center; }
+  .mn-hero { gap: .8rem; padding: 1rem; }
+  .mn-hero-icon { width: 44px; height: 44px; }
+  .mn-hero-icon .ico { width: 24px; height: 24px; }
+  .mn-hero-name { font-size: 1.3rem; }
 }
 .illust .il-caption { fill: var(--text); font-weight: 600; }
 .illust .il-panel.last { stroke: var(--accent); fill: rgba(var(--accent-rgb), .07); }
