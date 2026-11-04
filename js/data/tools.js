@@ -36,6 +36,7 @@ export const ICONS = {
   server: 'M4 4h16v6H4zM4 14h16v6H4zM8 7h.01M8 17h.01M12 7h5M12 17h5',
   container: 'M3 8l9-4 9 4v8l-9 4-9-4zM3 8l9 4 9-4M12 12v8',
   cloud: 'M7 18a4 4 0 0 1-.5-7.97 5.5 5.5 0 0 1 10.6-1.1A4 4 0 0 1 17 18z',
+  bars: 'M4 20V10M10 20V4M16 20v-8M22 20v-5M3 20h20',
   nginx: 'M4 20V4l16 16V4',
   shield: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6zM9 12l2 2 4-4',
   manuals: 'M5 4h10l4 4v12H5zM15 4v4h4M8 11h8M8 14.5h8M8 18h5',

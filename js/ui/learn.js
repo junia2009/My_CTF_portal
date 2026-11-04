@@ -7,6 +7,7 @@ import { PROXY_TEXTS } from '../data/learn-proxy.js';
 import { DFIR_TEXTS } from '../data/learn-dfir.js';
 import { INFRA_TEXTS } from '../data/learn-infra.js';
 import { CLOUD_TEXTS } from '../data/learn-cloud.js';
+import { OBS_TEXTS } from '../data/learn-obs.js';
 import { icon } from '../data/tools.js';
 import { renderGuide, registerFigures, registerWidgets } from './manuals.js';
 import { NET_FIGURES, NET_WIDGETS } from './netfig.js';
@@ -16,13 +17,14 @@ import { PROXY_FIGURES, PROXY_WIDGETS } from './proxyfig.js';
 import { DFIR_FIGURES, DFIR_WIDGETS } from './forensicfig.js';
 import { INFRA_FIGURES, INFRA_WIDGETS } from './infrafig.js';
 import { CLOUD_FIGURES, CLOUD_WIDGETS } from './cloudfig.js';
+import { OBS_FIGURES, OBS_WIDGETS } from './obsfig.js';
 import { $, h, store } from './common.js';
 
-const LEARN = [...NET, ...CRYPTO_TEXTS, ...WEB_TEXTS, ...WEBVULN_TEXTS, ...DFIR_TEXTS, ...INFRA_TEXTS, ...CLOUD_TEXTS, ...PROXY_TEXTS];
+const LEARN = [...NET, ...CRYPTO_TEXTS, ...WEB_TEXTS, ...WEBVULN_TEXTS, ...DFIR_TEXTS, ...INFRA_TEXTS, ...CLOUD_TEXTS, ...OBS_TEXTS, ...PROXY_TEXTS];
 
 const READ_KEY = 'ctfportal.learnRead';
-registerFigures({ ...NET_FIGURES, ...CRYPTO_FIGURES, ...WEB_FIGURES, ...PROXY_FIGURES, ...DFIR_FIGURES, ...INFRA_FIGURES, ...CLOUD_FIGURES });
-registerWidgets({ ...NET_WIDGETS, ...CRYPTO_WIDGETS, ...WEB_WIDGETS, ...PROXY_WIDGETS, ...DFIR_WIDGETS, ...INFRA_WIDGETS, ...CLOUD_WIDGETS });
+registerFigures({ ...NET_FIGURES, ...CRYPTO_FIGURES, ...WEB_FIGURES, ...PROXY_FIGURES, ...DFIR_FIGURES, ...INFRA_FIGURES, ...CLOUD_FIGURES, ...OBS_FIGURES });
+registerWidgets({ ...NET_WIDGETS, ...CRYPTO_WIDGETS, ...WEB_WIDGETS, ...PROXY_WIDGETS, ...DFIR_WIDGETS, ...INFRA_WIDGETS, ...CLOUD_WIDGETS, ...OBS_WIDGETS });
 
 export function initLearn() {
   const root = $('learnBody');
