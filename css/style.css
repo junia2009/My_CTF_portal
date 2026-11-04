@@ -1436,6 +1436,7 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .nf-calc-big { display: block; font-family: var(--mono); font-size: 1.15rem; color: var(--accent); padding: .5rem 0; word-break: break-all; }
 .nf-danger { color: #ff6b7a; font-weight: 700; }
 .nf-ok { color: #22c38e; font-weight: 700; }
+.nf-bad td, .nf-bad th { background: rgba(255, 107, 122, .08); }
 .nf-hit td { background: rgba(var(--accent-rgb), .12); }
 .nf-calc-conf { width: 100%; font-family: var(--mono); font-size: .82rem; line-height: 1.5; margin: .3rem 0 .5rem; }
 .nf-calc-title { font-family: var(--display); font-size: .7rem; letter-spacing: .16em; color: var(--accent); }
