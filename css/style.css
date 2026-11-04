@@ -1287,6 +1287,9 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .mn-diagram .hot .mn-line { fill: rgba(var(--accent-rgb), .4); }
 .mn-diagram .mn-no circle { fill: var(--accent); }
 .mn-diagram .mn-no text { font-size: 11px; font-weight: 700; fill: var(--on-accent); }
+.mn-diagram .mn-dot { fill: var(--warn); stroke: var(--panel-solid); stroke-width: 1.5; }
+.mn-diagram .mn-send { fill: var(--accent); }
+.mn-diagram .mn-send-t { fill: var(--on-accent); font-size: 11px; font-weight: 700; }
 .mn-diagram .mn-link { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .mn-diagram .mn-note { font-size: 11px; fill: var(--accent); }
 .mn-diagram .mn-filter { font-size: 12px; fill: #3ef0a0; }

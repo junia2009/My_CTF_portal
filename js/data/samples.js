@@ -202,6 +202,52 @@ async function sampleRev() {
   return new File([bin], 'crackme', { type: 'application/octet-stream' });
 }
 
+// QGIS の練習：地図に置くと文字が浮かび上がる座標の CSV（東京駅の近く）
+function sampleGpsCsv() {
+  // 1 文字を幅 4・高さ 6 の格子の線で表す（[x1, y1, x2, y2]）
+  const font = {
+    M: [[0, 0, 0, 6], [0, 6, 2, 3], [2, 3, 4, 6], [4, 6, 4, 0]],
+    A: [[0, 0, 2, 6], [2, 6, 4, 0], [1, 3, 3, 3]],
+    P: [[0, 0, 0, 6], [0, 6, 4, 6], [4, 6, 4, 3], [4, 3, 0, 3]],
+  };
+  const lat0 = 35.6745, lon0 = 139.7610, unit = 0.00045;
+  const rows = ['id,lat,lon,name'];
+  let id = 1;
+  [...'MAP'].forEach((ch, k) => {
+    for (const [x1, y1, x2, y2] of font[ch]) {
+      const n = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) * 2;
+      for (let i = 0; i <= n; i++) {
+        const x = x1 + ((x2 - x1) * i) / n + k * 6, y = y1 + ((y2 - y1) * i) / n;
+        rows.push(`${id},${(lat0 + y * unit).toFixed(6)},${(lon0 + x * unit * 1.23).toFixed(6)},p${id++}`);
+      }
+    }
+  });
+  rows.push(`${id},35.681236,139.767125,東京駅（目印）`);
+  return new File([rows.join('\n') + '\n'], 'points.csv', { type: 'text/csv' });
+}
+
+// Postman の練習：Postman Echo（Postman 公式の確認用 API）を呼ぶコレクション
+function samplePostman() {
+  const test = (lines) => [{ listen: 'test', script: { type: 'text/javascript', exec: lines } }];
+  const col = {
+    info: { name: 'CTF Portal 練習コレクション', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+    variable: [{ key: 'baseUrl', value: 'https://postman-echo.com' }],
+    item: [
+      { name: '1. GET とクエリ', request: { method: 'GET', url: '{{baseUrl}}/get?team=pallas&level=1' },
+        event: test(["pm.test('200 が返る', () => pm.response.to.have.status(200));", "pm.test('team が届いている', () => pm.expect(pm.response.json().args.team).to.eql('pallas'));"]) },
+      { name: '2. POST で JSON を送る', request: { method: 'POST', header: [{ key: 'Content-Type', value: 'application/json' }], url: '{{baseUrl}}/post', body: { mode: 'raw', raw: '{\n  "user": "yamada",\n  "score": 42\n}', options: { raw: { language: 'json' } } } },
+        event: test(["const body = pm.response.json();", "pm.test('score が 42', () => pm.expect(body.json.score).to.eql(42));", "pm.collectionVariables.set('lastUser', body.json.user);"]) },
+      { name: '3. 変数を使う', request: { method: 'GET', url: '{{baseUrl}}/get?user={{lastUser}}' },
+        event: test(["pm.test('2 で保存した名前が使われている', () => pm.expect(pm.response.json().args.user).to.eql('yamada'));"]) },
+      { name: '4. Basic 認証（わざと失敗します）', request: { method: 'GET', url: '{{baseUrl}}/basic-auth', auth: { type: 'basic', basic: [{ key: 'username', value: 'postman', type: 'string' }, { key: 'password', value: 'wrong-password', type: 'string' }] } },
+        event: test(["pm.test('認証に成功する', () => pm.response.to.have.status(200));"]) },
+      { name: '5. ヘッダーを確かめる', request: { method: 'GET', header: [{ key: 'X-Practice', value: 'ctf-portal' }], url: '{{baseUrl}}/headers' },
+        event: test(["pm.test('自分で付けたヘッダーが届いている', () => pm.expect(pm.response.json().headers['x-practice']).to.eql('ctf-portal'));"]) },
+    ],
+  };
+  return new File([JSON.stringify(col, null, 2)], 'ctf_portal_practice.postman_collection.json', { type: 'application/json' });
+}
+
 export const SAMPLES = {
   codec: () => ({ text: 'NjY2YzYxNjc3Yjc3MzM2YzYzMzA2ZDMzNWY3NDMwNWY2Mzc0NjY3ZA==', magic: true }),
   base: () => ({ text: '0x666c61677b6e756d6233727d' }),
@@ -241,5 +287,7 @@ export const SAMPLES = {
     a: 'Meeting notes: the server room key is kept in the blue cabinet.',
     b: 'Meeting notes: thf server room kly is kapt in thg blue {cabinet}.',
   }),
+  gpscsv: sampleGpsCsv,
+  postman: samplePostman,
   regex: () => ({ pattern: '[A-Za-z0-9_]+\\{[^}]+\\}', text: 'noise ctf{first_one} more noise\nflag{second_one} and FLAG{THIRD}\nnot_a_flag{ unfinished' }),
 };

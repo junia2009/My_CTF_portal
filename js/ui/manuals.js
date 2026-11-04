@@ -113,6 +113,46 @@ const DIAGRAMS = {
     svg.append(btn, s('path', { d: 'M 182 120 L 196 120', class: 'mn-link' }), note(285, 314, 'ドラッグで追加'));
     return svg;
   },
+  // QGIS の画面
+  qgis() {
+    const svg = diagramFrame(720, 400, 'QGIS の画面の配置図', 'プロジェクト  編集  ビュー  レイヤ  設定  プラグイン  ベクタ  ラスタ  データベース  Web  メッシュ  プロセシング  ヘルプ');
+    const bar = s('g', { class: 'mn-pane dim' });
+    bar.append(s('rect', { x: 10, y: 38, width: 700, height: 22, rx: 3, class: 'mn-box' }));
+    for (let i = 0; i < 22; i++) bar.append(s('rect', { x: 18 + i * 30, y: 43, width: 14, height: 12, rx: 2, class: 'mn-line' }));
+    svg.append(bar,
+      pane(10, 68, 190, 150, '①', 'ブラウザ（XYZ Tiles など）', 8),
+      pane(10, 226, 190, 136, '②', 'レイヤー', 7, 'hot'),
+      pane(210, 68, 500, 294, '③', '地図（マップキャンバス）', 0, 'hot'),
+    );
+    // 地図の中の点
+    for (const [x, y] of [[330, 180], [350, 200], [370, 220], [520, 160], [540, 190], [600, 260], [460, 300]]) svg.append(s('circle', { cx: x, cy: y, r: 5, class: 'mn-dot' }));
+    svg.append(s('path', { d: 'M 240 330 C 330 250, 430 330, 690 200', class: 'mn-link' }));
+    svg.append(s('line', { x1: 0, y1: 370, x2: 720, y2: 370, class: 'mn-sep' }), note(14, 389, '④ 座標  139.7671,35.6812   縮尺 1:5,000   回転 0.0°   EPSG:4326', 'start'));
+    return svg;
+  },
+  // Postman の画面
+  postman() {
+    const svg = diagramFrame(720, 400, 'Postman の画面の配置図', 'Home   Workspaces   API Network                                        Environment ⑤ ▾');
+    svg.append(pane(10, 40, 170, 350, '①', 'Collections', 16));
+    const url = s('g', { class: 'mn-pane hot' });
+    url.append(s('rect', { x: 190, y: 40, width: 520, height: 30, rx: 3, class: 'mn-box' }));
+    const ut = s('text', { x: 230, y: 60, class: 'mn-filter' });
+    ut.textContent = 'GET ▾   {{baseUrl}}/get?name=pallas';
+    const sendb = s('rect', { x: 640, y: 44, width: 64, height: 22, rx: 3, class: 'mn-send' });
+    const st = s('text', { x: 672, y: 59, 'text-anchor': 'middle', class: 'mn-send-t' });
+    st.textContent = 'Send';
+    const badge = s('g', { class: 'mn-no' });
+    badge.append(s('circle', { cx: 205, cy: 55, r: 9 }));
+    const n = s('text', { x: 205, y: 59, 'text-anchor': 'middle' });
+    n.textContent = '②';
+    badge.append(n);
+    url.append(ut, sendb, st, badge);
+    svg.append(url,
+      pane(190, 78, 520, 120, '③', 'Params ・ Authorization ・ Headers ・ Body ・ Scripts', 5),
+      pane(190, 206, 520, 184, '④', 'Response  200 OK  120 ms  1.2 KB ／ Body ・ Headers ・ Test Results', 9, 'hot'),
+    );
+    return svg;
+  },
 };
 
 // 確認問題：選ぶと正解・不正解と解説を表示

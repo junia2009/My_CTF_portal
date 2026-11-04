@@ -2,6 +2,8 @@
 // 1つのガイド = 章（chapters）の並び。章は blocks（段落・手順・ヒント・注意・キー操作の表・図・コード・Q&A）でできている
 // 新しいガイドは MANUALS に足すだけで、一覧と目次に出る
 
+import { MORE_MANUALS } from './manuals-more.js';
+
 export const MANUALS = [
   {
     id: 'ghidra',
@@ -704,3 +706,5 @@ export const MANUALS = [
     ],
   },
 ];
+
+MANUALS.push(...MORE_MANUALS);

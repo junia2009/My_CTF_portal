@@ -1,6 +1,22 @@
 // ツールの使い方ガイドの挿絵（章ごとの 1 枚絵）。キーは「ガイドの id/章の id」
 // panels：[絵の種類, 絵の中の文字, 説明]。絵の種類は js/ui/illust.js の ICONS を参照
 export const MANUAL_ILLUST = {
+  // ---------- QGIS ----------
+  'qgis/about': { title: 'QGIS がしてくれること', panels: [['file', 'points.csv', '座標の一覧・GPS の記録'], ['window', 'QGIS', '地図に重ねる'], ['search', 'MAP', '形・経路・場所が見える']], point: '1 点ならポータルの位置特定、たくさんの点・重ね合わせなら QGIS' },
+  'qgis/install': { title: 'インストールの流れ', panels: [['download', 'QGIS LTR', '長期サポート版を選ぶ'], ['window', 'QGIS', '起動して日本語を確認'], ['browser', 'OpenStreetMap', '背景の地図が出れば完了']], point: '地図はネットから読む。会場で使えるか事前に確認' },
+  'qgis/screen': { title: '背景の地図を重ねる', panels: [['browser', 'XYZ Tiles', 'ブラウザから選ぶ'], ['bars', 'レイヤー', '上にあるほど手前'], ['search', '地理院の写真', '地図と航空写真を見比べる']], point: '資料に使うときは出典の表示を忘れずに' },
+  'qgis/points': { title: '座標の一覧を地図に置く', panels: [['file', 'lat,lon', 'CSV を用意'], ['window', 'Ctrl+Shift+T', '区切りテキストで読み込む'], ['chip', 'X=lon Y=lat', '経度が X、緯度が Y'], ['search', 'EPSG:4326', '座標参照系を指定']], point: 'X と Y を逆にすると点が海の上に出る' },
+  'qgis/photos': { title: '写真の撮影場所をまとめて置く', panels: [['file', 'IMG_*.jpg', '写真を 1 つのフォルダに'], ['recipe', 'geotagged', 'ジオタグ付き写真のインポート'], ['search', '撮影地点', '点として地図に並ぶ']], point: '位置情報は消されていたり書き換えられたりする。ほかの手がかりと合わせて' },
+  'qgis/measure': { title: '測る・調べる・書き出す', panels: [['kbd', 'Ctrl+Shift+M', '距離を測る'], ['kbd', 'Ctrl+Shift+I', '点の属性を見る'], ['kbd', 'F6', '属性テーブル'], ['export', 'PNG', '地図を画像に']], point: '広い範囲の距離も、楕円体を考えて正しく測ってくれる' },
+  'qgis/practice': { title: '練習の流れ', panels: [['download', 'points.csv', 'ダウンロード'], ['window', 'X=lon Y=lat', '地図に読み込む'], ['search', '???', '浮かぶ文字を読む'], ['flag', '900 m?', '東京駅からの距離を測る']], point: '文字が反転して見えたら X と Y を入れ替える' },
+  // ---------- Postman ----------
+  'postman/about': { title: 'Postman がしてくれること', panels: [['window', 'GET /api/…', 'リクエストを組み立てる'], ['server', 'API', '送って応答を見る'], ['check', 'Tests', '保存・自動で確かめる']], point: '通信を「見る」のは Burp・mitmproxy、自分で「送る」のは Postman' },
+  'postman/install': { title: 'インストールの流れ', panels: [['download', 'Postman', 'デスクトップ版を入れる'], ['lock', 'Sign in', 'サインイン（保存・共有に必要）'], ['warn', 'Public?', 'ワークスペースの公開範囲を確認']], point: '会社の API キーを公開ワークスペースに置かない' },
+  'postman/screen': { title: '最初のリクエスト', panels: [['chip', 'GET', 'メソッドを選ぶ'], ['browser', 'postman-echo.com/get', 'URL を入れる'], ['kbd', 'Ctrl+Enter', '送る'], ['code', '{ "args": … }', '応答を読む']], point: 'Postman Echo は送った値をそのまま返す確認用の API' },
+  'postman/vars': { title: '変数と環境', panels: [['chip', '{{baseUrl}}', 'URL に変数を書く'], ['bars', '開発 / 本番', '環境で値を切り替える'], ['lock', 'secret', '秘密の値は伏せ字・共有しない']], point: '範囲の狭い変数ほど優先される' },
+  'postman/tests': { title: 'スクリプトで自動テスト', panels: [['code', 'pm.test(…)', '応答を確かめる'], ['code', 'environment.set|(\'token\')', '値を次へ渡す'], ['loop', 'Runner', 'まとめて実行'], ['check', 'Pass', '結果を一覧で']], point: 'ログイン → トークン → 呼び出し、の流れを自動化できる' },
+  'postman/cli': { title: '取り込み・書き出し・Newman', panels: [['terminal', 'curl …', 'curl を取り込む'], ['export', 'JSON', 'コレクションを書き出す'], ['terminal', 'newman run', 'コマンドで実行（CI）']], point: '開発者ツールの「Copy as cURL」と組み合わせると速い' },
+  'postman/practice': { title: '練習の流れ', panels: [['download', 'collection.json', 'ダウンロード'], ['window', 'Import', '取り込む'], ['loop', 'Run', 'まとめて実行'], ['warn', '401', '失敗の原因を直す']], point: 'ステータスと Authorization タブを見比べよう' },
   // ---------- Ghidra ----------
   'ghidra/about': { title: 'Ghidra がしてくれること', panels: [['file', 'crackme', '配られた実行ファイル'], ['code', 'mov eax, [rbp-4]|xor eax, 0x37|cmp cl, al', '機械語を命令に戻す（逆アセンブル）'], ['code', 'if ((c ^ 0x37)|   != enc[i])|  return 0;', 'C 言語に近い形に戻す（デコンパイル）']], point: '読めない機械語を、人が読める形にしてくれる' },
   'ghidra/install': { title: 'インストールの流れ', panels: [['chip', 'JDK 21', 'Java を入れる'], ['download', 'ghidra_11.x.zip', 'zip をダウンロード'], ['zip', '', '展開するだけ（インストーラー無し）'], ['window', 'Ghidra', 'ghidraRun で起動']], point: '会場では落とせないことがある。大会の前に一度起動して確認' },
