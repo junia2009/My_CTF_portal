@@ -327,3 +327,4 @@ export const NET_WIDGETS = {
     return h('div', { class: 'nf-calc' }, h('div', { class: 'nf-calc-title' }, 'TRY：サブネット計算'), h('p', { class: 'hint' }, '値を変えて、答えを予想してから確かめてみましょう（例：10.1.2.3/16、172.16.5.200/27）'), input, out);
   },
 };
+export { s, T, R, L, A, boxT, frame, pc, server };
