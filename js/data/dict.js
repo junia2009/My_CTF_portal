@@ -2,6 +2,8 @@
 // 項目：[分類, やりたいこと, コード, 説明, 検索用の別名（任意）, 方言・補足の表（任意）]
 // 例で使う名前：テーブル users（id, name, email, dept, age, created_at）・orders（id, user_id, amount, ordered_at）
 
+import { MORE } from './dict-more.js';
+
 const e = (cat, t, code, d, kw = '', notes = null) => ({ cat, t, code, d, kw, notes });
 
 export const DICTS = [
@@ -226,3 +228,9 @@ export const DICTS = [
     ],
   },
 ];
+
+for (const d of DICTS) {
+  const have = new Set(d.entries.map((x) => x.t));
+  for (const x of MORE[d.id] || []) if (!have.has(x.t)) d.entries.push(x);
+  for (const x of d.entries) if (!d.cats.includes(x.cat)) d.cats.push(x.cat);
+}
