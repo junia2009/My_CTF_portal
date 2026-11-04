@@ -2,6 +2,7 @@
 import { DICTS } from '../data/dict.js';
 import { COMMANDS } from '../data/commands.js';
 import { $, h, store, copy, debounce } from './common.js';
+import { gitMap } from './gitmap.js';
 
 const FAV_KEY = 'ctfportal.dictFav';
 const LANGS = [['sql', 'SQL'], ['python', 'Python'], ['linux', 'Linux コマンド'], ['git', 'Git']];
@@ -36,6 +37,7 @@ export function initDict() {
       onclick: () => { lang = id; cat = null; favOnly = false; render(); },
     }, name, h('small', {}, mode === 'cmd' ? COMMANDS[id].length : DICTS.find((d) => d.id === id).entries.length))),
     mode === 'task' ? h('button', { type: 'button', class: `dc-fav-tab${favOnly ? ' active' : ''}`, onclick: () => { favOnly = !favOnly; render(); } }, '★ よく使う', h('small', {}, fav.size)) : '');
+    $('dcGitMap').hidden = lang !== 'git' || favOnly;
     $('dcModeCmd').classList.toggle('active', mode === 'cmd');
     $('dcModeTask').classList.toggle('active', mode === 'task');
     $('dcCmdView').hidden = mode !== 'cmd';
@@ -198,6 +200,22 @@ export function initDict() {
       renderDetail();
     } else renderTasks();
   }
+  // Git の全体マップ（Git のタブの一番上）。チップを押すと「コマンドで引く」でその説明を開く
+  const gm = gitMap((name) => {
+    mode = 'cmd';
+    store.set('ctfportal.dictMode', mode);
+    lang = 'git';
+    cmdCat.git = null;
+    $('dcCmdSearch').value = '';
+    selected.git = name;
+    render();
+    $('dcDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, (name) => !!findCmd('git', name));
+  $('dcGitMapBody').append(gm.svg);
+  const mapBox = $('dcGitMap');
+  mapBox.open = store.get('ctfportal.gitMapOpen', true);
+  mapBox.addEventListener('toggle', () => store.set('ctfportal.gitMapOpen', mapBox.open));
+
   render();
   // #dict/sql のように開いたら、その言語を表示する
   return (arg) => {

@@ -1438,6 +1438,59 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .dc-mode button { --c: 0px; background: none; color: var(--muted); border: none; padding: .4rem .9rem; font-size: .85rem; letter-spacing: .02em; }
 .dc-mode button.active { background: var(--accent); color: var(--on-accent); }
 .dc-mode button:not(.active):hover { color: var(--text); filter: none; background: rgba(var(--accent-rgb), .08); }
+/* Git 全体マップ */
+.gm-wrap { margin: 0 0 1rem; padding: .8rem 1rem 1rem; }
+.gm-wrap > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .8rem; list-style: none; }
+.gm-wrap > summary::-webkit-details-marker { display: none; }
+.gm-wrap > summary::before { content: '▸'; color: var(--accent); transition: transform .15s; display: inline-block; }
+.gm-wrap[open] > summary::before { transform: rotate(90deg); }
+.gm-sum-t { font-family: var(--display); font-weight: 700; letter-spacing: .08em; color: var(--text); }
+.gm-sum-s { font-size: .8rem; color: var(--muted); }
+.gm-scroll { margin-top: .7rem; }
+.gm-hint { display: none; margin: .5rem 0 0; font-size: .75rem; color: var(--muted); }
+.gitmap { display: block; width: 100%; height: auto; font-family: var(--ui); }
+.gitmap .gm-zone { fill: rgba(var(--accent-rgb), .05); stroke: var(--line-strong); stroke-width: 1.5; }
+.gitmap .gm-zone.z2 { fill: rgba(var(--accent-rgb), .1); stroke: var(--accent); }
+.gitmap .gm-zone.stash { stroke-dasharray: 4 3; }
+.gitmap .gm-zone-n { font-family: var(--display); font-size: 11px; fill: var(--accent); letter-spacing: .1em; }
+.gitmap .gm-zone-t { font-size: 14px; font-weight: 700; fill: var(--text); }
+.gitmap .gm-zone-s { font-size: 10.5px; fill: var(--muted); }
+.gitmap .gm-zone-s.strong { fill: var(--text); font-weight: 600; }
+.gitmap .gm-ico { fill: rgba(var(--accent-rgb), .12); stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; }
+.gitmap .gm-ico.doc { fill: var(--panel-solid); stroke: var(--line-strong); }
+.gitmap .gm-ico-line { fill: var(--accent); opacity: .5; }
+.gitmap .gm-led { fill: var(--accent); }
+.gitmap .gm-edge { stroke: var(--line-strong); stroke-width: 2; }
+.gitmap .gm-commit { fill: var(--panel-solid); stroke: var(--accent); stroke-width: 2; }
+.gitmap .gm-commit.head { fill: var(--accent); }
+.gitmap .gm-tiny { font-family: var(--mono); font-size: 9px; fill: var(--muted); }
+.gitmap .gm-tiny.acc, .gitmap .gm-cap.acc { fill: var(--accent); font-weight: 700; }
+.gitmap .gm-arrow { fill: none; stroke: var(--accent); stroke-width: 2; }
+.gitmap .gm-arrow.back { stroke: var(--muted); stroke-dasharray: 5 3; }
+.gitmap .gm-arrow.pull { stroke: var(--warn); stroke-dasharray: none; }
+.gitmap .gm-head { fill: var(--accent); }
+.gitmap .gm-head.back { fill: var(--muted); }
+.gitmap .gm-cap { font-size: 10.5px; fill: var(--muted); }
+.gitmap .gm-chip { cursor: pointer; outline: none; }
+.gitmap .gm-chip rect { fill: var(--panel-solid); stroke: var(--line-strong); stroke-width: 1.2; transition: fill .12s, stroke .12s; }
+.gitmap .gm-chip-t { font-family: var(--mono); font-size: 11.5px; font-weight: 700; fill: var(--text); pointer-events: none; }
+.gitmap .gm-chip.hot rect { stroke: var(--accent); fill: rgba(var(--accent-rgb), .14); }
+.gitmap .gm-chip.hot .gm-chip-t { fill: var(--accent); }
+.gitmap .gm-chip:hover rect, .gitmap .gm-chip:focus-visible rect { fill: var(--accent); stroke: var(--accent); }
+.gitmap .gm-chip:hover .gm-chip-t, .gitmap .gm-chip:focus-visible .gm-chip-t { fill: var(--on-accent); }
+.gitmap .gm-chip.off { opacity: .45; pointer-events: none; }
+.gitmap .gm-panel { fill: rgba(var(--accent-rgb), .04); stroke: var(--line); }
+.gitmap .gm-panel.flow { fill: rgba(var(--accent-rgb), .08); stroke: var(--accent); stroke-dasharray: 4 3; }
+.gitmap .gm-panel-bar { fill: var(--accent); }
+.gitmap .gm-panel-t { font-size: 12.5px; font-weight: 700; fill: var(--text); }
+.gitmap .gm-step { fill: var(--accent); }
+.gitmap .gm-step-n { font-family: var(--display); font-size: 12px; font-weight: 700; fill: var(--on-accent); }
+.gitmap .gm-step-t { font-family: var(--mono); font-size: 10.5px; font-weight: 700; fill: var(--text); }
+@media (max-width: 900px) {
+  .gm-hint { display: block; }
+  .gm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .3rem; }
+  .gm-scroll .gitmap { width: 860px; max-width: none; }
+}
 .dc-cmd-view { display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 1rem; align-items: start; }
 .dc-cmd-cats { grid-column: 1 / -1; margin: 0; }
 .dc-cats .chip.zero { opacity: .45; }
