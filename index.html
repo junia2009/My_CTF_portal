@@ -99,7 +99,7 @@
       <a href="#cheatsheet" data-route="cheatsheet">チートシート</a>
       <a href="#manuals" data-route="manuals">ツールの使い方</a>
       <div class="nav-group">業務で使う</div>
-      <a href="#dict" data-route="dict">逆引き辞典</a>
+      <a href="#dict" data-route="dict">コマンド辞典</a>
       <a href="#diff" data-route="diff">差分比較</a>
       <a href="#regex" data-route="regex">正規表現テスター</a>
     </nav>
@@ -1218,15 +1218,28 @@
 
       <!-- チートシート -->
       <section data-page="dict" hidden>
-        <h1>逆引き辞典</h1>
-        <p class="lead">「やりたいこと」から SQL・Python・Linux コマンドの書き方を引けます。日本語でも英語でも検索でき、コードはそのままコピーできます。</p>
+        <h1>コマンド辞典</h1>
+        <p class="lead">SQL・Python・Linux コマンドの使い方を、コマンドごとに引けます（書式・よく使うオプション・例・注意点）。「やりたいことで探す」に切り替えると、目的から書き方を引けます。</p>
         <div class="dc-bar">
           <div class="dc-tabs" id="dcTabs" role="tablist"></div>
-          <input id="dcSearch" class="dc-search" placeholder="やりたいことで検索（例：重複 / 上位10件 / 置換 / ポート / csv）" aria-label="逆引き辞典を検索">
+          <div class="dc-mode" role="group" aria-label="引き方">
+            <button type="button" id="dcModeCmd" class="active">コマンドで引く</button>
+            <button type="button" id="dcModeTask">やりたいことで探す</button>
+          </div>
         </div>
-        <div class="dc-cats" id="dcCats"></div>
-        <p class="hint dc-info" id="dcInfo"></p>
-        <div class="dc-list" id="dcList"></div>
+        <div id="dcCmdView" class="dc-cmd-view">
+          <aside class="card dc-index">
+            <input id="dcCmdSearch" placeholder="コマンド名・説明で絞り込み（grep / JOIN / open / 置換…）" aria-label="コマンドを絞り込み">
+            <div class="dc-index-list" id="dcIndex"></div>
+          </aside>
+          <article class="card dc-detail" id="dcDetail" aria-live="polite"></article>
+        </div>
+        <div id="dcTaskView" hidden>
+          <input id="dcSearch" class="dc-search" placeholder="やりたいことで検索（例：重複 / 上位10件 / 置換 / ポート / csv）" aria-label="やりたいことで検索">
+          <div class="dc-cats" id="dcCats"></div>
+          <p class="hint dc-info" id="dcInfo"></p>
+          <div class="dc-list" id="dcList"></div>
+        </div>
       </section>
 
       <section data-page="manuals" hidden>
