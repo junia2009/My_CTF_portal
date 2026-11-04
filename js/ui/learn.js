@@ -2,18 +2,20 @@
 import { LEARN as NET } from '../data/learn.js';
 import { CRYPTO_TEXTS } from '../data/learn-crypto.js';
 import { WEB_TEXTS } from '../data/learn-web.js';
+import { PROXY_TEXTS } from '../data/learn-proxy.js';
 import { icon } from '../data/tools.js';
 import { renderGuide, registerFigures, registerWidgets } from './manuals.js';
 import { NET_FIGURES, NET_WIDGETS } from './netfig.js';
 import { CRYPTO_FIGURES, CRYPTO_WIDGETS } from './cryptofig.js';
 import { WEB_FIGURES, WEB_WIDGETS } from './webfig.js';
+import { PROXY_FIGURES, PROXY_WIDGETS } from './proxyfig.js';
 import { $, h, store } from './common.js';
 
-const LEARN = [...NET, ...CRYPTO_TEXTS, ...WEB_TEXTS];
+const LEARN = [...NET, ...CRYPTO_TEXTS, ...WEB_TEXTS, ...PROXY_TEXTS];
 
 const READ_KEY = 'ctfportal.learnRead';
-registerFigures({ ...NET_FIGURES, ...CRYPTO_FIGURES, ...WEB_FIGURES });
-registerWidgets({ ...NET_WIDGETS, ...CRYPTO_WIDGETS, ...WEB_WIDGETS });
+registerFigures({ ...NET_FIGURES, ...CRYPTO_FIGURES, ...WEB_FIGURES, ...PROXY_FIGURES });
+registerWidgets({ ...NET_WIDGETS, ...CRYPTO_WIDGETS, ...WEB_WIDGETS, ...PROXY_WIDGETS });
 
 export function initLearn() {
   const root = $('learnBody');
