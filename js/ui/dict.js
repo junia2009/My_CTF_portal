@@ -25,6 +25,7 @@ export function initDict() {
   let mode = store.get('ctfportal.dictMode', 'cmd');
   const selected = { sql: 'SELECT', python: 'print', linux: 'ls' };
   let cat = null, favOnly = false;
+  const cmdCat = { sql: null, python: null, linux: null }; // コマンドで引く：セクションの絞り込み
   const fav = new Set(store.get(FAV_KEY, []));
   const saveFav = () => store.set(FAV_KEY, [...fav]);
 
@@ -48,8 +49,26 @@ export function initDict() {
   function renderIndex() {
     const q = $('dcCmdSearch').value.trim().toLowerCase();
     const match = (x) => !q || `${x.name} ${x.sum} ${x.desc} ${x.opts.map((o) => o.join(' ')).join(' ')}`.toLowerCase().includes(q);
-    const list = COMMANDS[lang].filter(match);
     const cats = [...new Set(COMMANDS[lang].map((x) => x.cat))];
+    if (!cats.includes(cmdCat[lang])) cmdCat[lang] = null;
+    const hits = COMMANDS[lang].filter(match);
+    const list = hits.filter((x) => !cmdCat[lang] || x.cat === cmdCat[lang]);
+    // セクションのチップ（件数は検索語を反映）
+    const setCat = (c) => {
+      cmdCat[lang] = c;
+      renderIndex();
+      // 選んでいたコマンドがセクションの外なら、その先頭を表示する
+      const items = $('dcIndex').querySelectorAll('.dc-index-item');
+      if (items.length && !$('dcIndex').querySelector('.dc-index-item.active')) items[0].click();
+    };
+    $('dcCmdCats').replaceChildren(
+      h('button', { type: 'button', class: `chip${cmdCat[lang] ? '' : ' on'}`, 'aria-pressed': String(!cmdCat[lang]), onclick: () => setCat(null) }, 'すべて', h('small', {}, hits.length)),
+      ...cats.map((c) => {
+        const n = hits.filter((x) => x.cat === c).length;
+        const on = cmdCat[lang] === c;
+        return h('button', { type: 'button', class: `chip${on ? ' on' : ''}${n ? '' : ' zero'}`, 'aria-pressed': String(on), onclick: () => setCat(on ? null : c) }, c, h('small', {}, n));
+      }),
+    );
     const groups = cats.map((c) => [c, list.filter((x) => x.cat === c)]).filter(([, l]) => l.length);
     // スマホ用：同じ一覧を標準の選択メニューにも入れる（ページの中に別のスクロール箱を作らない）
     const pick = $('dcPick');
@@ -62,10 +81,12 @@ export function initDict() {
       h('div', { class: 'dc-index-cat' }, c),
       ...l.map((x) => h('button', { type: 'button', class: `dc-index-item${x.name === selected[lang] ? ' active' : ''}`, onclick: () => { selected[lang] = x.name; renderIndex(); renderDetail(true); } },
         h('code', {}, x.name), h('span', {}, x.sum))),
-    ]) : [h('p', { class: 'hint' }, '見つかりませんでした'),
+    ]) : [h('p', { class: 'hint' }, cmdCat[lang] && hits.length ? `「${cmdCat[lang]}」には見つかりませんでした` : '見つかりませんでした'),
+      cmdCat[lang] && hits.length ? h('button', { type: 'button', class: 'chip dc-other', onclick: () => setCat(null) }, `すべてのセクションで ${hits.length} 件 →`) : '',
       // ほかの言語にあれば案内する
-      ...LANGS.filter(([id]) => id !== lang && COMMANDS[id].some(match)).map(([id, name]) => h('button', { type: 'button', class: 'chip dc-other', onclick: () => {
+      ...LANGS.filter(([id]) => !hits.length && id !== lang && COMMANDS[id].some(match)).map(([id, name]) => h('button', { type: 'button', class: 'chip dc-other', onclick: () => {
         lang = id;
+        cmdCat[id] = null;
         const hit = COMMANDS[id].find(match);
         selected[id] = hit.name;
         render();

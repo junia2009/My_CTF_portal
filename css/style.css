@@ -1439,6 +1439,8 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .dc-mode button.active { background: var(--accent); color: var(--on-accent); }
 .dc-mode button:not(.active):hover { color: var(--text); filter: none; background: rgba(var(--accent-rgb), .08); }
 .dc-cmd-view { display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.dc-cmd-cats { grid-column: 1 / -1; margin: 0; }
+.dc-cats .chip.zero { opacity: .45; }
 .dc-index { position: sticky; top: .8rem; margin: 0; display: flex; flex-direction: column; max-height: calc(100vh - 90px); }
 .dc-index-list { flex: 1; min-height: 0; overflow-y: auto; margin-right: -.4rem; padding-right: .4rem; }
 .dc-index input { margin-bottom: .5rem; }
