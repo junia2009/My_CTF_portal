@@ -393,24 +393,41 @@ export function initDiff() {
         ...p.changes.slice(0, 500).map((c) => h('tr', { class: `sh-${c.kind}` },
           h('td', { class: 'num' }, c.ref), h('td', {}, KIND[c.kind]), h('td', {}, cellText(c.a, c.fa)), h('td', {}, cellText(c.b, c.fb)))))),
       p.changes.length > 500 ? h('p', { class: 'hint' }, `ほか ${p.changes.length - 500} セル`) : '');
-      // 表の形で見る（変わったセルのまわりだけ）
-      const rs = p.changes.map((c) => c.r), cs = p.changes.map((c) => c.c);
-      const r0 = Math.max(0, Math.min(...rs) - 1), r1 = Math.min(r0 + 49, Math.max(...rs) + 1);
-      const c0 = Math.max(0, Math.min(...cs) - 1), c1 = Math.min(c0 + 25, Math.max(...cs) + 1);
+      // 表の形で見る：変わったセルのある行・列（と前後 1 つ）だけを並べ、間の変化の無い所は「⋯」で詰める
+      // （離れた場所の変更も全部見えるように）
+      const near = (vals, max) => {
+        const set = new Set();
+        for (const v of vals) for (let d = -1; d <= 1; d++) if (v + d >= 0 && v + d <= max) set.add(v + d);
+        return [...set].sort((x, y) => x - y);
+      };
+      const maxR = Math.max(p.a.maxRow, p.b.maxRow, 0), maxC = Math.max(p.a.maxCol, p.b.maxCol, 0);
+      const LIMIT_R = 400, LIMIT_C = 60;
+      const rowsAll = near(p.changes.map((c) => c.r), maxR), colsAll = near(p.changes.map((c) => c.c), maxC);
+      const rowList = rowsAll.slice(0, LIMIT_R), colList = colsAll.slice(0, LIMIT_C);
       const byRef = new Map(p.changes.map((c) => [c.ref, c]));
-      const rows = [h('tr', {}, h('th', {}), ...Array.from({ length: c1 - c0 + 1 }, (_, i) => h('th', { class: p.b.hiddenCols.has(c0 + i) ? 'sh-hidden' : '' }, colName(c0 + i))))];
-      for (let r = r0; r <= r1; r++) {
+      // 列の見出し（間が空く所に ⋯ の列を入れる）
+      const head = [h('th', {})];
+      colList.forEach((c, i) => {
+        if (i && c !== colList[i - 1] + 1) head.push(h('th', { class: 'sh-gap' }, '⋯'));
+        head.push(h('th', { class: p.b.hiddenCols.has(c) ? 'sh-hidden' : '' }, colName(c)));
+      });
+      const rows = [h('tr', {}, ...head)];
+      const span = head.length;
+      rowList.forEach((r, i) => {
+        if (i && r !== rowList[i - 1] + 1) rows.push(h('tr', { class: 'sh-gap-row' }, h('td', { colspan: span }, `⋯ ${rowList[i - 1] + 2}〜${r} 行目は変化なし ⋯`)));
         const tds = [];
-        for (let c = c0; c <= c1; c++) {
+        colList.forEach((c, j) => {
+          if (j && c !== colList[j - 1] + 1) tds.push(h('td', { class: 'sh-gap' }, ''));
           const ref = colName(c) + (r + 1);
           const ch = byRef.get(ref);
           const v = p.b.cells.get(ref)?.v ?? '';
           if (!ch) tds.push(h('td', {}, v));
           else tds.push(h('td', { class: `sh-${ch.kind}`, title: `${ref}　A：${ch.a || '（空）'} → B：${ch.b || '（空）'}${ch.fa || ch.fb ? `\n数式：${ch.fa ?? '（なし）'} → ${ch.fb ?? '（なし）'}` : ''}` },
             ch.kind === 'del' ? h('s', {}, ch.a) : ch.kind === 'mod' ? [h('s', {}, ch.a), h('br'), ch.b] : v));
-        }
+        });
         rows.push(h('tr', {}, h('th', { class: p.b.hiddenRows.has(r) ? 'sh-hidden' : '' }, r + 1), ...tds));
-      }
+      });
+      if (rowsAll.length > LIMIT_R || colsAll.length > LIMIT_C) rows.push(h('tr', { class: 'sh-gap-row' }, h('td', { colspan: span }, '変更が多いため、ここまでを表示しています（全部は上の一覧で確認できます）')));
       parts.push(h('p', { class: 'hint sh-legend' }, h('span', { class: 'sh-mod' }, '変更'), h('span', { class: 'sh-add' }, '追加'), h('span', { class: 'sh-del' }, '削除'), h('span', { class: 'sh-formula' }, '数式だけ変更'), '　セルにカーソルを合わせると A → B を表示（表示は B の内容）'),
         h('div', { class: 'table-wrap sh-grid-wrap' }, h('table', { class: 'sh-grid' }, ...rows)));
     }

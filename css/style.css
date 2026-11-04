@@ -884,6 +884,8 @@ tr.diff-add td:first-child { color: var(--accent); } tr.diff-del td:first-child 
 .sh-grid td.sh-del, .sh-legend .sh-del { background: rgba(255, 107, 122, .2); }
 .sh-grid td.sh-formula, .sh-legend .sh-formula { background: rgba(201, 162, 255, .2); }
 .sh-grid s { color: var(--muted); }
+.sh-grid th.sh-gap, .sh-grid td.sh-gap { width: 1.6rem; min-width: 1.6rem; padding: 0; text-align: center; color: var(--muted); background: repeating-linear-gradient(-45deg, rgba(var(--accent-rgb), .06) 0 4px, transparent 4px 8px); }
+.sh-grid tr.sh-gap-row td { text-align: center; color: var(--muted); font-size: .74rem; padding: .15rem; background: repeating-linear-gradient(-45deg, rgba(var(--accent-rgb), .06) 0 4px, transparent 4px 8px); }
 .sh-legend { margin: .6rem .7rem .3rem; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
 .sh-legend span { padding: 0 .4rem; color: var(--text); }
 .sh-rows .sh-rn { width: 2.6rem; flex-shrink: 0; color: var(--muted); text-align: right; margin-right: .6rem; }
