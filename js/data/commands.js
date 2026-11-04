@@ -4,6 +4,7 @@
 const c = (name, cat, sum, syn, desc, opts = [], ex = [], warn = '', rel = []) => ({ name, cat, sum, syn, desc, opts, ex, warn, rel });
 
 import { MORE } from './commands-more.js';
+import { GIT_COMMANDS } from './commands-git.js';
 
 export const COMMANDS = {
   // ======================= Linux =======================
@@ -168,3 +169,5 @@ for (const [lang, list] of Object.entries(MORE)) {
   const have = new Set(COMMANDS[lang].map((x) => x.name));
   for (const x of list) if (!have.has(x.name)) COMMANDS[lang].push(x);
 }
+
+COMMANDS.git = GIT_COMMANDS;

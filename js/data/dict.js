@@ -3,6 +3,7 @@
 // 例で使う名前：テーブル users（id, name, email, dept, age, created_at）・orders（id, user_id, amount, ordered_at）
 
 import { MORE } from './dict-more.js';
+import { GIT_DICT } from './dict-git.js';
 
 const e = (cat, t, code, d, kw = '', notes = null) => ({ cat, t, code, d, kw, notes });
 
@@ -234,3 +235,5 @@ for (const d of DICTS) {
   for (const x of MORE[d.id] || []) if (!have.has(x.t)) d.entries.push(x);
   for (const x of d.entries) if (!d.cats.includes(x.cat)) d.cats.push(x.cat);
 }
+
+DICTS.push(GIT_DICT);

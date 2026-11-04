@@ -75,7 +75,7 @@ export const TOOLS = [
   { id: 'notes', group: '補助', name: '問題メモ', desc: '試したこととフラグを記録' },
   { id: 'cheatsheet', group: '補助', name: 'チートシート', desc: 'ジャンル別の定番コマンド集' },
   { id: 'manuals', group: '補助', name: 'ツールの使い方', desc: 'Ghidra・Wireshark・CyberChef・gdb・開発者ツール・Burp' },
-  { id: 'dict', group: '業務', name: 'コマンド辞典', desc: 'SQL・Python・Linux コマンドの使い方' },
+  { id: 'dict', group: '業務', name: 'コマンド辞典', desc: 'SQL・Python・Linux・Git の使い方' },
   { id: 'diff', group: '業務', name: '差分比較', desc: '2つのテキスト・データの違い' },
   { id: 'regex', group: '業務', name: '正規表現テスター', desc: 'パターンを試してマッチを確認' },
 ];
