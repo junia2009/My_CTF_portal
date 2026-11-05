@@ -2170,3 +2170,5 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .cred-proto { font-weight: 700; color: var(--accent); }
 .cred code { font-family: var(--mono); cursor: pointer; word-break: break-all; }
 .cred-note { flex-basis: 100%; font-size: .78rem; word-break: break-all; }
+.cred-leak { border-left: 3px solid #f0b429; padding-left: .5rem; }
+.cred-leak .cred-proto { color: #f0b429; }

@@ -66,10 +66,11 @@ export function initPcap() {
     const credBox = creds.length ? h('div', { class: 'alert cred-box' },
       h('b', {}, `平文で流れた認証情報 ${creds.length} 件`),
       h('span', { class: 'hint' }, '（暗号化されていない通信では、ID とパスワードがこのように読めてしまう）'),
-      ...creds.slice(0, 20).map((c) => h('div', { class: 'cred' },
+      ...creds.slice(0, 20).map((c) => h('div', { class: 'cred' + (c.proto.includes('漏えい') ? ' cred-leak' : '') },
         h('span', { class: 'tag' }, `#${c.stream}`), h('span', { class: 'cred-proto' }, c.proto),
         c.user !== null && c.user !== undefined ? h('span', {}, 'ユーザー ', h('code', { class: 'copyable', onclick: () => copy(c.user) }, c.user)) : '',
         c.pass !== null && c.pass !== undefined ? h('span', {}, 'パスワード ', h('code', { class: 'copyable' + (looksFlag(c.pass) ? ' flag-hit' : ''), onclick: () => copy(c.pass) }, c.pass)) : '',
+        c.hash ? h('span', {}, 'ハッシュ ', h('code', { class: 'copyable', onclick: () => copy(c.hash) }, c.hash)) : '',
         h('div', { class: 'hint cred-note' }, c.note + (c.where ? `　— ${c.where}` : '') + (c.raw && c.proto.includes('Basic') ? `　（元：${c.raw}）` : '')),
       ))) : '';
     const credFlags = creds.flatMap((c) => [c.user, c.pass]).filter(looksFlag);

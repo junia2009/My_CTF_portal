@@ -435,6 +435,19 @@ export function findCredentials(streams) {
       out.push({ stream: s.id, proto: 'SMTP AUTH PLAIN', where: '', raw: m[0].trim(), user: user ?? null, pass: pass ?? null, note: 'Base64 で「\\0ユーザー\\0パスワード」' });
     }
     if ((m = text.match(/^AUTH LOGIN\r?\n([A-Za-z0-9+/=]+)\r?\n([A-Za-z0-9+/=]+)/mi))) out.push({ stream: s.id, proto: 'SMTP AUTH LOGIN', where: '', raw: m[0].trim(), user: b64txt(m[1]), pass: b64txt(m[2]), note: 'ユーザー名とパスワードを 1 行ずつ Base64 で送る' });
+    // サーバーの応答に、パスワードのデータベース（.htpasswd / .htdigest）が漏れていないか
+    const resp = latin.decode(s.toClient.subarray(0, 200000));
+    for (const line of resp.split(/\r?\n/)) {
+      let mm;
+      // htdigest： ユーザー:realm:MD5(ユーザー:realm:パスワード)  ← この 32 桁がそのまま Digest 認証に使える
+      if ((mm = line.match(/^([^:\s]{1,64}):([^:\s]{1,64}):([0-9a-f]{32})$/))) {
+        out.push({ stream: s.id, proto: '漏えい：htdigest（パスワードDB）', where: '', raw: line, user: mm[1], pass: null, hash: mm[3], realm: mm[2],
+          note: `これは HA1 = MD5("${mm[1]}:${mm[2]}:パスワード")。Digest 認証ではこの 32 桁があれば、パスワード本文を知らなくても認証を通せる` });
+      // htpasswd(APR1/MD5 crypt や bcrypt など)
+      } else if ((mm = line.match(/^([^:\s]{1,64}):(\$(?:apr1|1|2[aby]?|5|6)\$[^\s]+)$/))) {
+        out.push({ stream: s.id, proto: '漏えい：htpasswd（パスワードDB）', where: '', raw: line, user: mm[1], pass: null, hash: mm[2], note: 'パスワードのハッシュ。元に戻すには総当たりが要る（許可された検証のみ）' });
+      }
+    }
   }
   return out;
 }
