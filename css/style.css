@@ -2136,3 +2136,21 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .jd-layer pre { white-space: pre-wrap; word-break: break-all; max-height: 60vh; overflow: auto; }
 .wf-deobf { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: -.2rem 0 .8rem; }
 @media (max-width: 760px) { .wf-code-head { flex-wrap: wrap; } .wf-code-head .hint { margin-left: 0; flex-basis: 100%; order: 3; } }
+
+/* JS 実行サンドボックス */
+.jr-bar { align-items: center; gap: .8rem; flex-wrap: wrap; }
+.jr-bar select { width: auto; max-width: 100%; }
+.jr-time { display: flex; align-items: center; gap: .4rem; margin: 0; font-size: .85rem; }
+#jrCode { tab-size: 2; min-height: 14rem; }
+.jr-head { display: flex; align-items: center; gap: .6rem; padding: .35rem .6rem; border-bottom: 1px solid var(--line); font-size: .8rem; }
+.jr-head > span:first-child { font-family: var(--display); letter-spacing: .1em; color: var(--accent); }
+.jr-head .hint { margin-left: auto; }
+.jr-lines { padding: .4rem 0; max-height: 60vh; overflow: auto; font-family: var(--mono); font-size: .82rem; line-height: 1.55; }
+.jr-line { display: flex; gap: .6rem; padding: .1rem .7rem; border-bottom: 1px dashed rgba(127,127,127,.15); }
+.jr-tag { flex: 0 0 3.2em; font-size: .72rem; opacity: .7; padding-top: .1rem; }
+.jr-text { white-space: pre-wrap; word-break: break-all; flex: 1; min-width: 0; }
+.jr-alert .jr-tag, .jr-alert .jr-text { color: var(--accent); font-weight: 700; }
+.jr-error .jr-text, .jr-error .jr-tag { color: #ff6b6b; }
+.jr-warn .jr-text { color: #f0b429; }
+.jr-value { border-top: 1px solid var(--line); }
+.jr-value .jr-tag { color: var(--accent); opacity: 1; }

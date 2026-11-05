@@ -96,6 +96,7 @@
       <a href="#pinject" data-route="pinject">AI 入力チェック</a>
       <a href="#webform" data-route="webform">フォーム解析</a>
       <a href="#jsdeobf" data-route="jsdeobf">難読化 JS デコード</a>
+      <a href="#jsrun" data-route="jsrun">JS 実行サンドボックス</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
@@ -1185,6 +1186,27 @@
           <p class="hint">しくみ：通信も画面操作もできない隔離フレーム（sandbox・CSP で外部通信禁止）の中で、<code>eval</code> / <code>Function</code> / <code>setTimeout(文字列)</code> / <code>document.write</code> を「受け取った文字列を記録するだけ」の関数に差し替えてから読み込みます。最後の「実行」の直前で止めるので、中身のコードは動きません。多段の難読化は「さらにデコード」で 1 段ずつ剥がします。</p>
         </div>
         <div id="jdOut"></div>
+      </section>
+
+      <section data-page="jsrun" hidden>
+        <h1>JS 実行サンドボックス</h1>
+        <p class="lead">問題の JavaScript の一部や、逆算するために自分で書いたコードをその場で動かします。<code>console.log</code>・<code>alert</code>・最後の式の値が結果に出ます。スマホでも使える「開発者ツールのコンソール」の代わりです。</p>
+        <div class="card">
+          <div class="row jr-bar">
+            <select id="jrTpl" aria-label="テンプレート"><option value="">テンプレートを選ぶ…</option></select>
+            <label class="jr-time">時間制限 <select id="jrTime"><option value="3000">3 秒</option><option value="10000">10 秒</option><option value="30000">30 秒</option></select></label>
+          </div>
+          <label for="jrCode">JavaScript</label>
+          <textarea id="jrCode" rows="14" class="mono" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          <label for="jrInput">フォームの入力値（任意・<code>$('input').val()</code> や <code>.value</code> が返す値）</label>
+          <input id="jrInput" class="mono" placeholder="例：FLAG_xxxx" autocapitalize="off" autocomplete="off">
+          <div class="row">
+            <button type="button" id="jrRun">実行（Ctrl+Enter）</button>
+            <button type="button" id="jrClear" class="ghost small">クリア</button>
+          </div>
+          <p class="hint">隔離フレームの中の別スレッドで実行します。外部との通信・ポータルの画面や保存データへのアクセスはできず、時間制限を超えると強制停止するので、無限ループでも固まりません。<code>$</code>（jQuery）と <code>document</code> は最小限のまねで、フォームの送信・クリックの処理は「すぐ送信された」として実行されます。</p>
+        </div>
+        <div id="jrOut"></div>
       </section>
 
       <section data-page="regex" hidden>

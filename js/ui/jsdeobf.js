@@ -2,6 +2,7 @@
 // 「実行せずに」中身を取り出す。サンドボックス iframe（allow-scripts のみ・通信禁止）の中で
 // 評価器（Function / eval）を乗っ取り、組み立てられたコード文字列を捕獲して返す。
 import { $, h, copy, debounce } from './common.js';
+import { JSRUN_KEY } from './jsrun.js';
 
 export const DEOBF_KEY = 'ctfportal.deobfInput';
 
@@ -114,7 +115,8 @@ export function initJsdeobf() {
       layer.append(h('div', { class: 'wf-code' },
         h('div', { class: 'wf-code-head' }, h('span', {}, caps.length > 1 ? `捕獲 ${i + 1}` : '復元されたコード'), h('span', { class: 'hint' }, ((t) => !t || t.id === 'unknown' ? '素の JS（これ以上の難読化は見当たらない）' : `まだ難読化あり：${t.label}`)(detectObf(c))),
           h('button', { type: 'button', class: 'ghost small', onclick: () => copy(c) }, 'コピー'),
-          h('button', { type: 'button', class: 'ghost small', onclick: () => { input.value = c; showType(); run(c, depth + 1); } }, 'さらにデコード')),
+          h('button', { type: 'button', class: 'ghost small', onclick: () => { input.value = c; showType(); run(c, depth + 1); } }, 'さらにデコード'),
+          h('button', { type: 'button', class: 'ghost small', onclick: () => { try { sessionStorage.setItem(JSRUN_KEY, c); } catch {} location.hash = '#jsrun'; } }, 'サンドボックスで実行')),
         h('pre', {}, c.length > 20000 ? c.slice(0, 20000) + '\n… (長いので省略。コピーで全文を取得)' : c)),
       flags.length ? h('div', { class: 'wf-flag' }, 'フラグらしき文字列：', ...flags.map((f) => h('code', {}, f))) : '');
     });
