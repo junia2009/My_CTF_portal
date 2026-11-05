@@ -50,7 +50,11 @@ const DECODERS = [
   }],
   ['URL', (b) => {
     const s = latin1Decode(b);
-    return /%[0-9a-fA-F]{2}/.test(s) ? toBytes(decodeURIComponent(s.replace(/\+/g, ' '))) : null;
+    // uuencode などは % を普通の記号として使うので、URL エンコードと誤認しない
+    if (/^\s*begin[ \t]+[0-7]{3}[ \t]/i.test(s)) return null;
+    // %XX が 2 か所以上、または文字全体の 1 割以上を占めるときだけ URL エンコードとみなす
+    const n = (s.match(/%[0-9a-fA-F]{2}/g) || []).length;
+    return n >= 2 || (n === 1 && s.length <= 30) ? toBytes(decodeURIComponent(s.replace(/\+/g, ' '))) : null;
   }],
   ['HTML エンティティ', (b) => {
     const s = bytesToText(b);
@@ -96,7 +100,7 @@ function evaluate(bytes, re) {
   return { text, ratio, flag, type: type?.name ?? null, score };
 }
 
-export async function magic(input, { maxDepth = 6, prefixes = DEFAULT_PREFIXES, limit = 12 } = {}) {
+export async function magic(input, { maxDepth = 30, prefixes = DEFAULT_PREFIXES, limit = 12 } = {}) {
   const start = typeof input === 'string' ? toBytes(input) : input;
   const re = flagRegex(prefixes);
   const results = [];
