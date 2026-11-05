@@ -176,7 +176,7 @@ export function initJsrun() {
     code.value = TEMPLATES[+tpl.value].code;
     tpl.value = '';
   });
-  code.value = store.get('ctfportal.jsrunCode', '') || TEMPLATES[0].code;
+  code.value = store.get('ctfportal.jsrunCode', '');
   code.addEventListener('input', () => store.set('ctfportal.jsrunCode', code.value));
   $('jrClear').addEventListener('click', () => { code.value = ''; out.replaceChildren(); store.set('ctfportal.jsrunCode', ''); code.focus(); });
   runBtn.addEventListener('click', run);

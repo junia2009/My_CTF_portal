@@ -56,7 +56,7 @@ export function initPyrun() {
 
   tpl.append(...TEMPLATES.map((t, i) => h('option', { value: i }, t.name)));
   tpl.addEventListener('change', () => { if (tpl.value !== '') { code.value = TEMPLATES[+tpl.value].code; store.set(PYRUN_KEY, code.value); tpl.value = ''; } });
-  code.value = store.get(PYRUN_KEY, '') || TEMPLATES[0].code;
+  code.value = store.get(PYRUN_KEY, '');
   code.addEventListener('input', () => store.set(PYRUN_KEY, code.value));
   code.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
