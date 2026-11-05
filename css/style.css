@@ -187,9 +187,9 @@ main { flex: 1; min-width: 0; padding: 2rem 2rem 4rem; max-width: 1080px; }
   transition: transform .15s;
 }
 .skip-link:focus { transform: none; }
-/* ページ移動で見出しに移したフォーカスは、キーボード操作のときだけ枠を出す */
-h1[tabindex="-1"]:focus { outline: none; }
-h1[tabindex="-1"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+/* ページ移動で見出しに移したフォーカスには枠を出さない（見出しは押せる部品ではなく、Tab の出発点にするだけ）。
+   コマンドバーで Enter を押した直後などは :focus-visible にもなるため、両方で消す */
+h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible { outline: none; }
 
 /* ---------- よく使うツール（ピン留め） ---------- */
 .eyebrow .pin-btn {

@@ -115,6 +115,9 @@ await t('コマンドバー：Base64 → Enter でエンコード/デコード�
   await page.fill('#cmdIn', 'ZmxhZ3toZWxsb193b3JsZH0=');
   await page.press('#cmdIn', 'Enter');
   await page.waitForFunction(() => location.hash.startsWith('#codec'));
+  await waitPage(page, 'codec');
+  // キーボードで移った直後でも、見出しに枠は出さない
+  assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), 'none');
   await page.waitForFunction(() => document.querySelector('[data-page="codec"]').innerText.includes('flag{hello_world}'));
   assert.deepEqual(page.errors, []);
   await ctx.close();
@@ -270,6 +273,8 @@ await t('キーボード：メニューでページを選ぶと、次の Tab は
   const a = await activeInfo(page);
   assert.equal(a.tag, 'H1');
   assert.equal(a.page, 'xor');
+  // 見出しに枠は出さない
+  assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), 'none');
   await page.keyboard.press('Tab');
   assert.equal((await activeInfo(page)).page, 'xor');
   await ctx.close();
