@@ -2160,3 +2160,5 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .es-more { margin-top: .6rem; }
 .es-more summary { cursor: pointer; font-size: .88rem; }
 .es-pre { margin: .4rem 0 0; padding: .7rem; max-height: 50vh; overflow: auto; background: var(--field); border: 1px solid var(--line); font-family: var(--mono); font-size: .8rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+.es-auto { margin-top: .8rem; padding: .7rem .9rem; border: 1px solid var(--accent); background: rgba(var(--accent-rgb), .06); }
+.es-auto > p { margin: .5rem 0; }

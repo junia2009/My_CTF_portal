@@ -1,6 +1,6 @@
 // 難解言語ランナー：Whitespace・Brainfuck・Ook! を貼り付け／ファイルから実行する
 import { $, h, copy } from './common.js';
-import { wsRun, wsListing, wsVisible, bfRun, ookToBf, guessEsolang } from '../lib/esolang.js';
+import { wsRun, wsListing, wsVisible, bfRun, ookToBf, guessEsolang, wsAutoSolve } from '../lib/esolang.js';
 
 const LANGS = { ws: 'Whitespace', bf: 'Brainfuck', ook: 'Ook!' };
 
@@ -72,6 +72,26 @@ export function initEsolang() {
       r.error ? h('p', { class: 'error' }, r.error) : '',
       flags.length ? h('div', { class: 'wf-flag' }, 'フラグらしき文字列：', ...flags.map((f) => h('code', {}, f))) : '',
     );
+    // 入力を求めるプログラムで、まだフラグが出ていなければ、答えの入力を自動で探して試す
+    if (k === 'ws' && !flags.length) {
+      const auto = wsAutoSolve(src);
+      if (auto) {
+        const hit = auto.tries.find((t) => t.flag);
+        const box = h('div', { class: 'es-auto' }, h('b', {}, 'このプログラムは入力（' + [auto.readsNum && '数字', auto.readsChar && '文字'].filter(Boolean).join('・') + '）を読み込んで、正解かどうかを比べています。'));
+        if (hit) {
+          box.append(h('p', {}, '比べている値を命令から拾って試したところ、正解の入力が見つかりました：'),
+            h('div', { class: 'wf-code' }, h('div', { class: 'wf-code-head' }, h('span', {}, `入力 = ${hit.input}`),
+              h('button', { type: 'button', class: 'ghost small', onclick: () => { $('esInput').value = hit.input; run(); } }, 'この入力で実行')), h('pre', {}, hit.out)),
+            h('div', { class: 'wf-flag' }, 'フラグらしき文字列：', h('code', {}, hit.flag)));
+        } else if (auto.tries.length) {
+          box.append(h('p', {}, '比べている値の候補を試しました（フラグらしき出力はなし）：'),
+            ...auto.tries.slice(0, 5).map((t) => h('div', { class: 'wf-code' }, h('div', { class: 'wf-code-head' }, h('span', {}, `入力 = ${t.input}`)), h('pre', {}, t.out))));
+        } else {
+          box.append(h('p', { class: 'hint' }, '比べている値を自動では見つけられませんでした。下の「命令の一覧」で、入力（inn / inc）の後に push している数を探してください。'));
+        }
+        card.append(box);
+      }
+    }
     if (k === 'ws') {
       card.append(
         h('details', { class: 'es-more' }, h('summary', {}, `命令の一覧（${r.prog.length} 個）`), h('pre', { class: 'es-pre' }, wsListing(r.prog))),

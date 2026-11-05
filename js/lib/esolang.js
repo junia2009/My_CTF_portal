@@ -142,3 +142,40 @@ export function guessEsolang(src) {
   if (tabs >= 3 && (ws / Math.max(src.length, 1) > 0.25 || /[ \t]+$/m.test(src))) return 'ws';
   return null;
 }
+
+// ---------- 入力を求めるプログラムの答えを自動で探す ----------
+// 「読み込んだ値 − 定数 が 0 なら分岐」のような比較から定数を拾い、それを入力として実際に試す。
+// 数字（inn）と 1 文字（inc）の両方に対応。見つかった入力ごとに実行結果を返す。
+const FLAG_RE = /[A-Za-z0-9_]{2,}\{[^}\n]{1,120}\}|FLAG_[A-Za-z0-9_]+/;
+export function wsAutoSolve(src) {
+  const prog = wsParse(src);
+  const readsNum = prog.some(([op]) => op === 'inn'), readsChar = prog.some(([op]) => op === 'inc');
+  if (!readsNum && !readsChar) return null;
+  // 比較に使われていそうな定数：push N の直後に sub（または add で負の数）→ jz / jn
+  const cands = new Set();
+  prog.forEach(([op, arg], i) => {
+    if (op !== 'push') return;
+    const next = prog.slice(i + 1, i + 4).map((x) => x[0]);
+    if (next[0] === 'sub' && (next[1] === 'jz' || next[1] === 'jn' || (next[1] === 'dup' && next[2] === 'jz'))) cands.add(arg);
+    if (next[0] === 'add' && arg < 0n && (next[1] === 'jz' || next[1] === 'jn')) cands.add(-arg);
+  });
+  const tries = [];
+  for (const n of cands) {
+    const inputs = [];
+    if (readsNum) inputs.push(n.toString() + '\n');
+    if (readsChar && n >= 32n && n < 0x110000n) inputs.push(String.fromCodePoint(Number(n)));
+    for (const input of inputs) {
+      try {
+        const r = wsRun(src, input, 500_000);
+        tries.push({ input: input.replace(/\n$/, ''), out: r.out, flag: (r.out.match(FLAG_RE) || [])[0] || null });
+      } catch { /* その入力では動かなかった */ }
+    }
+  }
+  // 1 文字ずつ比べる型（inc を何度も読む）なら、拾った文字をつなげて丸ごと試す
+  if (readsChar && cands.size > 1) {
+    const word = [...cands].filter((n) => n >= 32n && n < 127n).map((n) => String.fromCharCode(Number(n))).join('');
+    try { const r = wsRun(src, word, 500_000); tries.push({ input: word, out: r.out, flag: (r.out.match(FLAG_RE) || [])[0] || null }); } catch {}
+  }
+  tries.sort((a, b) => (b.flag ? 1 : 0) - (a.flag ? 1 : 0) || b.out.length - a.out.length);
+  return { readsNum, readsChar, candidates: [...cands].map(String), tries };
+}
