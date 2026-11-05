@@ -2180,3 +2180,7 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .ch-row code { font-family: var(--mono); cursor: pointer; background: var(--field); padding: .1rem .4rem; border: 1px solid var(--line); word-break: break-all; }
 .ch-note { flex-basis: 100%; font-size: .8rem; }
 .ch-foot { margin-top: .6rem; }
+.ch-ct { font-size: .78rem; }
+.ch-auto { margin-top: .7rem; }
+.ch-auto #chAutoOut { margin-top: .5rem; }
+.ch-hit code { font-weight: 700; }

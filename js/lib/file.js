@@ -333,3 +333,73 @@ export function keyCandidates(strings, limit = 12) {
   }
   return out.sort((a, b) => b.score - a.score).slice(0, limit).map((x) => x.text);
 }
+
+// ---------- PE のセクション（.data などを優先するため） ----------
+export function peSections(bytes) {
+  if (bytes[0] !== 0x4d || bytes[1] !== 0x5a) return null; // 'MZ'
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  try {
+    const pe = dv.getUint32(0x3c, true);
+    if (dv.getUint32(pe, true) !== 0x00004550) return null; // 'PE\0\0'
+    const nsec = dv.getUint16(pe + 6, true);
+    const optSize = dv.getUint16(pe + 20, true);
+    let o = pe + 24 + optSize;
+    const secs = [];
+    for (let n = 0; n < nsec; n++, o += 40) {
+      let name = '';
+      for (let k = 0; k < 8 && bytes[o + k]; k++) name += String.fromCharCode(bytes[o + k]);
+      const raw = dv.getUint32(o + 20, true), rsize = dv.getUint32(o + 16, true);
+      secs.push({ name, raw, end: raw + rsize });
+    }
+    return secs;
+  } catch { return null; }
+}
+const sectionAt = (secs, off) => secs?.find((s) => off >= s.raw && off < s.end)?.name ?? null;
+
+// ---------- 暗号文の候補 ----------
+// ゼロ（またはパディング）に囲まれた、文字として読めない短いバイト列を拾う。
+// 実行ファイルに埋め込まれた「比較用の暗号文」や「鍵」はこの形で置かれていることが多い。
+export function detectCiphertext(bytes, { min = 4, max = 64, limit = 16 } = {}) {
+  const secs = peSections(bytes);
+  // リソース（アイコン・画像など高エントロピー）は除外対象
+  const skip = new Set(['.text', '.rsrc', '.reloc']); // コード・リソース・再配置は暗号文ではない
+  const out = [];
+  const isPad = (b) => b === 0x00; // 区切りはゼロのみ（0xff は暗号文の一部でありうる）
+  const zerosBefore = (k) => { let n = 0; while (k - 1 - n >= 0 && bytes[k - 1 - n] === 0) n++; return n; };
+  const zerosAfter = (k) => { let n = 0; while (k + n < bytes.length && bytes[k + n] === 0) n++; return n; };
+  let i = 0;
+  while (i < bytes.length) {
+    if (isPad(bytes[i])) { i++; continue; }
+    let j = i;
+    while (j < bytes.length && !isPad(bytes[j])) j++;
+    const len = j - i;
+    const before = i === 0 || isPad(bytes[i - 1]);
+    const after = j >= bytes.length || isPad(bytes[j]);
+    if (len >= min && len <= max && before && after) {
+      const run = bytes.subarray(i, j);
+      const sec = sectionAt(secs, i);
+      const hi = [...run].filter((b) => b >= 0x80).length;
+      const ffRatio = [...run].filter((b) => b === 0xff).length / len;
+      const printable = [...run].filter((b) => b >= 0x20 && b < 0x7f).length;
+      const uniq = new Set(run).size;
+      const iso = Math.min(zerosBefore(i), zerosAfter(j)); // 前後のゼロの長さ（＝どれだけ孤立しているか）
+      const inData = secs && (sec === '.data' || sec === '.rdata');
+      const isoOk = inData || iso >= 2; // PE の .data/.rdata は孤立度を問わない（直前にポインタが来るため）
+      if (uniq > 1 && hi >= 2 && isoOk && ffRatio < 0.3 && printable / len < 0.75 && uniq >= Math.min(len, 4) && !(secs && skip.has(sec))) {
+        // .data / .rdata を優先し、ゼロで強く囲まれたものを上位に
+        const secBonus = sec === '.data' ? 6 : sec === '.rdata' ? 4 : secs ? 0 : 2;
+        out.push({ offset: i, length: len, bytes: run.slice(), section: sec, score: secBonus + Math.min(iso, 8) + uniq / len });
+      }
+    }
+    i = j + 1;
+  }
+  const seen = new Set();
+  return out.sort((a, b) => b.score - a.score).filter((c) => {
+    const k = bytesToHexLocal(c.bytes);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, limit);
+}
+
+function bytesToHexLocal(b) { return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join(''); }

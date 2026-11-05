@@ -5,6 +5,7 @@ import { computeHashes, identifyHash } from '../lib/hash.js';
 import { decodeJwt } from '../lib/jwt.js';
 import { findFlags, DEFAULT_FLAG_PATTERN } from '../lib/flag.js';
 import { flagRegex } from '../lib/magic.js';
+import { rc4 } from '../lib/blockcipher.js';
 import { cidrInfo, convertTimestamp } from '../lib/net.js';
 import { $, h, store, copy, toast, kvRow, debounce, download, fmtSize, hex, getPrefixes, setTable, registerReceiver, fill, pallasSay, sendTo } from './common.js';
 
@@ -148,8 +149,51 @@ export function initFile() {
         ));
       }
     }
-    parts.push(h('p', { class: 'hint ch-foot' }, '暗号文（比較対象の定数など）は「バイナリ解析（逆アセンブル）」で該当のデータを探し、16進でコピーして上の鍵つき復号に貼り付けます。'));
+    const ciphers = F.detectCiphertext(bytes);
+    if (ciphers.length) {
+      parts.push(h('p', { class: 'ch-lead' }, '暗号文の候補（文字として読めない、埋め込まれた短いデータ）：'));
+      for (const c of ciphers) {
+        const hexStr = [...c.bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+        parts.push(h('div', { class: 'ch-row' },
+          h('span', { class: 'tag' }, c.section ?? 'data'), h('span', { class: 'num' }, `${hex(c.offset)}`), h('span', { class: 'hint' }, `${c.length}B`),
+          h('code', { class: 'copyable ch-ct', onclick: () => copy(hexStr) }, hexStr.length > 48 ? hexStr.slice(0, 48) + '…' : hexStr),
+          h('button', { type: 'button', class: 'ghost small', onclick: () => jump(c.offset) }, 'ダンプ'),
+          h('button', { type: 'button', class: 'ghost small', onclick: () => sendTo('codec', { hex: hexStr, recipe: [{ id: 'rc4', args: { keyFmt: 'text' } }], focusKey: true }) }, 'RC4へ'),
+        ));
+      }
+    }
+    // 鍵候補 × 暗号文候補を RC4 で総当たりして、フラグが出る組み合わせを探す
+    if (keys.length && ciphers.length) {
+      const btn = h('button', { type: 'button', class: 'small', onclick: () => autoSolve(keys, ciphers, btn) }, `鍵候補 × 暗号文候補を RC4 で総当たり（${keys.length}×${ciphers.length}）`);
+      parts.push(h('div', { class: 'ch-auto' }, btn, h('div', { id: 'chAutoOut' })));
+    }
+    parts.push(h('p', { class: 'hint ch-foot' }, '自動で見つからないときは、暗号文候補を「RC4へ」で送り、鍵候補を1つずつ試してください。AES や XOR の可能性もあります。'));
     $('cryptoHints').replaceChildren(...parts);
+  }
+
+  // 鍵候補 × 暗号文候補を RC4 で全部試し、フラグらしい結果を表示する
+  function autoSolve(keys, ciphers, btn) {
+    btn.disabled = true;
+    const re = flagRegex(getPrefixes());
+    const hits = [];
+    for (const k of keys) {
+      const key = C.latin1Encode(k);
+      for (const c of ciphers) {
+        const dec = rc4(key, c.bytes);
+        const text = C.bytesToText(dec);
+        const m = text.match(re) || text.match(/FLAG_[A-Za-z0-9_]{3,}/i) || (/^[\x20-\x7e]{4,}$/.test(text) ? [text] : null);
+        if (m) hits.push({ key: k, offset: c.offset, text, flag: (text.match(re) || [])[0] || (text.match(/FLAG_[A-Za-z0-9_]{3,}/i) || [])[0] || null });
+      }
+    }
+    hits.sort((a, b) => (b.flag ? 1 : 0) - (a.flag ? 1 : 0));
+    const out = $('chAutoOut');
+    if (!hits.length) { out.replaceChildren(h('p', { class: 'hint' }, 'RC4 では読める結果が出ませんでした。AES / XOR や、別の鍵・暗号文の組み合わせを手で試してください。')); return; }
+    out.replaceChildren(h('p', { class: 'ch-lead' }, `読めた組み合わせ ${hits.length} 件：`),
+      ...hits.slice(0, 12).map((x) => h('div', { class: 'ch-row' + (x.flag ? ' ch-hit' : '') },
+        h('span', { class: 'hint' }, `鍵 ${x.key} × ${hex(x.offset)}`),
+        h('code', { class: 'copyable' + (x.flag ? ' flag-hit' : ''), onclick: () => copy(x.text) }, x.text.length > 60 ? x.text.slice(0, 60) + '…' : x.text))));
+    const flag = hits.find((x) => x.flag);
+    if (flag) pallasSay({ kind: 'fileFlag', mood: 'happy', flag: flag.flag, anchor: '#cryptoHints' });
   }
 
   // エンコード/デコードを開き、鍵つきの復号を1手だけ入れた状態にする（暗号文はユーザーが貼る）
