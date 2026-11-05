@@ -45,6 +45,12 @@
 - 「迷ったら診断」の結果から、そのままツールに中身を渡して開けます（エンコードなら Magic、RSA なら自動で解くところまで実行）
 - 使い方パネルは開閉でき、閉じた状態は全ページで記憶されます（慣れた人は閉じておけます）
 
+## 使いやすさの工夫
+
+- **よく使うツールのピン留め**：各ツールの見出しの上（MODULE 番号の行）の **☆ よく使うに追加** を押すと、メニューのホームの直後に「よく使う」としてまとめて並びます。並びはモジュール順のままで、本来のメニューや MODULE 番号は変わりません（ブラウザに保存）
+- **キーボード操作**：最初の Tab で「本文へ移動」が出ます。メニューでページを選ぶと、次の Tab はそのページの本文から始まります
+- **スマホのメニュー**：横スクロールのメニューは、続きがある側の端がぼけて表示されます
+
 ## 見た目の切り替え
 
 - 右上の **☾ / ☀ ボタン**でダーク / ライトを切り替えます（選んだものはブラウザに保存）
@@ -82,7 +88,8 @@
 GitHub Actions（`.github/workflows/pages.yml`）で自動公開します。
 
 1. このリポジトリの **Settings → Pages** を開き、**Build and deployment** の Source を「**GitHub Actions**」にする（最初の1回だけ）
-2. `main` ブランチに push すると、テスト → 公開が自動で実行されます
+2. `main` ブランチに push すると、テスト（処理のテストと画面のテスト）→ 公開が自動で実行されます
+   - プルリクエストでも同じテストが走ります（`.github/workflows/test.yml`、公開はしない）
    - **Actions** タブの「Deploy to GitHub Pages」から「Run workflow」で手動実行もできます
 3. 公開先: `https://<ユーザー名>.github.io/My_CTF_portal/`
 
@@ -100,7 +107,15 @@ python3 -m http.server 8000
 ## テスト
 
 ```sh
-node tests/run.mjs
+node tests/run.mjs   # 処理部分（変換・暗号・解析など）のテスト
+```
+
+画面の動きのテスト（ブラウザで実際に操作する）には Playwright と Chromium が必要です。
+
+```sh
+npm install --no-save --no-package-lock playwright@1.63.0
+npx playwright install chromium
+node tests/e2e.mjs   # 画面のテスト（ページ移動・コマンドバー・例を試す・ピン留め・キーボード操作・スマホ表示など）
 ```
 
 ## 構成
@@ -115,6 +130,7 @@ js/ui/              各画面の動作
 js/lib/             変換・暗号・ファイル解析などの処理（画面に依存しない関数）
 js/data/genres.js   ジャンル定義とチートシートのデータ
 tests/run.mjs       処理部分のテスト
+tests/e2e.mjs       画面の動きのテスト（Playwright）
 tests/fixtures/     テスト用の実行ファイル（crackme.c とそのビルド結果、PE のサンプル）
 ```
 

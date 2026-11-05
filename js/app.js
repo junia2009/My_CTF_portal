@@ -17,11 +17,13 @@ import { initRev } from './ui/rev.js';
 import { initManuals } from './ui/manuals.js';
 import { initLearn } from './ui/learn.js';
 import { initDict } from './ui/dict.js';
+import { initPins, initNavFade, initSkipLink, focusAfterRoute } from './ui/nav.js';
 
 const onShow = {};
 let pallas = null;
 
-function route() {
+// moved: ページを移ったとき（初回表示以外）は、キーボード操作のフォーカスを新しいページへ移す
+function route(moved = false) {
   const [page, arg] = (location.hash.slice(1) || 'home').split('/');
   const target = document.querySelector(`[data-page="${page}"]`) ? page : 'home';
   document.querySelectorAll('[data-page]').forEach((s) => (s.hidden = s.dataset.page !== target));
@@ -29,6 +31,7 @@ function route() {
   onShow[target]?.(arg ? decodeURIComponent(arg) : undefined);
   pallas?.onRoute(target);
   window.scrollTo(0, 0);
+  if (moved) focusAfterRoute();
 }
 
 document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy($(b.dataset.copy).value)));
@@ -38,6 +41,9 @@ initTheme();
 initClock();
 initEyebrows();
 decorateNav();
+const navFade = initNavFade();
+initPins(navFade);
+initSkipLink();
 initHome();
 initHelp();
 initTabs();
@@ -71,5 +77,5 @@ onShow.manuals = initManuals();
 onShow.learn = initLearn();
 onShow.dict = initDict();
 pallas = initPallas();
-window.addEventListener('hashchange', route);
+window.addEventListener('hashchange', () => route(true));
 route();

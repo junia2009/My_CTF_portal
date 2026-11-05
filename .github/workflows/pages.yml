@@ -28,6 +28,14 @@ jobs:
       - name: テスト
         run: node tests/run.mjs
 
+      - name: 画面のテスト用にブラウザを用意する
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: 画面のテスト
+        run: node tests/e2e.mjs
+
       - name: 公開するファイルだけをまとめる
         run: |
           mkdir _site

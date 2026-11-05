@@ -42,6 +42,7 @@
   --glass: rgba(4, 9, 17, .92);
   --glass-2: rgba(10, 22, 38, .92);
   --side-bg: linear-gradient(180deg, rgba(8, 18, 32, .7), rgba(4, 9, 17, .4));
+  --nav-fade: rgb(4, 9, 17);
   --on-accent: #031018;
   color-scheme: dark;
 }
@@ -177,6 +178,29 @@ a { color: var(--accent); }
 .nav-group::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
 main { flex: 1; min-width: 0; padding: 2rem 2rem 4rem; max-width: 1080px; }
+
+/* ---------- キーボード操作 ---------- */
+/* 本文へのスキップ：Tab で最初にフォーカスしたときだけ左上に出る */
+.skip-link {
+  position: fixed; left: 12px; top: 10px; z-index: 200; transform: translateY(-160%);
+  font-weight: 700; color: var(--on-accent); background: var(--accent); padding: .5rem .9rem; text-decoration: none;
+  transition: transform .15s;
+}
+.skip-link:focus { transform: none; }
+/* ページ移動で見出しに移したフォーカスは、キーボード操作のときだけ枠を出す */
+h1[tabindex="-1"]:focus { outline: none; }
+h1[tabindex="-1"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/* ---------- よく使うツール（ピン留め） ---------- */
+.eyebrow .pin-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: .35rem;
+  font-family: var(--ui); font-size: .75rem; letter-spacing: .04em; font-weight: 600;
+  color: var(--muted); background: transparent; border: 1px solid var(--line); padding: .2rem .6rem; cursor: pointer;
+}
+.eyebrow .pin-btn:hover { color: var(--accent); border-color: var(--accent); }
+.eyebrow .pin-btn.on { color: var(--accent); border-color: rgba(var(--accent-rgb), .6); background: rgba(var(--accent-rgb), .08); }
+.pin-star::before { content: "☆"; }
+.pin-btn.on .pin-star::before { content: "★"; }
 section:not([hidden]) { animation: enter .45s cubic-bezier(.2, .8, .2, 1); }
 @keyframes enter { from { opacity: 0; transform: translateY(10px); filter: blur(3px); } }
 
@@ -1051,6 +1075,17 @@ main { padding-bottom: 230px; }
   .sidebar a:hover { padding-left: .6rem; }
   .sidebar a.active::after { left: 10%; right: 10%; top: auto; bottom: 0; width: auto; height: 2px; }
   .nav-group { display: none; }
+  /* 横に続きがあることを、端のぼかしで示す（スクロールした分だけ左にも出る） */
+  .sidebar::before, .sidebar::after {
+    content: ""; position: sticky; flex: 0 0 36px; align-self: stretch; z-index: 1; pointer-events: none;
+    opacity: 0; transition: opacity .2s;
+  }
+  .sidebar::before { left: -16px; order: -1; margin: -.4rem -36px -.4rem -16px; background: linear-gradient(90deg, var(--nav-fade), transparent); }
+  .sidebar::after { right: -16px; order: 999; margin: -.4rem -16px -.4rem -36px; background: linear-gradient(270deg, var(--nav-fade), transparent); }
+  .sidebar.more-left::before, .sidebar.more-right::after { opacity: 1; }
+  /* スマホでは見出しの行が折り返さないよう、☆ だけにする（読み上げ用の名前は残す） */
+  .eyebrow .pin-btn { padding: .2rem .55rem; font-size: .95rem; }
+  .eyebrow .pin-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   main { padding: 1.25rem 16px 3rem; }
   .hero2 { grid-template-columns: 1fr; min-height: 0; padding-top: .5rem; }
   .radar { position: absolute; right: -90px; top: -30px; width: 280px; opacity: .35; pointer-events: none; z-index: 0; }
@@ -1746,6 +1781,7 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
   --glass: rgba(255, 255, 255, .9);
   --glass-2: #ffffff;
   --side-bg: rgba(255, 255, 255, .62);
+  --nav-fade: #fff;
   --on-accent: #ffffff;
   --shadow-1: 0 1px 2px rgba(16, 40, 70, .06), 0 6px 18px rgba(16, 40, 70, .06);
   --shadow-2: 0 2px 4px rgba(16, 40, 70, .06), 0 14px 34px rgba(16, 40, 70, .1);
