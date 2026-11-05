@@ -271,6 +271,10 @@ await t('お気に入りのページ：モジュール順のタイルで開け�
   await waitPage(page, 'favorites');
   assert.equal(await page.isVisible('.fav-picker'), false, '登録があるときは最初は一覧を出さない');
   await page.click('.fav-edit');
+  // 「完了」は塗りつぶしで、文字が読める（押した直後でカーソルが乗ったままでも）
+  const done = await page.$eval('.fav-edit', (e) => { const c = getComputedStyle(e); return { img: c.backgroundImage, bg: c.backgroundColor, fg: c.color }; });
+  assert.equal(done.img, 'none', `完了ボタンの背景が塗りつぶしになっていません: ${done.img}`);
+  assert.notEqual(done.bg, done.fg);
   await page.click('.fav-tile:nth-child(1) .fav-remove');
   assert.deepEqual(await page.$$eval('.fav-tile .fav-link', (as) => as.map((a) => a.getAttribute('href'))), ['#rsa', '#pcap']);
   await page.click('.fav-edit');
