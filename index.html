@@ -94,6 +94,7 @@
       <a href="#pcap" data-route="pcap">pcap 解析</a>
       <a href="#logs" data-route="logs">ログ解析</a>
       <a href="#pinject" data-route="pinject">AI 入力チェック</a>
+      <a href="#webform" data-route="webform">フォーム解析</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
@@ -1152,6 +1153,22 @@
       </section>
 
       <!-- 正規表現テスター -->
+      <section data-page="webform" hidden>
+        <h1>フォーム解析</h1>
+        <p class="lead">問題の HTML（入力フォーム）を貼り付けると、送信先・入力欄・隠れた手がかりを一覧にし、送信リクエストの組み立て・curl / fetch の生成・弱点の当たりを示します。解析はこのブラウザの中だけで行い、どこにも送信しません。</p>
+        <div class="card">
+          <label for="wfBase">問題の URL（任意・action を絶対 URL に直すのに使う）</label>
+          <input id="wfBase" class="mono" placeholder="https://chal.example.com/">
+          <label for="wfHtml">HTML（フォーム）を貼り付け</label>
+          <textarea id="wfHtml" rows="8" class="mono" placeholder="&lt;form action=&quot;/login&quot; method=&quot;post&quot;&gt; … &lt;/form&gt;"></textarea>
+          <div class="row">
+            <button type="button" id="wfSample" class="ghost small">サンプルを読み込む</button>
+            <button type="button" id="wfClear" class="ghost small">クリア</button>
+          </div>
+        </div>
+        <div id="wfOut"></div>
+      </section>
+
       <section data-page="regex" hidden>
         <h1>正規表現テスター</h1>
         <div class="card">

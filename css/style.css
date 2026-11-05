@@ -2085,3 +2085,47 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 [data-mode="light"] .illust .il-bubble.c { stroke: #e07a5f; } [data-mode="light"] .illust .il-bubble.s { stroke: #5b8fd6; }
 [data-mode="light"] .illust .il-edge.t { stroke: #12924a; } [data-mode="light"] .illust .il-edge.f { stroke: #c8223a; }
 [data-mode="light"] .illust .il-num { fill: var(--accent); }
+
+/* フォーム解析ツール */
+#webform textarea { font-size: .85rem; line-height: 1.55; }
+#webform #wfBase { width: 100%; max-width: 520px; margin-bottom: .3rem; }
+.wf-h { font-size: 1rem; letter-spacing: .06em; text-transform: none; margin: 0 0 .7rem; }
+.wf-h::after { display: none; }
+.wf-flag { margin: 0 0 1rem; padding: .6rem .9rem; border: 1px solid var(--accent); background: rgba(var(--accent-rgb), .1); display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .9rem; }
+.wf-flag code { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+.wf-meta { width: 100%; border-collapse: collapse; margin-bottom: .9rem; font-size: .9rem; }
+.wf-meta th { text-align: left; white-space: nowrap; padding: .3rem .8rem .3rem 0; color: var(--muted); font-weight: 600; vertical-align: top; width: 1%; }
+.wf-meta td { padding: .3rem 0; word-break: break-all; }
+.wf-meta code { font-family: var(--mono); color: var(--accent); }
+.wf-fields { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.wf-fields thead th { font-family: var(--display); font-size: .62rem; letter-spacing: .14em; color: var(--accent); text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line-strong); }
+.wf-fields td { padding: .35rem .5rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.wf-fields code { font-family: var(--mono); color: var(--text); font-weight: 700; }
+.wf-inc { width: 1%; text-align: center; }
+.wf-val { width: 100%; min-width: 120px; font-size: .84rem; padding: .25rem .4rem; margin: 0; }
+.wf-type { display: inline-block; font-family: var(--mono); font-size: .72rem; color: var(--accent); border: 1px solid var(--line-strong); padding: 0 .35rem; border-radius: 3px; }
+.wf-attrs { display: flex; flex-wrap: wrap; gap: .25rem; }
+.wf-badge { font-size: .68rem; color: var(--muted); border: 1px solid var(--line); padding: 0 .3rem; border-radius: 3px; white-space: nowrap; }
+.wf-badge.hid { color: var(--warn); border-color: rgba(255, 194, 71, .5); }
+.wf-row-hidden { background: rgba(255, 194, 71, .05); }
+.wf-sec { font-family: var(--display); font-size: .62rem; letter-spacing: .22em; color: var(--accent); margin: 1.1rem 0 .5rem; padding-top: .7rem; border-top: 1px dashed var(--line); }
+.wf-code { margin: 0 0 .6rem; border: 1px solid var(--line); background: var(--field); }
+.wf-code-head { display: flex; align-items: center; gap: .6rem; padding: .35rem .6rem; border-bottom: 1px solid var(--line); font-size: .8rem; }
+.wf-code-head > span:first-child { font-family: var(--display); letter-spacing: .1em; color: var(--accent); }
+.wf-code-head .hint { margin-left: auto; margin-right: .4rem; }
+.wf-code pre { margin: 0; padding: .7rem; overflow-x: auto; font-family: var(--mono); font-size: .82rem; line-height: 1.6; color: var(--text); white-space: pre; font-variant-ligatures: none; }
+.wf-hints { margin-top: .2rem; }
+.wf-hint-list { display: flex; flex-wrap: wrap; gap: .4rem; }
+.wf-hint { display: inline-flex; align-items: center; gap: .5rem; text-decoration: none; padding: .35rem .7rem; border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); background: rgba(var(--accent-rgb), .06); color: var(--text); font-size: .86rem; }
+.wf-hint:hover { border-color: var(--accent); }
+.wf-hint span { color: var(--accent); font-size: .78rem; }
+.wf-clue { margin-bottom: 1rem; }
+.wf-clue > b { font-size: .92rem; }
+.wf-pre { margin: .3rem 0; padding: .5rem .7rem; background: var(--field); border: 1px solid var(--line); font-family: var(--mono); font-size: .8rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; overflow-x: auto; }
+.wf-clue code { font-family: var(--mono); color: var(--accent); }
+.wf-urls { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+.wf-urls code { font-size: .8rem; border: 1px solid var(--line); padding: .1rem .4rem; word-break: break-all; }
+.wf-check { margin: 0 0 .8rem; padding-left: 1.2rem; }
+.wf-check li { margin: .35rem 0; line-height: 1.7; }
+.wf-check li::marker { color: var(--accent); }
+.wf-links { display: flex; flex-wrap: wrap; gap: .4rem; }
