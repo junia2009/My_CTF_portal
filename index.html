@@ -97,6 +97,7 @@
       <a href="#webform" data-route="webform">フォーム解析</a>
       <a href="#jsdeobf" data-route="jsdeobf">難読化 JS デコード</a>
       <a href="#jsrun" data-route="jsrun">JS 実行サンドボックス</a>
+      <a href="#esolang" data-route="esolang">難解言語ランナー</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
@@ -1207,6 +1208,30 @@
           <p class="hint">隔離フレームの中の別スレッドで実行します。外部との通信・ポータルの画面や保存データへのアクセスはできず、時間制限を超えると強制停止するので、無限ループでも固まりません。<code>$</code>（jQuery）と <code>document</code> は最小限のまねで、フォームの送信・クリックの処理は「すぐ送信された」として実行されます。</p>
         </div>
         <div id="jrOut"></div>
+      </section>
+
+      <section data-page="esolang" hidden>
+        <h1>難解言語ランナー</h1>
+        <p class="lead">Whitespace（スペース・タブ・改行だけで書く言語）・Brainfuck・Ook! のプログラムを実行します。普通のソースコードの空白に Whitespace のプログラムが隠れている問題によく使います。</p>
+        <div class="card">
+          <div class="row jr-bar">
+            <label class="jr-time">言語 <select id="esLang"><option value="auto">自動判定</option><option value="ws">Whitespace</option><option value="bf">Brainfuck</option><option value="ook">Ook!</option></select></label>
+            <label class="btn ghost" for="esFile">ファイルを開く</label>
+            <input type="file" id="esFile" hidden>
+          </div>
+          <label for="esCode">プログラム</label>
+          <textarea id="esCode" rows="12" class="mono" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          <div id="esInfo" class="jd-info"></div>
+          <label for="esInput">入力（任意・プログラムが読み込む文字）</label>
+          <input id="esInput" class="mono" autocapitalize="off" autocomplete="off">
+          <div class="row">
+            <button type="button" id="esRun">実行</button>
+            <button type="button" id="esSample" class="ghost small">サンプルを読み込む</button>
+            <button type="button" id="esClear" class="ghost small">クリア</button>
+          </div>
+          <p class="hint">Whitespace は空白・タブがひとつ欠けても動きません。Web ページの表示やチャットからコピーすると行末の空白やタブが消えやすいので、<b>問題のファイルをダウンロードして「ファイルを開く」で読み込む</b>のが確実です。上限ステップ数で止まるので、無限ループでも固まりません。</p>
+        </div>
+        <div id="esOut"></div>
       </section>
 
       <section data-page="regex" hidden>
