@@ -296,13 +296,18 @@ const XXTAB = '+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 function uuLikeDecode(s, mode) {
   const raw = s.replace(/\r/g, '');
   const all = raw.split('\n');
+  const hadBegin = all.some((l) => /^\s*begin[ \t]/i.test(l));
   // begin / end と空行を落とし、データ行だけ残す
-  const body = [];
+  let body = [];
   for (const l of all) {
     if (/^\s*begin[ \t]/i.test(l) || /^\s*end\s*$/i.test(l) || l.trim() === '' || l.trim() === '`') continue;
     body.push(l.replace(/\s+$/, ''));
   }
-  const hadBegin = all.some((l) => /^\s*begin[ \t]/i.test(l));
+  // 改行が消えて 1 行に潰れている場合（コピペでよくある）：ヘッダと end を外し、空白区切りで切り直す
+  if (hadBegin && (!body.length || (body.length === 1 && /\bend\b/i.test(body[0])))) {
+    let m = raw.replace(/^[\s\S]*?begin[ \t]+[0-7]{3}[ \t]+\S+/i, '').replace(/\bend\b[\s\S]*$/i, '');
+    body = m.split(/\s+/).filter((t) => t && t !== '`');
+  }
   if (!body.length) {
     if (hadBegin) return new Uint8Array(0); // begin/end はあるが中身が空
     throw new Error('データ行が見つかりません（begin/end の間に本文がありません）');
