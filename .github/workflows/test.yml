@@ -1,0 +1,30 @@
+name: Test
+
+# プルリクエストの段階で、計算のテストと画面のテストを走らせる（公開はしない）
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: テスト
+        run: node tests/run.mjs
+
+      - name: 画面のテスト用にブラウザを用意する
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: 画面のテスト
+        run: node tests/e2e.mjs
