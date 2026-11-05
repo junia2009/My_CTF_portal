@@ -24,6 +24,9 @@ import { initLearn } from './ui/learn.js';
 import { initDict } from './ui/dict.js';
 import { initPins, initFavorites, initNavFade, initSkipLink, focusAfterRoute } from './ui/nav.js';
 
+import { VERSION, BUILD_DATE } from './data/version.js';
+const elVer = document.getElementById('appVersion');
+if (elVer) elVer.textContent = `${VERSION} · ${BUILD_DATE}`;
 const onShow = {};
 let pallas = null;
 
