@@ -17,7 +17,7 @@ import { initRev } from './ui/rev.js';
 import { initManuals } from './ui/manuals.js';
 import { initLearn } from './ui/learn.js';
 import { initDict } from './ui/dict.js';
-import { initPins, initNavFade, initSkipLink, focusAfterRoute } from './ui/nav.js';
+import { initPins, initFavorites, initNavFade, initSkipLink, focusAfterRoute } from './ui/nav.js';
 
 const onShow = {};
 let pallas = null;
@@ -42,7 +42,8 @@ initClock();
 initEyebrows();
 decorateNav();
 const navFade = initNavFade();
-initPins(navFade);
+const pins = initPins(navFade);
+onShow.favorites = initFavorites(pins);
 initSkipLink();
 initHome();
 initHelp();

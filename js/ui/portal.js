@@ -93,9 +93,11 @@ const PAGE_CODES = {
 };
 // 番号はサイドメニューの並び順で振る（ページを足しても通し番号がずれない）
 export function initEyebrows() {
-  const order = [...document.querySelectorAll('#nav a[data-route]')].map((a) => a.dataset.route).filter((id) => id !== 'home');
+  // ホームとお気に入り（ツールではなく入口のページ）は番号を振らない
+  const skip = (id) => id === 'home' || id === 'favorites';
+  const order = [...document.querySelectorAll('#nav a[data-route]')].map((a) => a.dataset.route).filter((id) => !skip(id));
   // メニューに無いページも、後ろに続けて番号を振る
-  for (const sec of document.querySelectorAll('[data-page]')) if (sec.dataset.page !== 'home' && !order.includes(sec.dataset.page)) order.push(sec.dataset.page);
+  for (const sec of document.querySelectorAll('[data-page]')) if (!skip(sec.dataset.page) && !order.includes(sec.dataset.page)) order.push(sec.dataset.page);
   order.forEach((id, i) => {
     const h1 = document.querySelector(`[data-page="${id}"] h1`);
     if (!h1) return;

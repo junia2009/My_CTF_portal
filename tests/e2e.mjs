@@ -92,7 +92,7 @@ await t('ホームがエラーなしで表示される', async () => {
 
 await t('メニューの全項目からページを開ける（エラーなし）', async () => {
   const { page, ctx } = await open();
-  const routes = await page.$$eval('#nav a[data-route]:not(.nav-pinned)', (as) => as.map((a) => a.dataset.route));
+  const routes = await page.$$eval('#nav a[data-route]:not(.nav-pinned):not(.nav-fav)', (as) => as.map((a) => a.dataset.route));
   assert.ok(routes.length >= 25, `メニューの項目が少なすぎます: ${routes.length}`);
   for (const r of routes) {
     await page.click(`#nav a[data-route="${r}"]:not(.nav-pinned)`);
@@ -217,7 +217,7 @@ await t('ライト/ダークとアクセントカラーを切り替えられ、�
 });
 
 // ---------- よく使うツール（ピン留め） ----------
-await t('ピン留め：モジュール順で「よく使う」に並び、本来のメニューと番号は変わらない', async () => {
+await t('ピン留め：モジュール順で「お気に入り」に並び、本来のメニューと番号は変わらない', async () => {
   const { page, ctx } = await open('home');
   const navBefore = await page.$$eval('#nav a[data-route]', (as) => as.map((a) => a.dataset.route));
   const eyebrowsBefore = await page.$$eval('.eyebrow', (es) => es.map((e) => e.firstChild.textContent));
@@ -247,6 +247,71 @@ await t('ピン留め：モジュール順で「よく使う」に並び、本�
   }
   assert.equal(await page.$$eval('#nav .nav-pinned, #nav .nav-pins-title', (e) => e.length), 0);
   assert.deepEqual(page.errors, []);
+  await ctx.close();
+});
+
+await t('お気に入りのページ：モジュール順のタイルで開け、ページ内で追加・削除できる', async () => {
+  const { page, ctx } = await open('favorites');
+  // 何も無いときは案内と、追加用の一覧が出る
+  assert.ok(await page.isVisible('.fav-empty'));
+  assert.ok(await page.isVisible('.fav-picker'));
+  // 一覧から追加（わざとモジュール順と逆に押す）
+  for (const id of ['pcap', 'rsa', 'identify']) await page.click(`.fav-chip[data-fav="${id}"]`);
+  assert.equal(await page.getAttribute('.fav-chip[data-fav="rsa"]', 'aria-pressed'), 'true');
+  assert.deepEqual(await page.$$eval('.fav-tile .fav-link', (as) => as.map((a) => a.getAttribute('href'))), ['#identify', '#rsa', '#pcap']);
+  // タイルの番号は各ページの MODULE 番号と同じ
+  const no = await page.textContent('.fav-tile:nth-child(2) .fav-no');
+  const eyebrow = await page.$eval('[data-page="rsa"] .eyebrow', (e) => e.firstChild.textContent);
+  assert.ok(eyebrow.includes(`MODULE ${no.slice(1)}`), `${no} と ${eyebrow}`);
+  // 各ツールのページの ☆ にも反映される
+  assert.equal(await page.getAttribute('[data-page="rsa"] .pin-btn', 'aria-pressed'), 'true');
+  // 編集で外す
+  await page.goto(BASE + '#home');
+  await page.goto(BASE + '#favorites');
+  await waitPage(page, 'favorites');
+  assert.equal(await page.isVisible('.fav-picker'), false, '登録があるときは最初は一覧を出さない');
+  await page.click('.fav-edit');
+  await page.click('.fav-tile:nth-child(1) .fav-remove');
+  assert.deepEqual(await page.$$eval('.fav-tile .fav-link', (as) => as.map((a) => a.getAttribute('href'))), ['#rsa', '#pcap']);
+  await page.click('.fav-edit');
+  // タイルからツールを開ける
+  await page.click('.fav-link[href="#pcap"]');
+  await waitPage(page, 'pcap');
+  assert.deepEqual(page.errors, []);
+  await ctx.close();
+});
+
+await t('スマホ：メニューにはお気に入りの複製を並べず、先頭の ★ から開く', async () => {
+  const { page, ctx } = await open('home', { device: 'iPhone 13' });
+  const ids = ['identify', 'codec', 'classic', 'rsa', 'xor', 'rev', 'file', 'image', 'pcap', 'dict'];
+  await page.evaluate((ids) => localStorage.setItem('ctf.pins', JSON.stringify(ids)), ids);
+  await page.reload();
+  await page.waitForSelector('[data-page]:not([hidden])');
+  // 複製はスマホでは見えない（メニューの長さは増えない）
+  assert.equal(await page.$$eval('#nav .nav-pinned', (as) => as.filter((a) => a.offsetParent).length), 0);
+  // ★ は先頭にあり、件数を出す
+  const first = await page.$eval('#nav a:not([hidden])', (a) => a.dataset.route);
+  assert.equal(first, 'favorites');
+  assert.equal(await page.textContent('#favCount'), '10');
+  await page.click('#nav a.nav-fav');
+  await waitPage(page, 'favorites');
+  // 10 件でも 1 画面に収まる（タイルの一覧の下端が画面内）
+  await page.waitForTimeout(700);
+  const bottom = await page.$eval('.fav-grid', (g) => g.getBoundingClientRect().bottom);
+  const vh = await page.evaluate(() => innerHeight);
+  assert.ok(bottom <= vh, `一覧の下端 ${bottom}px が画面の高さ ${vh}px を超えています`);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, true);
+  assert.deepEqual(page.errors, []);
+  await ctx.close();
+});
+
+await t('PC：メニューの ★ は出さず、サイドメニューに「お気に入り」が並ぶ', async () => {
+  const { page, ctx } = await open('home');
+  await page.evaluate(() => localStorage.setItem('ctf.pins', JSON.stringify(['rsa', 'codec'])));
+  await page.reload();
+  await page.waitForSelector('[data-page]:not([hidden])');
+  assert.equal(await page.isVisible('#nav a.nav-fav'), false);
+  assert.deepEqual(await page.$$eval('#nav .nav-pinned', (as) => as.filter((a) => a.offsetParent).map((a) => a.dataset.route)), ['codec', 'rsa']);
   await ctx.close();
 });
 
