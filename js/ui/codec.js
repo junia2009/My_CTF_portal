@@ -397,11 +397,12 @@ export function initCodec() {
 
   registerReceiver('codec', (p) => {
     inFmt.value = p.hex !== undefined ? 'hex' : 'text';
-    input.value = p.hex ?? p.text;
-    recipe = [];
+    input.value = p.hex ?? p.text ?? '';
+    recipe = Array.isArray(p.recipe) ? p.recipe.map((r) => ({ id: r.id, args: r.args ?? {} })) : [];
     save();
     buildSteps();
     if (p.magic) $('magicRun').click();
+    if (p.focusKey) setTimeout(() => { const el = document.querySelector('#codec input[aria-label="鍵"]'); el?.focus(); input.focus(); }, 50);
   });
 
   buildSteps();

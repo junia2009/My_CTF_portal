@@ -36,6 +36,7 @@ export function initFile() {
     summary();
     entropyChart();
     sigs();
+    cryptoHints();
     png();
     strings = F.extractStrings(bytes, Number($('strMin').value) || 5, 20000);
     renderStrings();
@@ -115,6 +116,46 @@ export function initFile() {
         ),
       ),
     ));
+  }
+
+  function cryptoHints() {
+    const crypto = F.detectCrypto(bytes);
+    const keys = F.keyCandidates(strings.length ? strings : F.extractStrings(bytes, 5, 20000));
+    $('cryptoCard').hidden = !crypto.length && !keys.length;
+    if (crypto.length === 0 && keys.length === 0) return;
+    const parts = [];
+    if (crypto.length) {
+      parts.push(h('p', { class: 'ch-lead' }, '使われていそうな暗号・ハッシュ：'));
+      for (const c of crypto) {
+        parts.push(h('div', { class: 'ch-row' },
+          h('span', { class: 'tag' + (c.kind === 'code' ? ' warn' : '') }, c.kind === 'code' ? 'コード' : '定数'),
+          h('b', {}, c.name), h('span', { class: 'num' }, hex(c.offset)),
+          h('button', { type: 'button', class: 'ghost small', onclick: () => jump(c.offset) }, 'ダンプで見る'),
+          h('div', { class: 'hint ch-note' }, c.note),
+        ));
+      }
+    }
+    if (keys.length) {
+      // 暗号文を貼って復号するときに使う、鍵つきの変換
+      const ops = [['rc4', 'RC4'], ['aes', 'AES'], ['xor', 'XOR']];
+      parts.push(h('p', { class: 'ch-lead' }, '鍵・パスワードらしい文字列（ランダムな英数字）：',
+        h('span', { class: 'hint' }, 'どれが鍵かは分からないので、暗号文に対して上から順に試してください')));
+      for (const k of keys) {
+        parts.push(h('div', { class: 'ch-row' },
+          h('code', { class: 'copyable', onclick: () => copy(k) }, k),
+          h('span', { class: 'hint' }, 'この鍵で開く：'),
+          ...ops.map(([id, label]) => h('button', { type: 'button', class: 'ghost small', onclick: () => openCodecWithKey(id, k) }, label)),
+        ));
+      }
+    }
+    parts.push(h('p', { class: 'hint ch-foot' }, '暗号文（比較対象の定数など）は「バイナリ解析（逆アセンブル）」で該当のデータを探し、16進でコピーして上の鍵つき復号に貼り付けます。'));
+    $('cryptoHints').replaceChildren(...parts);
+  }
+
+  // エンコード/デコードを開き、鍵つきの復号を1手だけ入れた状態にする（暗号文はユーザーが貼る）
+  function openCodecWithKey(opId, key) {
+    sendTo('codec', { text: '', recipe: [{ id: 'hexd' }, { id: opId, args: { key, keyFmt: 'text' } }], focusKey: true });
+    toast(`エンコード/デコードに ${opId.toUpperCase()}（鍵つき）を用意しました。暗号文を 16 進で貼ってください`);
   }
 
   function png() {

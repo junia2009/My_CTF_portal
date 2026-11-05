@@ -2172,3 +2172,11 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .cred-note { flex-basis: 100%; font-size: .78rem; word-break: break-all; }
 .cred-leak { border-left: 3px solid #f0b429; padding-left: .5rem; }
 .cred-leak .cred-proto { color: #f0b429; }
+/* ファイル解析：暗号の手がかり */
+.ch-lead { margin: .6rem 0 .3rem; font-weight: 600; font-size: .92rem; }
+.ch-lead .hint { font-weight: 400; margin-left: .4rem; }
+.ch-row { display: flex; flex-wrap: wrap; gap: .4rem .6rem; align-items: center; padding: .4rem 0; border-top: 1px dashed var(--line); }
+.ch-row > b { color: var(--accent); }
+.ch-row code { font-family: var(--mono); cursor: pointer; background: var(--field); padding: .1rem .4rem; border: 1px solid var(--line); word-break: break-all; }
+.ch-note { flex-basis: 100%; font-size: .8rem; }
+.ch-foot { margin-top: .6rem; }

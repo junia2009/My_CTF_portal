@@ -269,3 +269,67 @@ export function pngFixDimensions(bytes, maxDim = 4096) {
   fixed.set(buf.subarray(4, 12), o);
   return { ...found, fixed };
 }
+
+// ---------- 暗号の手がかり（どの暗号・ハッシュを使っていそうか） ----------
+// 既知の定数テーブル（コンパイルしても値が変わらない）と、RC4 の S-box 初期化コードを探す。
+const hx = (s) => Uint8Array.from(s.match(/../g).map((x) => parseInt(x, 16)));
+const CRYPTO_SIGS = [
+  { name: 'AES（S-box）', sig: hx('637c777bf26b6fc5300167'), note: 'AES。鍵が分かれば「AES」で復号（CBC / ECB / CTR / GCM）' },
+  { name: 'AES（復号用 逆 S-box）', sig: hx('52096ad53036a538bf40a3'), note: 'AES の復号テーブル' },
+  { name: 'AES（Te0 テーブル）', sig: hx('c66363a5f87c7c84'), note: 'AES（テーブル実装）' },
+  { name: 'SHA-256（初期値 H）', sig: hx('67e6096a85ae67bb'), note: 'SHA-256' },
+  { name: 'SHA-256（定数 K）', sig: hx('982f8a4291443771'), note: 'SHA-256' },
+  { name: 'SHA-512（初期値）', sig: hx('08c9bcf367e6096a'), note: 'SHA-512' },
+  { name: 'MD5（正弦テーブル T）', sig: hx('78a46ad7'), note: 'MD5（先頭定数 0xd76aa478）' },
+  { name: 'SHA-1 / MD5（初期値 A）', sig: hx('0123456789abcdef'), note: 'SHA-1 や MD5 の初期値（0x67452301…）。ほかの手がかりと合わせて判断' },
+  { name: 'CRC32（多項式テーブル）', sig: hx('00000000963007770ec'), note: 'CRC32' },
+  { name: 'Blowfish（円周率 P 配列）', sig: hx('886a3f2403d308a3'), note: 'Blowfish' },
+  { name: 'base64 の文字表', sig: toBytesAscii('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'), note: 'Base64。独自の並び順なら「Base64（独自の文字表）」' },
+];
+function toBytesAscii(s) { return Uint8Array.from(s, (c) => c.charCodeAt(0)); }
+
+export function detectCrypto(bytes) {
+  const hits = [];
+  for (const s of CRYPTO_SIGS) {
+    const at = indexOfSeqB(bytes, s.sig, 0);
+    if (at >= 0) hits.push({ name: s.name, offset: at, note: s.note, kind: 'const' });
+  }
+  // RC4 などの「256 要素テーブルを 0..255 で初期化」するコード： inc eax; cmp eax,0x100; jl/jb
+  for (let i = 0; i + 7 < bytes.length; i++) {
+    if (bytes[i] === 0x40 && bytes[i + 1] === 0x3d && bytes[i + 2] === 0x00 && bytes[i + 3] === 0x01 && bytes[i + 4] === 0x00 && bytes[i + 5] === 0x00 && (bytes[i + 6] === 0x7c || bytes[i + 6] === 0x72)) {
+      hits.push({ name: 'RC4 らしきコード（S-box の初期化）', offset: i, note: '256 要素を 0..255 で初期化 → RC4 の可能性。鍵が分かれば「RC4」で復号（暗号化と復号は同じ）', kind: 'code' });
+      break;
+    }
+  }
+  return hits;
+}
+
+function indexOfSeqB(b, seq, from) {
+  for (let i = from; i <= b.length - seq.length; i++) {
+    let ok = true;
+    for (let j = 0; j < seq.length; j++) if (b[i + j] !== seq[j]) { ok = false; break; }
+    if (ok) return i;
+  }
+  return -1;
+}
+
+// 鍵・パスワードらしい文字列（ランダムっぽい英数字の並び）を拾う。すでに抽出した文字列から選ぶ。
+export function keyCandidates(strings, limit = 12) {
+  const out = [];
+  const seen = new Set();
+  for (const s of strings) {
+    const t = (s.text ?? s).trim();
+    if (seen.has(t) || !/^[A-Za-z0-9+/=_\-]{8,64}$/.test(t)) continue;
+    const lower = (t.match(/[a-z]/g) || []).length, upper = (t.match(/[A-Z]/g) || []).length, digit = (t.match(/[0-9]/g) || []).length;
+    const classes = [lower, upper, digit].filter((n) => n > 0).length;
+    const longWord = /[a-z]{6,}|[A-Z]{6,}/.test(t); // GetProcAddress のような普通の単語を除く
+    // 長さが 8/16/24/32 だと鍵らしさが上がる
+    const niceLen = [8, 16, 24, 32, 44].includes(t.length);
+    const uniq = new Set(t).size;
+    if (classes >= 2 && digit >= 1 && !longWord && uniq >= t.length * 0.55) {
+      seen.add(t);
+      out.push({ text: t, score: (niceLen ? 2 : 0) + classes + (digit && upper && lower ? 1 : 0) });
+    }
+  }
+  return out.sort((a, b) => b.score - a.score).slice(0, limit).map((x) => x.text);
+}
