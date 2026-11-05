@@ -344,6 +344,11 @@ await t('診断: 形式の推定', () => {
   assert.equal(identify('This is a secret message for you hello world')[0].id, 'plain');
   assert.equal(identify('Lxfopv ef rnhr lxfopv ef rnhr gsbxs wd zuttfmwi')[0].id, 'classic');
   assert.equal(identify('@@##!!')[0].id, 'unknown');
+  // 空白のない1語のフラグ形式もシーザー暗号と判定する
+  assert.equal(identify('synt{pnrfne_vf_rnfl}')[0].id, 'caesar');
+  assert.match(identify('synt{pnrfne_vf_rnfl}')[0].title, /13 文字ずらし＝ROT13/);
+  assert.match(identify('iodj{khoor}')[0].title, /23 文字ずらし/);
+  assert.equal(identify('flag{already_plain}').some((r) => r.id === 'caesar'), false);
 });
 await t('診断: RSA の値を読み取る', () => {
   const r = identify('Here are the params:\nn = 0x1234abcd\ne = 3\nc = 987654321\n');
