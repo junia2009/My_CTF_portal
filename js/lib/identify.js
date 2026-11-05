@@ -153,6 +153,19 @@ export function identify(input, prefixes) {
   }
 
   // ---- 古典暗号 ----
+  // ずらすとフラグの形（flag{...} など）になるなら、1語でもシーザー暗号と判定する
+  if (!flag && /[a-z]{2,}\{/i.test(text)) {
+    const re = flagRegex(prefixes);
+    const hit = caesarAll(text).find((r) => r.shift !== 0 && re.test(r.text));
+    if (hit) {
+      const found = hit.text.match(re)[0];
+      add({
+        id: 'caesar', level: HIGH, title: `シーザー暗号（${hit.shift} 文字ずらし${hit.shift === 13 ? '＝ROT13' : ''}）`, tool: 'classic', payload: text,
+        reason: `アルファベットを ${hit.shift} 文字ずらすとフラグの形になります: 「${found.slice(0, 60)}${found.length > 60 ? '…' : ''}」`,
+        next: '古典暗号ツールの「シーザー / ROT」タブで確認し、フラグを提出しましょう。',
+      });
+    }
+  }
   const letters = text.replace(/[^a-z]/gi, '').length;
   const words = text.split(/\s+/).filter(Boolean).length;
   if (!flag && letters >= 12 && words >= 2 && letters / compact.length > 0.75 && !res.some((r) => r.level === HIGH || r.id === 'enc')) {
