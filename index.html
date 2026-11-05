@@ -95,6 +95,7 @@
       <a href="#logs" data-route="logs">ログ解析</a>
       <a href="#pinject" data-route="pinject">AI 入力チェック</a>
       <a href="#webform" data-route="webform">フォーム解析</a>
+      <a href="#jsdeobf" data-route="jsdeobf">難読化 JS デコード</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
       <a href="#flag" data-route="flag">フラグ検索</a>
@@ -1167,6 +1168,23 @@
           </div>
         </div>
         <div id="wfOut"></div>
+      </section>
+
+      <section data-page="jsdeobf" hidden>
+        <h1>難読化 JS デコード</h1>
+        <p class="lead">aaencode（顔文字）・JSFuck・Packer など、<code>eval</code> / <code>Function</code> で文字列を実行する形の難読化 JavaScript から、<b>実行せずに</b>中身のコードを取り出します。</p>
+        <div class="card">
+          <label for="jdIn">難読化された JavaScript を貼り付け</label>
+          <textarea id="jdIn" rows="8" class="mono" spellcheck="false" placeholder="ﾟωﾟﾉ= /｀ｍ´）ﾉ ~┻━┻ //*´∇｀*/ ['_']; …"></textarea>
+          <div id="jdInfo" class="jd-info"></div>
+          <div class="row">
+            <button type="button" id="jdRun">デコード</button>
+            <button type="button" id="jdSample" class="ghost small">サンプルを読み込む</button>
+            <button type="button" id="jdClear" class="ghost small">クリア</button>
+          </div>
+          <p class="hint">しくみ：通信も画面操作もできない隔離フレーム（sandbox・CSP で外部通信禁止）の中で、<code>eval</code> / <code>Function</code> / <code>setTimeout(文字列)</code> / <code>document.write</code> を「受け取った文字列を記録するだけ」の関数に差し替えてから読み込みます。最後の「実行」の直前で止めるので、中身のコードは動きません。多段の難読化は「さらにデコード」で 1 段ずつ剥がします。</p>
+        </div>
+        <div id="jdOut"></div>
       </section>
 
       <section data-page="regex" hidden>

@@ -2,6 +2,7 @@
 // 送信リクエストの組み立て・curl / fetch の生成・弱点の当たりを示す。
 // すべてブラウザの中だけで静的に解析し、どこにも送信しない。
 import { $, h, store, copy, debounce } from './common.js';
+import { DEOBF_KEY, detectObf } from './jsdeobf.js';
 
 const SAMPLE = `<!-- TODO: remove debug account before release -->
 <form action="/login" method="post">
@@ -100,7 +101,8 @@ export function initWebform() {
     if (scripts.length) clue.push(h('div', { class: 'wf-clue' }, h('b', {}, `<script>（${scripts.length}）`), h('div', { class: 'hint' }, 'クライアント側の検証・隠しエンドポイント。ブラウザ側の検証はバイパスできる（サーバー側の確認を試す）'),
       ...scripts.map((s) => s.getAttribute('src')
         ? h('div', {}, '外部：', h('code', {}, s.getAttribute('src')))
-        : h('pre', { class: 'wf-pre' }, (s.textContent || '').trim().slice(0, 400) + ((s.textContent || '').length > 400 ? ' …' : '')))));
+        : h('div', {}, h('pre', { class: 'wf-pre' }, (s.textContent || '').trim().slice(0, 400) + ((s.textContent || '').length > 400 ? ' …' : '')),
+          deobfLink(s.textContent || '')))));
     // ページ内の URL（別の入口）
     const urls = new Set();
     docp.querySelectorAll('[action],[href],[src]').forEach((e) => { const u = e.getAttribute('action') || e.getAttribute('href') || e.getAttribute('src'); if (u && !u.startsWith('data:') && !u.startsWith('#')) urls.add(u); });
@@ -233,3 +235,14 @@ export function initWebform() {
 }
 // fetch コード用：JS 文字列リテラル
 function sh2(s) { return JSON.stringify(String(s)); }
+
+// 難読化されていそうな script には「難読化 JS デコード」への導線を出す
+function deobfLink(code) {
+  const t = detectObf(code);
+  if (!t || t.id === 'unknown' || code.trim().length < 40) return '';
+  return h('div', { class: 'wf-deobf' }, h('span', { class: 'hint' }, `難読化の可能性：${t.label}`),
+    h('button', { type: 'button', class: 'small', onclick: () => {
+      try { sessionStorage.setItem(DEOBF_KEY, code); } catch {}
+      location.hash = '#jsdeobf';
+    } }, '難読化 JS デコードで開く →'));
+}

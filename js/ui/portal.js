@@ -87,7 +87,7 @@ const PAGE_CODES = {
   codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', binview: 'BINARY VIEWER', mojibake: 'CHARSET REPAIR',
   classic: 'CLASSIC CIPHER', xor: 'XOR ANALYZER', rsa: 'RSA BREAKER', math: 'NUMBER THEORY',
   rev: 'REVERSE ENGINEERING', file: 'FILE FORENSICS', image: 'IMAGE FORENSICS', geo: 'GEO LOCATOR', audio: 'AUDIO ANALYZER',
-  pcap: 'PACKET ANALYZER', logs: 'LOG ANALYZER', pinject: 'PROMPT GUARD', webform: 'FORM ANALYZER', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
+  pcap: 'PACKET ANALYZER', logs: 'LOG ANALYZER', pinject: 'PROMPT GUARD', webform: 'FORM ANALYZER', jsdeobf: 'JS DEOBFUSCATOR', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
   flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL', manuals: 'TOOL MANUALS',
   dict: 'REFERENCE', diff: 'DIFF ENGINE', regex: 'PATTERN LAB',
 };

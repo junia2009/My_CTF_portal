@@ -2129,3 +2129,10 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .wf-check li { margin: .35rem 0; line-height: 1.7; }
 .wf-check li::marker { color: var(--accent); }
 .wf-links { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+/* 難読化 JS デコード */
+.jd-info { margin: .5rem 0; font-size: .88rem; min-height: 1.3em; }
+.jd-info b { color: var(--accent); }
+.jd-layer pre { white-space: pre-wrap; word-break: break-all; max-height: 60vh; overflow: auto; }
+.wf-deobf { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: -.2rem 0 .8rem; }
+@media (max-width: 760px) { .wf-code-head { flex-wrap: wrap; } .wf-code-head .hint { margin-left: 0; flex-basis: 100%; order: 3; } }
