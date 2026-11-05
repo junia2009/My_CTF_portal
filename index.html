@@ -69,6 +69,7 @@
 
   <div class="layout">
     <nav class="sidebar" id="nav">
+      <a href="#favorites" data-route="favorites" class="nav-fav" aria-label="お気に入り"><span class="nav-fav-count" id="favCount"></span></a>
       <a href="#home" data-route="home">ホーム</a>
       <div class="nav-group">はじめに</div>
       <a href="#guide" data-route="guide">はじめての CTF</a>
@@ -199,6 +200,13 @@
       </section>
 
       <!-- 迷ったら診断 -->
+      <!-- お気に入り（スマホのメニュー先頭の ★ から開く。PC ではサイドメニューの「よく使う」と同じ内容） -->
+      <section data-page="favorites" class="fav-page" hidden>
+        <div class="eyebrow">QUICK ACCESS // FAVORITES</div>
+        <h1>お気に入り</h1>
+        <div id="favRoot"></div>
+      </section>
+
       <section data-page="identify" hidden>
         <h1>迷ったら診断</h1>
         <p class="lead">問題に出てきた文字列を貼るか、ファイルを入れてください。正体を推測して、次にやることと使うツールを提案します。</p>
