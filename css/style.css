@@ -201,7 +201,8 @@ h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible { outline: none; }
 .fav-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: -.4rem 0 1rem; }
 .fav-stat { font-family: var(--mono); font-size: .8rem; letter-spacing: .15em; color: var(--muted); }
 .fav-stat b { font-size: 1.5rem; color: var(--accent); letter-spacing: .05em; text-shadow: 0 0 12px rgba(var(--accent-rgb), .5); margin-right: .1rem; }
-.fav-edit.on { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+/* 編集中の「完了」は塗りつぶす。共通の ghost ボタンの hover（タップ後も残る）やライトモードの指定に負けないよう、詳しく指定する */
+.fav-page button.ghost.fav-edit.on, .fav-page button.ghost.fav-edit.on:hover { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
 
 .fav-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .7rem; }
 .fav-tile { position: relative; animation: favIn .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 45ms); }
