@@ -1,6 +1,6 @@
 // Python 実行（Pyodide）：問題のスクリプトや逆算コードを本物の Python で動かす。
 // 初回だけ CDN から Pyodide を読み込む。実行は Web Worker の中（無限ループは「停止」で止める）。
-import { $, h, copy, store, getPrefixes } from './common.js';
+import { $, h, copy, getPrefixes } from './common.js';
 import { flagRegex } from '../lib/magic.js';
 
 export const PYRUN_KEY = 'ctfportal.pyrunInput';
@@ -55,14 +55,13 @@ export function initPyrun() {
   let worker = null, running = false, loaded = false;
 
   tpl.append(...TEMPLATES.map((t, i) => h('option', { value: i }, t.name)));
-  tpl.addEventListener('change', () => { if (tpl.value !== '') { code.value = TEMPLATES[+tpl.value].code; store.set(PYRUN_KEY, code.value); tpl.value = ''; } });
-  code.value = store.get(PYRUN_KEY, '');
-  code.addEventListener('input', () => store.set(PYRUN_KEY, code.value));
+  tpl.addEventListener('change', () => { if (tpl.value !== '') { code.value = TEMPLATES[+tpl.value].code; tpl.value = ''; } });
+  code.value = '';
   code.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
     if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); code.setRangeText('    ', code.selectionStart, code.selectionEnd, 'end'); }
   });
-  $('pyClear').addEventListener('click', () => { code.value = ''; out.replaceChildren(); store.set(PYRUN_KEY, ''); code.focus(); });
+  $('pyClear').addEventListener('click', () => { code.value = ''; out.replaceChildren(); code.focus(); });
   runBtn.addEventListener('click', run);
   stopBtn.addEventListener('click', stop);
 
@@ -138,7 +137,7 @@ export function initPyrun() {
   const takeSent = () => {
     try {
       const sent = sessionStorage.getItem(PYRUN_KEY);
-      if (sent) { sessionStorage.removeItem(PYRUN_KEY); code.value = sent; store.set(PYRUN_KEY, sent); out.replaceChildren(); }
+      if (sent) { sessionStorage.removeItem(PYRUN_KEY); code.value = sent; out.replaceChildren(); }
     } catch {}
   };
   takeSent();

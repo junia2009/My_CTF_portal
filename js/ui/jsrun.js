@@ -1,7 +1,7 @@
 // JS 実行：問題の JavaScript の一部や、逆算用に自分で書いたコードを安全に動かして結果を見る。
 // 隔離 iframe（sandbox・同一オリジンなし・CSP で通信禁止）の中で Web Worker を起こして実行し、
 // 時間切れになったら iframe ごと捨てる（無限ループでもポータルは固まらない）。
-import { $, h, copy, store } from './common.js';
+import { $, h, copy } from './common.js';
 
 export const JSRUN_KEY = 'ctfportal.jsrunInput';
 
@@ -176,9 +176,8 @@ export function initJsrun() {
     code.value = TEMPLATES[+tpl.value].code;
     tpl.value = '';
   });
-  code.value = store.get('ctfportal.jsrunCode', '');
-  code.addEventListener('input', () => store.set('ctfportal.jsrunCode', code.value));
-  $('jrClear').addEventListener('click', () => { code.value = ''; out.replaceChildren(); store.set('ctfportal.jsrunCode', ''); code.focus(); });
+  code.value = '';
+  $('jrClear').addEventListener('click', () => { code.value = ''; out.replaceChildren(); code.focus(); });
   runBtn.addEventListener('click', run);
   code.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
@@ -208,7 +207,7 @@ export function initJsrun() {
   const takeSent = () => {
     try {
       const sent = sessionStorage.getItem(JSRUN_KEY);
-      if (sent) { sessionStorage.removeItem(JSRUN_KEY); code.value = sent; store.set('ctfportal.jsrunCode', sent); out.replaceChildren(); }
+      if (sent) { sessionStorage.removeItem(JSRUN_KEY); code.value = sent; out.replaceChildren(); }
     } catch {}
   };
   takeSent();
