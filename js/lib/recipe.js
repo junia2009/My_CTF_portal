@@ -5,6 +5,7 @@ import {
   b64Encode, b64Decode, b32Encode, b32Decode, b58Encode, b58Decode, b85Encode, b85Decode,
   bytesToHex, hexToBytes, bytesToBin, binToBytes, bytesToDec, decToBytes,
   htmlEncode, htmlDecode, unicodeEscape, unicodeUnescape, morseEncode, morseDecode, reverse,
+  uuDecode, xxDecode, uuEncode,
 } from './codecs.js';
 import { blockCrypt, rc4, aesGcm } from './blockcipher.js';
 import { vigenere, affineDecrypt, railFenceEncrypt, railFenceDecrypt, caesarAll, englishRank, xorBruteSingle } from './ciphers.js';
@@ -326,6 +327,8 @@ export const OPS = [
   { id: 'unid', cat: 'decode', name: 'Unicode エスケープ → 元に戻す', desc: '\\u0041 の形を戻す', kw: 'unicode escape', fn: asText(unicodeUnescape) },
   { id: 'escd', cat: 'decode', name: 'エスケープ（\\x41 \\n など）→ 元に戻す', desc: 'プログラムの文字列でよく見る形を戻す', kw: 'escape backslash \\x', fn: asAscii(unescapeBytes) },
   { id: 'qpd', cat: 'decode', name: 'Quoted-Printable → 元に戻す', desc: 'メールの =E3=81=82 の形を戻す', kw: 'quoted printable mail', fn: asAscii(qpDecode) },
+  { id: 'uud', cat: 'decode', name: 'uudecode（uuencode → 元に戻す）', desc: 'begin 644 … end で囲まれた昔の添付形式。各行の先頭がその行のバイト数', kw: 'uudecode uuencode begin uu unix', fn: asAscii(uuDecode) },
+  { id: 'xxd', cat: 'decode', name: 'xxdecode（xxencode → 元に戻す）', desc: 'uuencode に似た形式で、英数字と + - だけを使う', kw: 'xxdecode xxencode', fn: asAscii(xxDecode) },
   { id: 'morsed', cat: 'decode', name: 'モールス信号 → 文字', desc: '. と - の並び（区切りは空白、単語は /）', kw: 'morse', fn: asText(morseDecode) },
   { id: 'a1z26d', cat: 'decode', name: 'A1Z26（数 → 英字）', desc: '1=A … 26=Z', kw: 'a1z26 number letter', fn: asText(a1z26Decode) },
   { id: 'bacon', cat: 'decode', name: 'Bacon 暗号 → 英字', desc: 'A と B（0 と 1）の 5 文字で 1 文字', kw: 'bacon baconian', params: [{ key: 'variant', label: '種類', type: 'select', options: [['26', '26 文字'], ['24', '24 文字（I=J・U=V）']], default: '26' }], fn: asText(baconDecode) },
@@ -362,6 +365,7 @@ export const OPS = [
   { id: 'esce', cat: 'encode', name: 'エスケープ（\\x41）にする', kw: 'escape', params: [{ key: 'all', label: '対象', type: 'select', options: [['no', '読めない文字だけ'], ['yes', 'すべての文字']], default: 'no' }], fn: escapeBytes },
   { id: 'qpe', cat: 'encode', name: 'Quoted-Printable にする', kw: 'quoted printable', fn: qpEncode },
   { id: 'morsee', cat: 'encode', name: 'モールス信号にする', kw: 'morse', fn: asText(morseEncode) },
+  { id: 'uue', cat: 'encode', name: 'uuencode にする', desc: 'begin 644 … end で囲んだ昔の添付形式', kw: 'uuencode uu begin', fn: (b) => toBytes(uuEncode(b)) },
   { id: 'a1z26e', cat: 'encode', name: 'A1Z26 にする（英字 → 数）', kw: 'a1z26', fn: asText(a1z26Encode) },
   { id: 'bige', cat: 'encode', name: 'バイト列 → 大きな整数', desc: 'bytes_to_long と同じ', kw: 'bigint bytes_to_long integer', fn: (b) => toBytes(bigFromBytes(b).toString()) },
 

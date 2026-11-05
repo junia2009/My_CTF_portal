@@ -288,6 +288,66 @@ export function b85Decode(s) {
   return Uint8Array.from(out);
 }
 
+// ---------- uuencode / xxencode ----------
+// uuencode: 1 文字 = 6 ビット。各値 v を chr(v + 32) で表す（v=0 は空白か ` のことも）。
+// 行頭はその行のバイト数（同じく +32）。begin/end 行は読み飛ばす。
+const XXTAB = '+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+function uuLikeDecode(s, mode) {
+  const raw = s.replace(/\r/g, '');
+  const all = raw.split('\n');
+  // begin / end と空行を落とし、データ行だけ残す
+  const body = [];
+  for (const l of all) {
+    if (/^\s*begin[ \t]/i.test(l) || /^\s*end\s*$/i.test(l) || l.trim() === '' || l.trim() === '`') continue;
+    body.push(l.replace(/\s+$/, ''));
+  }
+  const hadBegin = all.some((l) => /^\s*begin[ \t]/i.test(l));
+  if (!body.length) {
+    if (hadBegin) return new Uint8Array(0); // begin/end はあるが中身が空
+    throw new Error('データ行が見つかりません（begin/end の間に本文がありません）');
+  }
+  const val = mode === 'xx'
+    ? (c) => { const i = XXTAB.indexOf(c); if (i < 0) throw new Error(`xxencode にない文字「${c}」`); return i; }
+    : (c) => (c === '`' ? 0 : (c.charCodeAt(0) - 0x20) & 0x3f); // 本家 uudecode と同じく 6 ビットにマスク（寛容）
+  const out = [];
+  for (const line of body) {
+    const count = mode === 'xx' ? XXTAB.indexOf(line[0]) : (line.charCodeAt(0) - 0x20) & 0x3f;
+    if (count <= 0) continue;
+    const data = line.slice(1);
+    const need = Math.ceil(count / 3) * 4;
+    const chars = data.slice(0, need);
+    const bytes = [];
+    for (let i = 0; i < chars.length; i += 4) {
+      const g = chars.slice(i, i + 4).padEnd(4, mode === 'xx' ? '+' : '`');
+      const n = (val(g[0]) << 18) | (val(g[1]) << 12) | (val(g[2]) << 6) | val(g[3]);
+      bytes.push((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    }
+    out.push(...bytes.slice(0, count));
+  }
+  return Uint8Array.from(out);
+}
+
+export const uuDecode = (s) => uuLikeDecode(s, 'uu');
+export const xxDecode = (s) => uuLikeDecode(s, 'xx');
+
+export function uuEncode(bytes, name = '<data>') {
+  const enc = (v) => String.fromCharCode(v ? v + 0x20 : 0x60); // 0 は ` で表す
+  const lines = [`begin 644 ${name}`];
+  for (let p = 0; p < bytes.length; p += 45) {
+    const chunk = bytes.slice(p, p + 45);
+    let line = enc(chunk.length);
+    for (let i = 0; i < chunk.length; i += 3) {
+      const b0 = chunk[i], b1 = chunk[i + 1] ?? 0, b2 = chunk[i + 2] ?? 0;
+      const n = (b0 << 16) | (b1 << 8) | b2;
+      line += enc((n >> 18) & 0x3f) + enc((n >> 12) & 0x3f) + enc((n >> 6) & 0x3f) + enc(n & 0x3f);
+    }
+    lines.push(line);
+  }
+  lines.push('`', 'end');
+  return lines.join('\n');
+}
+
 // ---------- モールス信号 ----------
 const MORSE = {
   A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..', J: '.---',

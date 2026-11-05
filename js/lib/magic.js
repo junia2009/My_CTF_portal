@@ -2,7 +2,7 @@
 import {
   toBytes, latin1Decode, bytesToText, printableRatio,
   b64Decode, b32Decode, b58Decode, b85Decode, hexToBytes, binToBytes, decToBytes,
-  htmlDecode, unicodeUnescape, morseDecode, caesar, rot47, atbash, reverse,
+  htmlDecode, unicodeUnescape, morseDecode, caesar, rot47, atbash, reverse, uuDecode,
 } from './codecs.js';
 import { streamTransform } from './recipe.js';
 import { englishScore } from './ciphers.js';
@@ -63,6 +63,10 @@ const DECODERS = [
   ['モールス信号', (b) => {
     const s = ascii(b);
     return s.length >= 3 && /^[.\-\s/|]+$/.test(s) && /[.]/.test(s) && /-/.test(s) ? toBytes(morseDecode(s)) : null;
+  }],
+  ['uudecode', (b) => {
+    const s = latin1Decode(b);
+    return /^\s*begin[ \t]+[0-7]{3}[ \t]/i.test(s) && /\bend\b/.test(s) ? uuDecode(s) : null;
   }],
   ['gzip 展開', (b) => (b[0] === 0x1f && b[1] === 0x8b ? tryInflate('gzip')(b) : null)],
   ['zlib 展開', (b) => (b[0] === 0x78 && [0x01, 0x5e, 0x9c, 0xda].includes(b[1]) ? tryInflate('deflate')(b) : null)],

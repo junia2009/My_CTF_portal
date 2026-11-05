@@ -9,7 +9,7 @@ import { $, h, store, copy, toast, download, debounce, preview, fmtSize, readByt
 const MAGIC_OPS = {
   Base64: 'b64d', Base32: 'b32d', Base58: 'b58d', Base85: 'b85d', Hex: 'hexd', '2進数': 'bind', '10進数': 'decd',
   URL: 'urld', 'HTML エンティティ': 'htmld', 'Unicode エスケープ': 'unid', 'モールス信号': 'morsed',
-  'gzip 展開': 'gunzip', 'zlib 展開': 'inflate', ROT47: 'rot47', Atbash: 'atbash', 反転: 'rev', ROT13: 'rot13',
+  uudecode: 'uud', 'gzip 展開': 'gunzip', 'zlib 展開': 'inflate', ROT47: 'rot47', Atbash: 'atbash', 反転: 'rev', ROT13: 'rot13',
 };
 const chainToRecipe = (chain) =>
   chain.map((n) => (MAGIC_OPS[n] ? { id: MAGIC_OPS[n] } : { id: 'caesar', args: { arg: (n.match(/\+(\d+)/) ?? [0, '0'])[1] } }));
