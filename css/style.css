@@ -2162,3 +2162,11 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .es-pre { margin: .4rem 0 0; padding: .7rem; max-height: 50vh; overflow: auto; background: var(--field); border: 1px solid var(--line); font-family: var(--mono); font-size: .8rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
 .es-auto { margin-top: .8rem; padding: .7rem .9rem; border: 1px solid var(--accent); background: rgba(var(--accent-rgb), .06); }
 .es-auto > p { margin: .5rem 0; }
+
+/* pcap：平文の認証情報 */
+.cred-box { display: block; }
+.cred-box > .hint { margin-left: .4rem; font-size: .8rem; }
+.cred { display: flex; flex-wrap: wrap; gap: .3rem .8rem; align-items: baseline; padding: .45rem 0; border-top: 1px dashed var(--line); margin-top: .4rem; }
+.cred-proto { font-weight: 700; color: var(--accent); }
+.cred code { font-family: var(--mono); cursor: pointer; word-break: break-all; }
+.cred-note { flex-basis: 100%; font-size: .78rem; word-break: break-all; }

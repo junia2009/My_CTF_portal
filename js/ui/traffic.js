@@ -1,5 +1,5 @@
 // pcap 解析とログ解析
-import { parseCapture, tcpStreams, httpExchanges } from '../lib/pcap.js';
+import { parseCapture, tcpStreams, httpExchanges, findCredentials } from '../lib/pcap.js';
 import { analyzeLog, parseTime } from '../lib/logs.js';
 import { hexdump, identifyType } from '../lib/file.js';
 import { latin1Decode, bytesToText, isUtf8 } from '../lib/codecs.js';
@@ -60,9 +60,25 @@ export function initPcap() {
     try {
       hits = findFlags(all, DEFAULT_FLAG_PATTERN, getPrefixes()).filter((x) => flagRegex(getPrefixes()).test(x.match));
     } catch { /* 無視 */ }
-    $('pcapAlerts').replaceChildren(hits.length
-      ? h('div', { class: 'alert ok' }, '通信の中にフラグらしき文字列：', ...hits.slice(0, 8).map((x) => h('b', { class: 'flag-hit copyable', title: x.source, onclick: () => copy(x.match) }, x.match)))
-      : '');
+    // 平文で流れた認証情報（Basic 認証の Base64 などは戻して表示）
+    const creds = findCredentials(streams);
+    const looksFlag = (v) => v && (flagRegex(getPrefixes()).test(v) || /^FLAG_[A-Za-z0-9_]+$/i.test(v));
+    const credBox = creds.length ? h('div', { class: 'alert cred-box' },
+      h('b', {}, `平文で流れた認証情報 ${creds.length} 件`),
+      h('span', { class: 'hint' }, '（暗号化されていない通信では、ID とパスワードがこのように読めてしまう）'),
+      ...creds.slice(0, 20).map((c) => h('div', { class: 'cred' },
+        h('span', { class: 'tag' }, `#${c.stream}`), h('span', { class: 'cred-proto' }, c.proto),
+        c.user !== null && c.user !== undefined ? h('span', {}, 'ユーザー ', h('code', { class: 'copyable', onclick: () => copy(c.user) }, c.user)) : '',
+        c.pass !== null && c.pass !== undefined ? h('span', {}, 'パスワード ', h('code', { class: 'copyable' + (looksFlag(c.pass) ? ' flag-hit' : ''), onclick: () => copy(c.pass) }, c.pass)) : '',
+        h('div', { class: 'hint cred-note' }, c.note + (c.where ? `　— ${c.where}` : '') + (c.raw && c.proto.includes('Basic') ? `　（元：${c.raw}）` : '')),
+      ))) : '';
+    const credFlags = creds.flatMap((c) => [c.user, c.pass]).filter(looksFlag);
+    $('pcapAlerts').replaceChildren(
+      hits.length ? h('div', { class: 'alert ok' }, '通信の中にフラグらしき文字列：', ...hits.slice(0, 8).map((x) => h('b', { class: 'flag-hit copyable', title: x.source, onclick: () => copy(x.match) }, x.match))) : '',
+      credFlags.length && !hits.length ? h('div', { class: 'alert ok' }, '認証情報の中にフラグらしき文字列：', ...credFlags.map((f) => h('b', { class: 'flag-hit copyable', onclick: () => copy(f) }, f))) : '',
+      credBox,
+    );
+    if (credFlags.length && !hits.length) hits = credFlags.map((f) => ({ match: f }));
     pallasSay(hits.length
       ? { kind: 'pcapFlag', mood: 'happy', flag: hits[0].match, anchor: '#pcapAlerts' }
       : { kind: 'pcapLoaded', mood: 'talk', n: cap.packets.length, streams: streams.length, anchor: '#pcapInfo' });

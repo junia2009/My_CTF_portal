@@ -378,3 +378,63 @@ export function buildDnsQuery(name, id = 0x1234) {
   for (const label of name.split('.')) q.push(label.length, ...Array.from(label, (c) => c.charCodeAt(0)));
   return Uint8Array.from([id >> 8, id & 255, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, ...q, 0, 0, 1, 0, 1]);
 }
+
+// ---------- 平文で流れた認証情報 ----------
+// HTTP の Authorization（Basic は Base64 を戻す）・フォームの password 欄、FTP / POP3 / IMAP / SMTP のログインを拾う。
+// 「暗号化されていない通信では、パスワードがそのまま見える」ことを確かめるための機能。
+const b64txt = (s) => {
+  try {
+    const bin = atob(s.trim());
+    return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+  } catch { return null; }
+};
+export function findCredentials(streams) {
+  const out = [];
+  const latin = new TextDecoder('latin1');
+  for (const s of streams) {
+    // HTTP
+    for (const req of parseHttpMessages(s.toServer)) {
+      for (const hk of ['authorization', 'proxy-authorization']) {
+        const v = req.headers[hk];
+        if (!v) continue;
+        const [scheme, ...rest] = v.split(' ');
+        const val = rest.join(' ');
+        if (/^basic$/i.test(scheme)) {
+          const dec = b64txt(val);
+          const i = dec ? dec.indexOf(':') : -1;
+          out.push({ stream: s.id, proto: 'HTTP Basic 認証', where: req.firstLine, raw: v, user: i >= 0 ? dec.slice(0, i) : dec, pass: i >= 0 ? dec.slice(i + 1) : null, note: 'Basic 認証は「ユーザー名:パスワード」を Base64 にしただけ（暗号ではない）' });
+        } else if (/^digest$/i.test(scheme)) {
+          out.push({ stream: s.id, proto: 'HTTP Digest 認証', where: req.firstLine, raw: v, user: (val.match(/username="([^"]*)"/) || [])[1] ?? null, pass: null, note: 'Digest はパスワードそのものは流れない（ハッシュ値のみ）' });
+        } else if (/^bearer$/i.test(scheme)) {
+          out.push({ stream: s.id, proto: 'HTTP Bearer トークン', where: req.firstLine, raw: v, user: null, pass: val, note: /^eyJ/.test(val) ? 'JWT らしい → 「JWT デコード」で中身を見られる' : 'API のトークン' });
+        }
+      }
+      // フォームやクエリのパスワード欄
+      const body = latin.decode(req.body || new Uint8Array());
+      const q = (req.firstLine.split(' ')[1] || '').split('?')[1] || '';
+      for (const src of [body, q]) {
+        if (!/=/.test(src)) continue;
+        let params;
+        try { params = new URLSearchParams(src); } catch { continue; }
+        const pass = [...params].find(([k]) => /pass|pwd|secret|token/i.test(k));
+        if (!pass) continue;
+        const user = [...params].find(([k]) => /user|login|name|mail|id$/i.test(k));
+        out.push({ stream: s.id, proto: 'HTTP フォーム', where: req.firstLine, raw: src.slice(0, 300), user: user ? user[1] : null, pass: pass[1], note: `${user ? user[0] + ' / ' : ''}${pass[0]} 欄` });
+      }
+    }
+    // テキスト系プロトコル（クライアント → サーバー）
+    const text = latin.decode(s.toServer.subarray(0, 200000));
+    const port = +String(s.server).split(':').pop();
+    let m;
+    const u = (text.match(/^USER (.+)$/m) || [])[1], p = (text.match(/^PASS (.+)$/m) || [])[1];
+    if (u || p) out.push({ stream: s.id, proto: port === 110 ? 'POP3' : port === 21 ? 'FTP' : 'FTP / POP3', where: '', raw: '', user: u?.trim() ?? null, pass: p?.trim() ?? null, note: 'USER / PASS コマンドがそのまま流れている' });
+    if ((m = text.match(/^\S+ LOGIN "?([^"\s]+)"? "?([^"\r\n]+?)"?\r?$/mi))) out.push({ stream: s.id, proto: 'IMAP', where: '', raw: m[0], user: m[1], pass: m[2], note: 'LOGIN コマンド' });
+    if ((m = text.match(/^AUTH PLAIN ?([A-Za-z0-9+/=]*)\r?\n?([A-Za-z0-9+/=]*)/mi))) {
+      const dec = b64txt(m[1] || m[2]) ?? '';
+      const [, user, pass] = dec.split('\0');
+      out.push({ stream: s.id, proto: 'SMTP AUTH PLAIN', where: '', raw: m[0].trim(), user: user ?? null, pass: pass ?? null, note: 'Base64 で「\\0ユーザー\\0パスワード」' });
+    }
+    if ((m = text.match(/^AUTH LOGIN\r?\n([A-Za-z0-9+/=]+)\r?\n([A-Za-z0-9+/=]+)/mi))) out.push({ stream: s.id, proto: 'SMTP AUTH LOGIN', where: '', raw: m[0].trim(), user: b64txt(m[1]), pass: b64txt(m[2]), note: 'ユーザー名とパスワードを 1 行ずつ Base64 で送る' });
+  }
+  return out;
+}
