@@ -13,10 +13,48 @@ export function detectObf(code) {
   if (/^[\[\]()!+]+$/.test(nonSpace.slice(0, 2000)) && nonSpace.length > 50) return { id: 'jsfuck', label: 'JSFuck（[]()!+ だけで書かれたコード）' };
   if (/ﾟωﾟ|ﾟДﾟ|ﾟΘﾟ|ﾟｰﾟ|ﾟoﾟ/.test(s)) return { id: 'aaencode', label: 'aaencode（顔文字の難読化）' };
   if (/[ᆞωᒧ〳ｰ]{2,}/.test(s) && /constructor|\[[^\]]+\]\s*\[/.test(s + '[a][') ) return { id: 'kaomoji', label: '顔文字系の難読化（aaencode の変種）' };
+  if (/^\s*return\s*["']/.test(s)) return { id: 'literal', label: 'エスケープされた文字列を返すだけの段（aaencode の途中）→ デコードで中身を取り出せる' };
   if (/eval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e/.test(s)) return { id: 'packer', label: 'Dean Edwards Packer（eval(function(p,a,c,k,e,…）' };
   if (/\bJJEncode\b|\$=~\[\]/.test(s)) return { id: 'jjencode', label: 'jjencode（記号の難読化）' };
   if (/constructor\s*\)?\s*\[?|\bFunction\s*\(|\beval\s*\(|\.constructor\.constructor/.test(s)) return { id: 'eval', label: 'eval / Function で文字列を実行する形' };
   return { id: 'unknown', label: '種類は判別できず（eval / Function 経由なら復元できる可能性あり）' };
+}
+
+// サンドボックス iframe の中で動く起動コード（toString して埋め込む。外側の変数は使えない）
+function sandboxBoot(TK) {
+  const caps = [];
+  // 「return unescape」のように組み込み関数を返すだけの補助（JSFuck が使う）→ 名前で探して返す
+  const HELP = /^\s*return\s*([A-Za-z_$][\w$.]*)\s*;?\s*$/;
+  // 「return "\u0024…"」のように文字列リテラルを返すだけの補助（aaencode が使う）→ 実行せず字句として読む
+  const LIT = /^\s*return\s*(["'])((?:\\[\s\S]|(?!\1)[^\\])*)\1\s*;?\s*$/;
+  const unesc = (t) => t.replace(/\\(u\{[0-9a-fA-F]+\}|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|[0-7]{1,3}|[\s\S])/g, (_, e) => {
+    if (e[0] === 'u') return String.fromCodePoint(parseInt(e[1] === '{' ? e.slice(2, -1) : e.slice(1), 16));
+    if (e[0] === 'x') return String.fromCharCode(parseInt(e.slice(1), 16));
+    if (/^[0-7]/.test(e)) return String.fromCharCode(parseInt(e, 8));
+    return { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', v: '\v', '\n': '' }[e] ?? e;
+  });
+  function cap(...a) {
+    const c = String(a.length ? a[a.length - 1] : '');
+    const m = c.match(HELP);
+    if (m) return () => m[1].split('.').reduce((o, k) => (o == null ? o : o[k]), window);
+    const l = c.match(LIT);
+    if (l) { const v = unesc(l[2]); return () => v; }
+    caps.push(c);
+    return () => '';
+  }
+  try { Object.defineProperty(Function.prototype, 'constructor', { value: cap, writable: true, configurable: true }); } catch {}
+  try { window.Function = cap; } catch {}
+  try { window.eval = (x) => { caps.push(String(x)); }; } catch {}
+  try { window.setTimeout = (f) => { if (typeof f === 'string') caps.push(f); return 0; }; window.setInterval = window.setTimeout; } catch {}
+  try { document.write = (x) => caps.push('[document.write] ' + x); document.writeln = document.write; window.alert = (x) => caps.push('[alert] ' + x); } catch {}
+  addEventListener('message', (ev) => {
+    if (!ev.data || ev.data.tk !== TK || !('code' in ev.data)) return;
+    let err = '';
+    window.onerror = (msg) => { err = String(msg); return true; };
+    try { const el = document.createElement('script'); el.textContent = ev.data.code; document.documentElement.appendChild(el); } catch (e) { err = e.message; }
+    parent.postMessage({ tk: TK, done: true, caps, err }, '*');
+  });
+  parent.postMessage({ tk: TK, ready: true }, '*');
 }
 
 // サンドボックスの中で走らせ、Function / eval に渡された文字列を捕獲する（実行はしない）
@@ -29,22 +67,7 @@ export function deobfuscate(code, timeoutMs = 3000) {
     const token = 'dj' + Math.random().toString(36).slice(2);
     // コードは HTML に埋め込まず postMessage で渡す（</script> を含んでも安全）。CSP で外部通信を禁止
     const boot = '<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'">'
-      + '<script>(function(){var TK=' + JSON.stringify(token) + ',caps=[];'
-      // 「return unescape」のように組み込み関数を返すだけの補助（JSFuck が使う）は本物を返す。それ以外は記録だけ
-      + 'var HELP=/^\\s*return\\s*([A-Za-z_$][\\w$.]*)\\s*;?\\s*$/;'
-      + 'function cap(){var a=arguments,c=String(a.length?a[a.length-1]:""),m=c.match(HELP);'
-      + 'if(m)return function(){return m[1].split(".").reduce(function(o,k){return o==null?o:o[k];},window);};'
-      + 'caps.push(c);return function(){return "";};}'
-      + 'try{Object.defineProperty(Function.prototype,"constructor",{value:cap,writable:true,configurable:true});}catch(e){}'
-      + 'try{window.Function=cap;}catch(e){}'
-      + 'try{window.eval=function(s){caps.push(String(s));return undefined;};}catch(e){}'
-      + 'try{window.setTimeout=function(f){if(typeof f==="string")caps.push(f);return 0;};window.setInterval=window.setTimeout;}catch(e){}'
-      + 'try{document.write=function(s){caps.push("[document.write] "+s);};document.writeln=document.write;window.alert=function(s){caps.push("[alert] "+s);};}catch(e){}'
-      + 'addEventListener("message",function(ev){if(!ev.data||ev.data.tk!==TK||!("code"in ev.data))return;'
-      + 'var err="";window.onerror=function(m){err=String(m);return true;};'
-      + 'try{var el=document.createElement("script");el.textContent=ev.data.code;document.documentElement.appendChild(el);}catch(e){err=e.message;}'
-      + 'parent.postMessage({tk:TK,done:true,caps:caps,err:err},"*");});'
-      + 'parent.postMessage({tk:TK,ready:true},"*");})();<\/script>';
+      + '<script>(' + sandboxBoot.toString() + ')(' + JSON.stringify(token) + ');<\/script>';
     let done = false;
     const cleanup = () => { removeEventListener('message', onMsg); ifr.remove(); };
     const onMsg = (e) => {
@@ -78,7 +101,9 @@ export function initJsdeobf() {
   async function run(code, depth) {
     if (!code.trim()) return;
     if (depth === 1) out.replaceChildren(h('p', { class: 'hint' }, 'デコード中…'));
-    const { caps, err } = await deobfuscate(code);
+    // 「return "…"」だけが貼られた場合（前の段で取り出した文字列）は、文字列として読んで中身を取り出す
+    const src = /^\s*return\s*["']/.test(code) ? `eval((0).constructor.constructor(${JSON.stringify(code)})())` : code;
+    const { caps, err } = await deobfuscate(src);
     const layer = h('article', { class: 'card jd-layer' }, h('h2', { class: 'wf-h' }, `第 ${depth} 段の結果`));
     if (!caps.length) {
       layer.append(h('p', {}, err ? `取り出せませんでした：${err}` : '評価器（eval / Function）に渡された文字列はありませんでした。'),
