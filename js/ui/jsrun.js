@@ -1,4 +1,4 @@
-// JS 実行サンドボックス：問題の JavaScript の一部や、逆算用に自分で書いたコードを安全に動かして結果を見る。
+// JS 実行：問題の JavaScript の一部や、逆算用に自分で書いたコードを安全に動かして結果を見る。
 // 隔離 iframe（sandbox・同一オリジンなし・CSP で通信禁止）の中で Web Worker を起こして実行し、
 // 時間切れになったら iframe ごと捨てる（無限ループでもポータルは固まらない）。
 import { $, h, copy, store } from './common.js';

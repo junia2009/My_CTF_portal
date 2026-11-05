@@ -1,4 +1,4 @@
-// 難読化 JS デコード：aaencode（顔文字）・jsfuck・packed eval などの難読化 JavaScript を、
+// JS 難読化解除：aaencode（顔文字）・jsfuck・packed eval などの難読化 JavaScript を、
 // 「実行せずに」中身を取り出す。サンドボックス iframe（allow-scripts のみ・通信禁止）の中で
 // 評価器（Function / eval）を乗っ取り、組み立てられたコード文字列を捕獲して返す。
 import { $, h, copy, debounce } from './common.js';
@@ -108,7 +108,7 @@ export function initJsdeobf() {
     const layer = h('article', { class: 'card jd-layer' }, h('h2', { class: 'wf-h' }, `第 ${depth} 段の結果`));
     if (!caps.length) {
       layer.append(h('p', {}, err ? `取り出せませんでした：${err}` : '評価器（eval / Function）に渡された文字列はありませんでした。'),
-        h('p', { class: 'hint' }, 'eval / Function を使わない難読化（文字列を直接 document.write しない形など）は、この方法では取り出せません。整形して読む・エンコード / デコードで部分を戻す、を試してください。'));
+        h('p', { class: 'hint' }, 'eval / Function を使わない難読化（文字列を直接 document.write しない形など）は、この方法では取り出せません。整形して読む・エンコード・デコードで部分を戻す、を試してください。'));
     }
     caps.forEach((c, i) => {
       const flags = [...c.matchAll(/[A-Za-z0-9_]{2,}\{[^}\n]{1,120}\}/g)].map((m) => m[0]);

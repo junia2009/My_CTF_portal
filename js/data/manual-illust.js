@@ -35,7 +35,7 @@ export const MANUAL_ILLUST = {
   'wireshark/advanced': { title: 'TLS を鍵で復号する', panels: [['lock', 'TLS', '暗号化されていて読めない'], ['file', 'keylog.txt', '配られた鍵のログを設定'], ['unlock', 'HTTP', '中身が読めるようになる']], point: '鍵が配られていなければ、暗号化された通信は読めない' },
   'wireshark/keys': { title: 'よく使う操作', panels: [['kbd', 'Ctrl+F', 'パケットを検索'], ['kbd', 'Ctrl+G', '番号へ移動'], ['chip', 'Apply as Filter', '右クリックで絞り込み']], point: '詳細欄の右クリックから、正しいフィルタを自動で作れる' },
   'wireshark/trouble': { title: 'よくあるつまずき', panels: [['warn', 'フィルタが赤い', '書き方を確認'], ['chip', 'Decode As…', '別のポートの HTTP を読ませる'], ['lock', '中身が読めない', '暗号化か圧縮を疑う']], point: '重いときは、まずフィルタで絞ってから' },
-  'wireshark/practice': { title: '練習の流れ', panels: [['download', 'sample_traffic.pcap', 'ダウンロード'], ['filter', 'http', '絞り込む'], ['chat', 'TCP Stream', '会話を読む'], ['flag', 'flag{…}', 'フラグを見つける']], point: '解けたら、ポータルの pcap 解析で答え合わせ' },
+  'wireshark/practice': { title: '練習の流れ', panels: [['download', 'sample_traffic.pcap', 'ダウンロード'], ['filter', 'http', '絞り込む'], ['chat', 'TCP Stream', '会話を読む'], ['flag', 'flag{…}', 'フラグを見つける']], point: '解けたら、ポータルの パケット解析で答え合わせ' },
 
   // ---------- CyberChef ----------
   'cyberchef/about': { title: '料理のようにデータを戻す', panels: [['chip', 'NjY2YzYx…', '材料（入力）'], ['recipe', 'From Hex|From Base64|Gunzip', 'レシピ（操作を上から順に）'], ['flag', 'flag{…}', 'できあがり（出力）']], point: '400 種類以上の操作を、組み合わせて使える' },

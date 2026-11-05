@@ -1,4 +1,4 @@
-// エンコード / デコード系の純粋関数（ブラウザ・Node 両対応）
+// エンコード・デコード系の純粋関数（ブラウザ・Node 両対応）
 
 const te = new TextEncoder();
 const td = new TextDecoder('utf-8');

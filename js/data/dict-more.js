@@ -194,7 +194,7 @@ export const MORE = {
     e('プロセス', '優先度を下げて実行する', 'nice -n 19 tar czf backup.tgz /data\nionice -c3 rsync -a src/ dst/', '重い処理がほかの仕事の邪魔をしないように', 'nice ionice 優先度 負荷'),
     e('プロセス', '時間を決めて打ち切る', 'timeout 10 curl -s https://example.com', '指定の秒数で止まる。応答の無いコマンドで固まらないように', 'timeout 制限時間 打ち切り'),
     // ネットワーク
-    e('ネットワーク', '通信を記録する（pcap）', 'sudo tcpdump -i any -n -w cap.pcap port 53', '保存した pcap は Wireshark やポータルの pcap 解析で読める。許可された環境だけで', 'tcpdump キャプチャ pcap パケット'),
+    e('ネットワーク', '通信を記録する（pcap）', 'sudo tcpdump -i any -n -w cap.pcap port 53', '保存した pcap は Wireshark やポータルの パケット解析で読める。許可された環境だけで', 'tcpdump キャプチャ pcap パケット'),
     e('ネットワーク', '経路を調べる', 'traceroute -n 8.8.8.8\ntracepath example.com', 'どこで通信が止まっているかの切り分けに', 'traceroute 経路 tracert'),
     e('ネットワーク', 'ファイルをダウンロードする', 'curl -fLO https://example.com/file.zip\nwget -c https://example.com/big.iso', '-f で 404 などをエラーにする。wget -c は途中から再開', 'ダウンロード curl wget'),
     e('ネットワーク', 'HTTP のヘッダーだけ見る', 'curl -sI https://example.com\ncurl -sv https://example.com -o /dev/null 2>&1 | grep -E "^[<>]"', 'リダイレクト・Cookie・セキュリティのヘッダーの点検に', 'ヘッダー head curl -I'),

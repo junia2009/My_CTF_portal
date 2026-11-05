@@ -1,4 +1,4 @@
-// バイナリビューア：バイト列を整数・浮動小数として読む / Python の struct 形式で読む
+// バイト列変換：バイト列を整数・浮動小数として読む / Python の struct 形式で読む
 
 const TYPES = [
   ['u8', 1, (v, o) => v.getUint8(o)],

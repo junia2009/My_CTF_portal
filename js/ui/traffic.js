@@ -1,4 +1,4 @@
-// pcap 解析とログ解析
+// パケット解析とログ解析
 import { parseCapture, tcpStreams, httpExchanges, findCredentials } from '../lib/pcap.js';
 import { analyzeLog, parseTime } from '../lib/logs.js';
 import { hexdump, identifyType } from '../lib/file.js';

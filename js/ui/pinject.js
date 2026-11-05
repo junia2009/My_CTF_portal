@@ -1,4 +1,4 @@
-// AI 入力チェック：見えない文字・隠しコンテンツ・注入パターンの検出と、無害化
+// AI 入力検査：見えない文字・隠しコンテンツ・注入パターンの検出と、無害化
 import * as PI from '../lib/pinject.js';
 import { diffChars } from '../lib/diff.js';
 import { $, h, copy, debounce, setTable, registerReceiver, fill, pallasSay, sendTo } from './common.js';

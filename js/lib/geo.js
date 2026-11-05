@@ -1,4 +1,4 @@
-// 位置特定アシスタント：画像から読み取った文字などから、場所の手がかりを取り出して地図検索のリンクを作る
+// 位置特定：画像から読み取った文字などから、場所の手がかりを取り出して地図検索のリンクを作る
 
 export const mapLinks = (query) => ({
   google: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`,

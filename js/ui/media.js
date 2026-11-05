@@ -228,7 +228,7 @@ export function initImage() {
           h('div', { class: 'mono-out', onclick: () => copy(r.data) }, r.data),
           h('div', { class: 'row' },
             h('button', { type: 'button', class: 'ghost small', onclick: () => sendTo('identify', { text: r.data }) }, '迷ったら診断へ'),
-            h('button', { type: 'button', class: 'ghost small', onclick: () => sendTo('codec', { text: r.data, magic: true }) }, 'エンコード / デコードへ'),
+            h('button', { type: 'button', class: 'ghost small', onclick: () => sendTo('codec', { text: r.data, magic: true }) }, 'エンコード・デコードへ'),
           ),
         );
         const f = r.data.match(flagRegex(getPrefixes()))?.[0];

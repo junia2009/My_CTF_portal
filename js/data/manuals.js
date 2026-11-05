@@ -176,7 +176,7 @@ export const MANUALS = [
             '「誰が・どこに・何を送ったか」を調べる（不正アクセスの痕跡を追う DEFENSE 問題）',
             '通信の中でやり取りされたファイル（画像・zip など）を取り出したい',
           ] },
-          { type: 'tip', title: 'ポータルの「pcap 解析」との使い分け', text: 'ポータルの pcap 解析は、インストール不要で HTTP・DNS・TCP の会話とフラグをさっと確認できます。いろいろなプロトコルを細かく見る、暗号化された通信を鍵で復号する、統計を取る、といった作業は Wireshark が得意です。', link: { label: 'pcap 解析を開く', href: '#pcap' } },
+          { type: 'tip', title: 'ポータルの「パケット解析」との使い分け', text: 'ポータルの パケット解析は、インストール不要で HTTP・DNS・TCP の会話とフラグをさっと確認できます。いろいろなプロトコルを細かく見る、暗号化された通信を鍵で復号する、統計を取る、といった作業は Wireshark が得意です。', link: { label: 'パケット解析を開く', href: '#pcap' } },
         ],
       },
       {
@@ -239,7 +239,7 @@ export const MANUALS = [
             { title: 'やり取りされたファイルを取り出す', text: 'File → Export Objects → HTTP（SMB・TFTP なども選べます）で、通信の中で受け渡されたファイルの一覧が出ます。選んで Save すると取り出せます。取り出したファイルはポータルのファイル解析で調べましょう。' },
             { title: '文字列で探す', text: 'Edit → Find Packet（Ctrl + F）で、検索対象を「String」、場所を「Packet bytes」にして flag などを探せます。フィルタの frame contains "flag" も同じ目的に使えます。' },
           ] },
-          { type: 'tip', title: 'DNS にも注目', text: '「dns」で絞り込んで問い合わせたドメイン名を見ると、サブドメインに Base64 などでデータを乗せて外へ送る手口（DNS トンネリング）が見つかることがあります。怪しい部分はポータルのエンコード / デコードで戻しましょう。' },
+          { type: 'tip', title: 'DNS にも注目', text: '「dns」で絞り込んで問い合わせたドメイン名を見ると、サブドメインに Base64 などでデータを乗せて外へ送る手口（DNS トンネリング）が見つかることがあります。怪しい部分はポータルのエンコード・デコードで戻しましょう。' },
         ],
       },
       {
@@ -287,7 +287,7 @@ export const MANUALS = [
         title: '練習：サンプルで試してみる',
         blocks: [
           { type: 'p', text: 'このポータルの練習用 pcap で、ここまでの流れを試せます。社内サーバーにファイルを取りに行った通信が記録されています。' },
-          { type: 'practice', download: { label: '練習用 pcap をダウンロード', sample: 'pcap', filename: 'sample_traffic.pcap' }, portal: { label: 'ポータルの pcap 解析で答え合わせ', page: 'pcap', sample: 'pcap' }, note: 'ファイル名：sample_traffic.pcap（7 パケット）' },
+          { type: 'practice', download: { label: '練習用 pcap をダウンロード', sample: 'pcap', filename: 'sample_traffic.pcap' }, portal: { label: 'ポータルの パケット解析で答え合わせ', page: 'pcap', sample: 'pcap' }, note: 'ファイル名：sample_traffic.pcap（7 パケット）' },
           { type: 'steps', items: [
             { title: '開いて全体を見る', text: 'Wireshark で開き、7 つのパケットのプロトコル（DNS・TCP・HTTP）を確認します。' },
             { title: '絞り込む', text: 'フィルタに http と入れて Enter。どのファイルを取りに行ったかを Info 欄で確認します。' },
@@ -321,7 +321,7 @@ export const MANUALS = [
             'AES・DES・RC4 などの鍵や IV が分かっている暗号文を復号したい（CRYPT）',
             'ファイルの中から別のファイルや URL・IP アドレスを抜き出したい（FORENSIC）',
           ] },
-          { type: 'tip', title: 'ポータルの「エンコード / デコード」との使い分け', text: 'ポータルのエンコード / デコードにも、自動解析（Magic）とレシピがあり、よく使う変換はこちらで足ります。AES などの本格的な暗号の復号、珍しい形式の変換、細かい設定が必要な処理は CyberChef が得意です。', link: { label: 'エンコード / デコードを開く', href: '#codec' } },
+          { type: 'tip', title: 'ポータルの「エンコード・デコード」との使い分け', text: 'ポータルのエンコード・デコードにも、自動解析（Magic）とレシピがあり、よく使う変換はこちらで足ります。AES などの本格的な暗号の復号、珍しい形式の変換、細かい設定が必要な処理は CyberChef が得意です。', link: { label: 'エンコード・デコードを開く', href: '#codec' } },
         ],
       },
       {
@@ -611,7 +611,7 @@ export const MANUALS = [
           { type: 'list', items: [
             'Cookie の値をダブルクリックして書き換えられる（例：role=user を role=admin に）。書き換えたらページを再読み込み',
             'eyJ で始まる値は JWT。ポータルの JWT デコードで中身を確認できる',
-            'Base64 らしい値は、ポータルのエンコード / デコードで戻してみる',
+            'Base64 らしい値は、ポータルのエンコード・デコードで戻してみる',
           ] },
           { type: 'tip', text: 'サーバーが Cookie の値を信用しすぎていると、書き換えるだけで権限が変わってしまうことがあります。CONFIG / DEFENSE の問題では、逆に「こうならないための設定」を問われることもあります。', link: { label: 'JWT デコードを開く', href: '#jwt' } },
         ],
@@ -687,7 +687,7 @@ export const MANUALS = [
             { title: '書き換えて送る', text: 'Repeater タブで左側のリクエストを書き換え、Send を押すと、右側にサーバーの応答が表示されます。' },
             { title: '比べる', text: '値を変えて応答がどう変わるかを見ます（エラーメッセージの違い、表示されるデータの違いなど）。タブを複製すれば、複数の版を並べて試せます。' },
           ] },
-          { type: 'tip', text: 'Decoder タブでは Base64 や URL エンコードの変換、Comparer タブでは 2 つの応答の違いを確認できます。ポータルのエンコード / デコードや差分比較でも同じことができます。' },
+          { type: 'tip', text: 'Decoder タブでは Base64 や URL エンコードの変換、Comparer タブでは 2 つの応答の違いを確認できます。ポータルのエンコード・デコードや差分比較でも同じことができます。' },
         ],
       },
       {

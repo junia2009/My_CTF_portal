@@ -1,4 +1,4 @@
-// 数論計算機 / バイナリビューア / 文字化け修復 / 差分比較 / 正規表現テスター
+// 数論計算 / バイト列変換 / 文字化け修復 / 差分比較 / 正規表現テスト
 import * as NT from '../lib/numtheory.js';
 import { readValues, unpack } from '../lib/binview.js';
 import { repairCandidates, decodeAll } from '../lib/mojibake.js';
@@ -9,7 +9,7 @@ import { bytesToHex, hexToBytes, latin1Decode } from '../lib/codecs.js';
 import { DEFAULT_FLAG_PATTERN } from '../lib/flag.js';
 import { $, h, copy, kvRow, debounce, readBytes, setTable, registerReceiver, fill, openTab, fmtSize, download, toast } from './common.js';
 
-// ================= 数論計算機 =================
+// ================= 数論計算 =================
 export function initMath() {
   const P = (id) => NT.parseBig($(id).value);
 
@@ -125,7 +125,7 @@ export function initMath() {
   });
 }
 
-// ================= バイナリビューア =================
+// ================= バイト列変換 =================
 export function initBinview() {
   let bytes = new Uint8Array();
   const offset = () => {
@@ -484,7 +484,7 @@ export function initDiff() {
   });
 }
 
-// ================= 正規表現テスター =================
+// ================= 正規表現テスト =================
 export function initRegex() {
   const PRESETS = [
     ['フラグ形式', DEFAULT_FLAG_PATTERN],

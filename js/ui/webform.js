@@ -236,7 +236,7 @@ export function initWebform() {
 // fetch コード用：JS 文字列リテラル
 function sh2(s) { return JSON.stringify(String(s)); }
 
-// 難読化されていそうな script には「難読化 JS デコード」への導線を出す
+// 難読化されていそうな script には「JS 難読化解除」への導線を出す
 function deobfLink(code) {
   const t = detectObf(code);
   if (!t || t.id === 'unknown' || code.trim().length < 40) return '';
@@ -244,5 +244,5 @@ function deobfLink(code) {
     h('button', { type: 'button', class: 'small', onclick: () => {
       try { sessionStorage.setItem(DEOBF_KEY, code); } catch {}
       location.hash = '#jsdeobf';
-    } }, '難読化 JS デコードで開く →'));
+    } }, 'JS 難読化解除で開く →'));
 }

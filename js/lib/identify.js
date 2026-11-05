@@ -90,7 +90,7 @@ export function identify(input, prefixes) {
     });
   }
 
-  // ---- ネットワーク・時刻 ----
+  // ---- ネットワーク・時刻計算 ----
   if (/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(text)) {
     let ok = true;
     try {
@@ -101,7 +101,7 @@ export function identify(input, prefixes) {
     if (ok) add({
       id: 'ip', level: HIGH, title: 'IPv4 アドレス', tool: 'net', payload: text,
       reason: '数字4つを「.」でつないだ形は IP アドレスです。',
-      next: 'ネットワーク・時刻ツールで、ネットワーク範囲やプライベートかどうかを確認できます。',
+      next: 'ネットワーク・時刻計算ツールで、ネットワーク範囲やプライベートかどうかを確認できます。',
     });
   }
   if (/^\d{10}(\d{3})?$/.test(compact)) {
@@ -109,13 +109,13 @@ export function identify(input, prefixes) {
     if (n >= 946684800 && n <= 2524608000) add({
       id: 'time', level: MID, title: 'UNIX 時間（日時）', tool: 'net', payload: compact,
       reason: `${compact.length} 桁の数値で、2000〜2050年の UNIX 時間の範囲に入っています。`,
-      next: 'ネットワーク・時刻ツールで日時に変換しましょう。ログの時刻合わせに役立ちます。',
+      next: 'ネットワーク・時刻計算ツールで日時に変換しましょう。ログの時刻合わせに役立ちます。',
     });
   }
 
   // ---- エンコード ----
   const enc = (title, reason, level = MID) =>
-    add({ id: 'enc', level, title, tool: 'codec', payload: text, reason, next: 'エンコード / デコードの「Magic」で自動的に戻せます。何重にもかかっていても順番に剥がします。' });
+    add({ id: 'enc', level, title, tool: 'codec', payload: text, reason, next: 'エンコード・デコードの「Magic」で自動的に戻せます。何重にもかかっていても順番に剥がします。' });
 
   if (/^[.\-\s/|]+$/.test(text) && /\./.test(text) && /-/.test(text)) enc('モールス信号', '「.」「-」と区切りだけでできています。', HIGH);
   else if (/^[01\s]+$/.test(text) && len >= 8) enc('2進数', '0 と 1 だけでできています。8桁で1文字を表すことが多いです。', len % 8 === 0 ? HIGH : MID);
@@ -138,7 +138,7 @@ export function identify(input, prefixes) {
       id: 'pinject', level: pi.level === '高' ? HIGH : MID, title: pi.tags ? '見えない文字で隠された文（Unicode タグ文字）' : 'AI への隠れた指示（プロンプトインジェクション）の疑い',
       tool: 'pinject', payload: text,
       reason: pi.reasons.slice(0, 2).join('。') + '。',
-      next: 'AI 入力チェックで、見えない文字・隠しコンテンツ・乗っ取りらしい表現を確認し、必要なら無害化しましょう。',
+      next: 'AI 入力検査で、見えない文字・隠しコンテンツ・乗っ取りらしい表現を確認し、必要なら無害化しましょう。',
     });
   }
 
@@ -197,7 +197,7 @@ export function identify(input, prefixes) {
     add({
       id: 'unknown', level: LOW, title: '形式を特定できませんでした', tool: 'codec', payload: text,
       reason: 'よく知られた形式には当てはまりませんでした。',
-      next: 'まずはエンコード / デコードの「Magic」を試しましょう。XOR されたデータなら XOR ツール、文章ならフラグ検索も有効です。',
+      next: 'まずはエンコード・デコードの「Magic」を試しましょう。XOR されたデータなら XOR ツール、文章ならフラグ検索も有効です。',
     });
   }
   return res.sort((a, b) => b.level - a.level);

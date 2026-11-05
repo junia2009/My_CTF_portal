@@ -230,7 +230,7 @@ export const CRYPTO_FIGURES = {
       const y = 34 + i * 30;
       kids.push(R(14, y, 692, 26, i % 2 ? 'nf-box' : 'nf-box l-data', 3), T(24, y + 18, a, 'nf-t small strong', 'start'), T(300, y + 18, b, 'nf-t small acc', 'start'), T(540, y + 18, c, 'nf-t mono small', 'start'));
     });
-    kids.push(T(360, 290, '迷ったらポータルの「迷ったら診断」「エンコード / デコード」の自動判定に貼る', 'nf-t small'));
+    kids.push(T(360, 290, '迷ったらポータルの「迷ったら診断」「エンコード・デコード」の自動判定に貼る', 'nf-t small'));
     return frame(720, 300, '暗号文・符号化の見分け方', ...kids);
   },
 };

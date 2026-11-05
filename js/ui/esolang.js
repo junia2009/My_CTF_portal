@@ -1,4 +1,4 @@
-// 難解言語ランナー：Whitespace・Brainfuck・Ook! を貼り付け／ファイルから実行する
+// 難解言語実行：Whitespace・Brainfuck・Ook! を貼り付け／ファイルから実行する
 import { $, h, copy } from './common.js';
 import { wsRun, wsListing, wsVisible, bfRun, ookToBf, guessEsolang, wsAutoSolve } from '../lib/esolang.js';
 

@@ -83,13 +83,13 @@ export function initBoot() {
 
 // ---------- 各ページ見出しの英字ラベル ----------
 const PAGE_CODES = {
-  home: 'COMMAND CENTER', guide: 'BRIEFING', identify: 'TARGET SCANNER', learn: 'KNOWLEDGE BASE',
-  codec: 'DECODER MATRIX', base: 'NUMERIC CONVERTER', binview: 'BINARY VIEWER', mojibake: 'CHARSET REPAIR',
-  classic: 'CLASSIC CIPHER', xor: 'XOR ANALYZER', rsa: 'RSA BREAKER', math: 'NUMBER THEORY',
-  rev: 'REVERSE ENGINEERING', file: 'FILE FORENSICS', image: 'IMAGE FORENSICS', geo: 'GEO LOCATOR', audio: 'AUDIO ANALYZER',
-  pcap: 'PACKET ANALYZER', logs: 'LOG ANALYZER', pinject: 'PROMPT GUARD', webform: 'FORM ANALYZER', jsdeobf: 'JS DEOBFUSCATOR', jsrun: 'JS SANDBOX', pyrun: 'PYTHON', esolang: 'ESOLANG RUNNER', hash: 'HASH ENGINE', jwt: 'TOKEN INSPECTOR',
-  flag: 'FLAG SCANNER', net: 'NET / TIME', notes: 'MISSION LOG', cheatsheet: 'FIELD MANUAL', manuals: 'TOOL MANUALS',
-  dict: 'REFERENCE', diff: 'DIFF ENGINE', regex: 'PATTERN LAB',
+  home: 'COMMAND CENTER', guide: 'BRIEFING', identify: 'TRIAGE', learn: 'KNOWLEDGE BASE',
+  codec: 'MULTI DECODER', base: 'RADIX CONVERTER', binview: 'BYTE CONVERTER', mojibake: 'CHARSET RESTORER',
+  classic: 'CLASSIC SOLVER', xor: 'XOR SOLVER', rsa: 'RSA SOLVER', math: 'MODULAR CALCULATOR',
+  rev: 'BINARY ANALYZER', file: 'FILE ANALYZER', image: 'IMAGE ANALYZER', geo: 'GEO LOCATOR', audio: 'AUDIO ANALYZER',
+  pcap: 'PACKET ANALYZER', logs: 'LOG ANALYZER', pinject: 'PROMPT SCANNER', webform: 'FORM ANALYZER', jsdeobf: 'JS DECODER', jsrun: 'JS RUNNER', pyrun: 'PYTHON RUNNER', esolang: 'ESOLANG RUNNER', hash: 'HASH CALCULATOR', jwt: 'JWT DECODER',
+  flag: 'FLAG SCANNER', net: 'NETWORK CALCULATOR', notes: 'MISSION LOG', cheatsheet: 'CHEAT SHEET', manuals: 'TOOL MANUAL',
+  dict: 'COMMAND REFERENCE', diff: 'DIFF COMPARATOR', regex: 'REGEX TESTER',
 };
 // 番号はサイドメニューの並び順で振る（ページを足しても通し番号がずれない）
 export function initEyebrows() {

@@ -1,4 +1,4 @@
-// 位置特定アシスタント：EXIF の GPS・OCR（PaddleOCR、端末内で処理）・手がかりの抽出・逆引き検索・チェックリスト
+// 位置特定：EXIF の GPS・OCR（PaddleOCR、端末内で処理）・手がかりの抽出・逆引き検索・チェックリスト
 import { readMetadata } from '../lib/exif.js';
 import { PaddleOCR } from '../lib/paddleocr.js';
 import { extractClues, mapLinks, coordLinks, CHECKLIST } from '../lib/geo.js';

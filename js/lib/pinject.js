@@ -1,4 +1,4 @@
-// AI 入力チェック：LLM に渡すテキストに紛れ込んだ「見えない文字」「隠れたコンテンツ」「指示の乗っ取りらしい表現」を検出し、無害化する
+// AI 入力検査：LLM に渡すテキストに紛れ込んだ「見えない文字」「隠れたコンテンツ」「指示の乗っ取りらしい表現」を検出し、無害化する
 import { b64Decode, fromBytes, isUtf8, printableRatio } from './codecs.js';
 
 const hex = (cp) => 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');

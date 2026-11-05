@@ -1,4 +1,4 @@
-// 解析系の画面：ファイル解析 / ハッシュ / JWT / フラグ検索 / ネットワーク・時刻
+// 解析系の画面：ファイル解析 / ハッシュ / JWT / フラグ検索 / ネットワーク・時刻計算
 import * as C from '../lib/codecs.js';
 import * as F from '../lib/file.js';
 import { computeHashes, identifyHash } from '../lib/hash.js';
@@ -72,7 +72,7 @@ export function initFile() {
     }
     const tool = { png: 'image', jpg: 'image', gif: 'image', bmp: 'image', webp: 'image', wav: 'audio', mp3: 'audio', flac: 'audio', ogg: 'audio', pcap: 'pcap', pcapng: 'pcap', elf: 'rev', exe: 'rev' }[type?.ext];
     if (tool) {
-      const label = { image: '画像解析', audio: '音声解析', pcap: 'pcap 解析', rev: 'バイナリ解析（逆アセンブル）' }[tool];
+      const label = { image: '画像解析', audio: '音声解析', pcap: 'パケット解析', rev: 'バイナリ解析（逆アセンブル）' }[tool];
       alerts.push(h('div', { class: 'alert ok' }, `${type.name}です。${label}で、より詳しく調べられます。`,
         h('button', { type: 'button', class: 'small', onclick: () => sendTo(tool, new File([bytes], name)) }, `${label}で開く`)));
     }
@@ -372,7 +372,7 @@ export function initFlag() {
   registerReceiver('flag', (p) => fill('flagIn', p.text));
 }
 
-// ================= ネットワーク・時刻 =================
+// ================= ネットワーク・時刻計算 =================
 export function initNet() {
   $('cidrIn').addEventListener('input', debounce(() => {
     $('cidrErr').textContent = '';

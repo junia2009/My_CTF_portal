@@ -255,7 +255,7 @@ export const PROXY_TEXTS = [
         blocks: [
           CODE('access.log の 1 行（squid 形式）', "1775634512.345    120 10.0.20.15 TCP_MISS/200 5321 GET http://example.com/ yamada HIER_DIRECT/93.184.215.14 text/html\n1775634520.002  15040 10.0.20.15 TCP_TUNNEL/200 48211 CONNECT www.example.jp:443 yamada HIER_DIRECT/203.0.113.10 -\n1775634530.871      0 10.0.20.33 TCP_DENIED/403 3954 CONNECT game.example-game.com:443 - HIER_NONE/- text/html"),
           TABLE(['列', '意味'], [
-            ['1', '時刻（UNIX 時間。ポータルのネットワーク・時刻で日本時間に変換できる）'],
+            ['1', '時刻（UNIX 時間。ポータルのネットワーク・時刻計算で日本時間に変換できる）'],
             ['2', '処理にかかった時間（ミリ秒）'],
             ['3', '利用者の IP'],
             ['4', '結果/ステータス（TCP_MISS：外から取得、TCP_HIT：キャッシュ、TCP_TUNNEL：HTTPS の中継、TCP_DENIED：拒否）'],

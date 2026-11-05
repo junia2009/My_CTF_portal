@@ -1,4 +1,4 @@
-// エンコード / デコード画面（CyberChef 相当）：目的別の変換一覧・段階ごとの結果・次の一手の提案
+// エンコード・デコード画面（CyberChef 相当）：目的別の変換一覧・段階ごとの結果・次の一手の提案
 import { bytesToHex, bytesToText, isUtf8, printableRatio, b64Encode } from '../lib/codecs.js';
 import { OPS, CATS, getOp, runRecipe, defaultArgs, searchOps, suggestNext, describeValue } from '../lib/recipe.js';
 import { magic } from '../lib/magic.js';
@@ -46,7 +46,7 @@ function fileActions(b, base) {
   return h('div', { class: 'cc-file' },
     h('span', {}, `${type.name}のファイルです`),
     h('button', { type: 'button', class: 'small', onclick: () => saveAs(b, base) }, `保存（.${extOf(b)}）`),
-    h('button', { type: 'button', class: 'ghost small', onclick: async () => toast(`${{ image: '画像解析', audio: '音声解析', pcap: 'pcap 解析', rev: 'バイナリ解析', file: 'ファイル解析' }[await openFileSmart(fileOf(b, base))]}で開きました`) }, '詳しく調べる'),
+    h('button', { type: 'button', class: 'ghost small', onclick: async () => toast(`${{ image: '画像解析', audio: '音声解析', pcap: 'パケット解析', rev: 'バイナリ解析', file: 'ファイル解析' }[await openFileSmart(fileOf(b, base))]}で開きました`) }, '詳しく調べる'),
   );
 }
 function previewBlock(b) {
