@@ -2184,3 +2184,9 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .ch-auto { margin-top: .7rem; }
 .ch-auto #chAutoOut { margin-top: .5rem; }
 .ch-hit code { font-weight: 700; }
+
+/* Python 実行 */
+.py-status { font-size: .8rem; margin-left: auto; padding: .15rem .5rem; border-radius: 4px; }
+.py-status.load { color: #f0b429; }
+.py-status.ok { color: var(--accent); }
+.py-status.err { color: #ff6b6b; }

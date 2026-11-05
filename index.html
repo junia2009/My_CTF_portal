@@ -97,6 +97,7 @@
       <a href="#webform" data-route="webform">フォーム解析</a>
       <a href="#jsdeobf" data-route="jsdeobf">難読化 JS デコード</a>
       <a href="#jsrun" data-route="jsrun">JS 実行サンドボックス</a>
+      <a href="#pyrun" data-route="pyrun">Python 実行</a>
       <a href="#esolang" data-route="esolang">難解言語ランナー</a>
       <a href="#hash" data-route="hash">ハッシュ</a>
       <a href="#jwt" data-route="jwt">JWT デコード</a>
@@ -1236,6 +1237,28 @@
           <p class="hint">Whitespace は空白・タブがひとつ欠けても動きません。Web ページの表示やチャットからコピーすると行末の空白やタブが消えやすいので、<b>問題のファイルをダウンロードして「ファイルを開く」で読み込む</b>のが確実です。上限ステップ数で止まるので、無限ループでも固まりません。</p>
         </div>
         <div id="esOut"></div>
+      </section>
+
+      <section data-page="pyrun" hidden>
+        <h1>Python 実行</h1>
+        <p class="lead">問題のスクリプトや逆算コードを<b>本物の Python</b>（Pyodide）で実行します。<code>hashlib</code>・<code>base64</code>・<code>itertools</code> や大きな整数の計算など、標準ライブラリがそのまま使えます。</p>
+        <div class="card">
+          <div class="row jr-bar">
+            <select id="pyTpl" aria-label="テンプレート"><option value="">テンプレートを選ぶ…</option></select>
+            <span id="pyStatus" class="py-status"></span>
+          </div>
+          <label for="pyCode">Python コード</label>
+          <textarea id="pyCode" rows="14" class="mono" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          <label for="pyInput">標準入力（任意・<code>input()</code> が読む行）</label>
+          <input id="pyInput" class="mono" autocapitalize="off" autocomplete="off">
+          <div class="row">
+            <button type="button" id="pyRun">実行（Ctrl+Enter）</button>
+            <button type="button" id="pyStop" class="ghost small">停止</button>
+            <button type="button" id="pyClear" class="ghost small">クリア</button>
+          </div>
+          <p class="hint">初回だけ Python 本体（Pyodide・約 10MB）をインターネットから取得します（以後はキャッシュ）。実行は別スレッド（Web Worker）の中なので、無限ループでも「停止」で止められ、画面は固まりません。ネットワークやファイルには触れません。</p>
+        </div>
+        <div id="pyOut"></div>
       </section>
 
       <section data-page="regex" hidden>

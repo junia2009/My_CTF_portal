@@ -14,6 +14,7 @@ import { initMath, initBinview, initMojibake, initDiff, initRegex } from './ui/u
 import { initWebform } from './ui/webform.js';
 import { initJsdeobf } from './ui/jsdeobf.js';
 import { initJsrun } from './ui/jsrun.js';
+import { initPyrun } from './ui/pyrun.js';
 import { initEsolang } from './ui/esolang.js';
 import { initPinject } from './ui/pinject.js';
 import { initGeo } from './ui/geo.js';
@@ -75,6 +76,7 @@ initRegex();
 initWebform();
 onShow.jsdeobf = initJsdeobf();
 onShow.jsrun = initJsrun();
+onShow.pyrun = initPyrun();
 initEsolang();
 initPinject();
 initGeo();
