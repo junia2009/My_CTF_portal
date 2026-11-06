@@ -1,5 +1,5 @@
 // 難解言語実行：Whitespace・Brainfuck・Ook! を貼り付け／ファイルから実行する
-import { $, h, copy } from './common.js';
+import { $, h, copy, registerReceiver } from './common.js';
 import { wsRun, wsListing, wsVisible, bfRun, ookToBf, guessEsolang, wsAutoSolve } from '../lib/esolang.js';
 
 const LANGS = { ws: 'Whitespace', bf: 'Brainfuck', ook: 'Ook!' };
@@ -20,6 +20,7 @@ const SAMPLES = {
 
 export function initEsolang() {
   const code = $('esCode'), lang = $('esLang'), info = $('esInfo'), out = $('esOut');
+  registerReceiver('esolang', (pl) => { code.value = pl.text || ''; showGuess(); });
 
   const showGuess = () => {
     const g = guessEsolang(code.value);

@@ -1,7 +1,7 @@
 // JS 難読化解除：aaencode（顔文字）・jsfuck・packed eval などの難読化 JavaScript を、
 // 「実行せずに」中身を取り出す。サンドボックス iframe（allow-scripts のみ・通信禁止）の中で
 // 評価器（Function / eval）を乗っ取り、組み立てられたコード文字列を捕獲して返す。
-import { $, h, copy, debounce } from './common.js';
+import { $, h, copy, debounce, registerReceiver } from './common.js';
 import { JSRUN_KEY } from './jsrun.js';
 
 export const DEOBF_KEY = 'ctfportal.deobfInput';
@@ -89,6 +89,7 @@ var _0x=["\\x64\\x6f\\x63\\x75\\x6d\\x65\\x6e\\x74\\x2e\\x74\\x69\\x74\\x6c\\x65
 
 export function initJsdeobf() {
   const input = $('jdIn'), out = $('jdOut'), info = $('jdInfo');
+  registerReceiver('jsdeobf', (pl) => { input.value = pl.text || ''; showType(); });
   $('jdSample').addEventListener('click', () => { input.value = SAMPLE; showType(); });
   $('jdClear').addEventListener('click', () => { input.value = ''; out.replaceChildren(); showType(); });
   $('jdRun').addEventListener('click', () => run(input.value, 1));

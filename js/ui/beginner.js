@@ -60,6 +60,7 @@ export function toPayload(r) {
     case 'rsa': return { ...r.payload, run: true };
     case 'hash': return { id: r.payload };
     case 'net': return r.id === 'ip' ? { cidr: r.payload } : { ts: r.payload };
+    case 'xor': return { text: r.payload, fmt: 'hex', tab: 'repeat' };
     case 'notes': return { flag: r.payload };
     default: return { text: r.payload };
   }

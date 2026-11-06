@@ -4,6 +4,7 @@ import { caesarAll, englishRank } from './ciphers.js';
 import { flagRegex } from './magic.js';
 import { parseIPv4 } from './net.js';
 import { analyze as analyzeInjection } from './pinject.js';
+import { guessEsolang } from './esolang.js';
 
 // 問題文に書かれた n = ... / e = ... / c = ... を読み取る
 export function parseRsaParams(text) {
@@ -130,6 +131,55 @@ export function identify(input, prefixes) {
   if (/&(#x?[0-9a-f]+|[a-z]+);/i.test(text)) enc('HTML エンティティ', '「&#...;」や「&amp;」のような部分があります。', HIGH);
   if (/\\u[0-9a-f]{4}|\\x[0-9a-f]{2}/i.test(text)) enc('Unicode / エスケープ表記', '「\\u0041」や「\\x41」のような書き方が含まれています。', HIGH);
   if (/^<~[\s\S]*~>$/.test(text)) enc('Base85（ASCII85）', '「<~」で始まり「~>」で終わっています。', HIGH);
+
+  // ---- HTML のフォーム ----
+  if (/<form[\s>]/i.test(text) || /<input[\s>]/i.test(text) || /<!doctype\s+html|<html[\s>]/i.test(text)) {
+    const hasForm = /<form[\s>]/i.test(text) || /<input[\s>]/i.test(text);
+    add({
+      id: 'webform', level: hasForm ? HIGH : MID, title: hasForm ? 'HTML のフォーム（入力欄つき）' : 'HTML のコード', tool: 'webform', payload: text,
+      reason: hasForm ? '<form> や <input> が含まれています。送信先や隠れた入力欄が手がかりになります。' : 'HTML のコードです。コメントや読み込む script に手がかりがあることがあります。',
+      next: 'フォーム解析で、送信先・入力欄・隠れたヒントを一覧にし、curl / fetch を組み立てます。',
+    });
+  }
+
+  // ---- 難読化された JavaScript ----
+  if (/ﾟωﾟ|ﾟДﾟ|ﾟΘﾟ|ﾟｰﾟ|ﾟoﾟ/.test(text)) {
+    add({ id: 'jsdeobf', level: HIGH, title: 'aaencode（顔文字で難読化された JavaScript）', tool: 'jsdeobf', payload: text,
+      reason: '「ﾟωﾟ」のような顔文字の並びは、JavaScript を顔文字だけで書く aaencode の特徴です。',
+      next: 'JS 難読化解除で、実行せずに中身のコードを取り出せます。' });
+  } else if (/^[\s\[\]()!+]{30,}$/.test(text) && /[\[\]]/.test(text) && /[!+]/.test(text)) {
+    add({ id: 'jsdeobf', level: HIGH, title: 'JSFuck（記号だけで書かれた JavaScript）', tool: 'jsdeobf', payload: text,
+      reason: '[ ] ( ) ! + の6種類の記号だけでできています。JSFuck という JavaScript の難読化です。',
+      next: 'JS 難読化解除で、実行せずに中身を取り出せます。' });
+  } else if (/(\.constructor|constructor\s*[([]|\beval\s*\(|\bFunction\s*\()/.test(text) && (/\\x[0-9a-f]{2}|\\u[0-9a-f]{4}|\[['"]/.test(text) || len > 120) && /[;(){}]/.test(text)) {
+    add({ id: 'jsdeobf', level: MID, title: '難読化された JavaScript の疑い', tool: 'jsdeobf', payload: text,
+      reason: 'eval / Function / constructor で文字列を実行する形が含まれています。',
+      next: 'JS 難読化解除で、実行せずに中身のコードを取り出せます。' });
+  }
+
+  // ---- 難解プログラミング言語（Brainfuck / Ook! / Whitespace） ----
+  const eso = guessEsolang(text);
+  if (eso && !res.some((r) => r.id === 'jsdeobf')) {
+    const label = { bf: 'Brainfuck', ook: 'Ook!', ws: 'Whitespace（空白だけのプログラム）' }[eso];
+    add({ id: 'esolang', level: eso === 'ws' ? MID : HIGH, title: `難解プログラミング言語（${label}）`, tool: 'esolang', payload: text,
+      reason: { bf: '+ - < > [ ] . , の記号だけでできています。', ook: '「Ook.」「Ook?」「Ook!」の並びは Ook! という言語です。', ws: 'スペース・タブ・改行だけでできています。' }[eso],
+      next: '難解言語実行で、プログラムを動かして出力（フラグ）を確認できます。' });
+  }
+
+  // ---- XOR されたデータの疑い（Hex がそのままでは読めないとき） ----
+  if (/^(0x)?[0-9a-f\s:,]+$/i.test(text) && !isHashLike) {
+    const hx = compact.replace(/^0x/i, '');
+    if (hx.length >= 8 && hx.length % 2 === 0 && /^[0-9a-f]+$/i.test(hx)) {
+      const bytes = hx.match(/../g).map((b) => parseInt(b, 16));
+      const printable = bytes.filter((b) => b >= 0x20 && b < 0x7f).length / bytes.length;
+      const uniq = new Set(bytes).size;
+      if (printable < 0.7 && uniq >= Math.min(bytes.length, 5)) {
+        add({ id: 'xor', level: MID, title: 'XOR などで隠されたバイト列の可能性', tool: 'xor', payload: compact,
+          reason: '16進に戻してもそのままでは文字になりません。1バイトの XOR や繰り返し鍵の XOR で隠されていることがあります。',
+          next: 'XOR 解読で、1バイト総当たり・繰り返し鍵・既知平文からの鍵推定を試せます。' });
+      }
+    }
+  }
 
   // ---- AI への隠れた指示（プロンプトインジェクション） ----
   const pi = analyzeInjection(text);

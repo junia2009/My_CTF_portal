@@ -1,7 +1,7 @@
 // フォーム解析：問題の HTML を貼り付けると、送信先・入力欄・隠れた手がかりを一覧にし、
 // 送信リクエストの組み立て・curl / fetch の生成・弱点の当たりを示す。
 // すべてブラウザの中だけで静的に解析し、どこにも送信しない。
-import { $, h, store, copy, debounce } from './common.js';
+import { $, h, store, copy, debounce, registerReceiver } from './common.js';
 import { DEOBF_KEY, detectObf } from './jsdeobf.js';
 
 const SAMPLE = `<!-- TODO: remove debug account before release -->
@@ -34,6 +34,7 @@ const esc = (s) => String(s);
 
 export function initWebform() {
   const htmlIn = $('wfHtml'), baseIn = $('wfBase'), out = $('wfOut');
+  registerReceiver('webform', (pl) => { htmlIn.value = pl.text || ''; render(); });
   $('wfSample').addEventListener('click', () => { htmlIn.value = SAMPLE; render(); });
   $('wfClear').addEventListener('click', () => { htmlIn.value = ''; render(); });
   htmlIn.addEventListener('input', debounce(render, 200));
