@@ -2191,6 +2191,7 @@ kbd { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; d
 .py-status.ok { color: var(--accent); }
 .py-status.err { color: #ff6b6b; }
 
-/* バージョン表示（ヒーローのレーダー内・右上） */
-.app-ver { position: absolute; right: 4%; top: 10%; font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; color: var(--muted); opacity: .8; white-space: nowrap; pointer-events: none; }
-@media (max-width: 760px) { .app-ver { right: 3%; top: 2%; font-size: .66rem; } }
+
+/* バージョン表示（タイトルの右横・シアン） */
+.app-ver { font-family: var(--mono); font-size: .8rem; font-weight: 600; letter-spacing: .08em; color: var(--accent); -webkit-text-fill-color: var(--accent); margin-left: .7em; white-space: nowrap; vertical-align: middle; opacity: .95; }
+@media (max-width: 760px) { .app-ver { margin-left: .5em; font-size: .62rem; } }

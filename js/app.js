@@ -26,7 +26,7 @@ import { initPins, initFavorites, initNavFade, initSkipLink, focusAfterRoute } f
 
 import { VERSION, BUILD_DATE } from './data/version.js';
 const elVer = document.getElementById('appVersion');
-if (elVer) elVer.textContent = `${VERSION} · ${BUILD_DATE}`;
+if (elVer) { elVer.textContent = VERSION; elVer.title = `${VERSION}（${BUILD_DATE}）`; }
 const onShow = {};
 let pallas = null;
 
